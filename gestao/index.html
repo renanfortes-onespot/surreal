@@ -137,6 +137,8 @@ table.dre tbody tr:hover{background:var(--hover);}
 table.dre tbody tr.lk{cursor:pointer;}
 table.dre tr.total td{font-weight:800;color:var(--txt);background:var(--cabec);border-top:1px solid var(--card-brd);position:sticky;bottom:0;}
 table.dre .sep-l{border-left:1px solid var(--card-brd);}
+table.dre.sim th,table.dre.sim td{padding-left:6px;padding-right:6px;}
+table.dre.sim th:first-child,table.dre.sim td:first-child{padding-left:10px;}
 table.dre th .ar{opacity:.6;margin-left:4px;color:var(--acc2);}
 body.claro .twrap{background:rgba(255,255,255,.45);}
 body.claro table.dre tbody tr:nth-child(even) td{background:rgba(15,23,42,.025);}
@@ -297,7 +299,7 @@ function eu(){ if(SGR.ativo&&SGR.perfil) return SGR.perfil; var id=null; try{id=
 
 /* ════════ navegação ════════ */
 var MENU=[
-  ['Visões',[['resumo','Resumo Gerencial','resumo'],['vendasA','Vendas','vendas'],['financeiro','Resultado e caixa','fin'],['simulador','Simulador de preço','sim'],['cenarios','Simular todos os sabores','grade']]],
+  ['Visões',[['resumo','Resumo Gerencial','resumo'],['vendasA','Vendas','vendas'],['financeiro','Resultado e caixa','fin'],['simulador','Simulador de preço (DRE)','sim'],['cenarios','Simular todos os sabores','grade']]],
   ['Gestão à Vista',[['pedidos','Pedidos','vendas'],['producao','Produção','prod'],['compras','Compras','compra'],['despesas','Despesas','recibo'],['estoque','Estoque','estoque'],['fichas','Fichas técnicas','ficha'],['insumos','Insumos','insumo'],['produtos','Produtos e preços','tag'],['clientes','Clientes','clientes'],['parametros','Parâmetros','config']]],
 ];
 var TIT={}; MENU.forEach(function(s){ s[1].forEach(function(m){ TIT[m[0]]=m[1]; }); });
@@ -502,47 +504,73 @@ function simFiltros(comSabor){
     + '<label class="tlbl">Tamanho<select class="tsel" onchange="SIM.tam=this.value;SIM.preco=null;render()">'+D().tamanhos.map(function(t){return '<option value="'+t.id+'"'+(t.id===SIM.tam?' selected':'')+'>'+t.nome+' · '+t.ml+' ml</option>';}).join('')+'</select></label>'
     + '<label class="tlbl">Canal<select class="tsel" onchange="SIM.canal=this.value;SIM.preco=null;render()">'+D().canais.map(function(c){return '<option value="'+c.id+'"'+(c.id===SIM.canal?' selected':'')+'>'+esc(c.nome)+(c.taxa?' · taxa '+SG.pct(c.taxa,0):'')+'</option>';}).join('')+'</select></label>';
 }
+/* SIMULADOR DE PREÇO = DRE SIMULADO
+   Cada linha: produto × tamanho × canal × preço × potes/mês. Ao lado, o DRE do mês
+   (receita → taxas/impostos → custos variáveis → margem de contribuição → indiretos → lucro).
+   Nada é salvo até clicar em "usar na tabela" na linha. */
+function simLinhaNova(pid){ var p=pid||SIM.prod, pr=SG.precoTabela(p,'direto','P'); if(pr==null){ var x=SG.precificar(p,'P','direto'); pr=x&&x.sugerido?Math.ceil(x.sugerido):0; } return {prod:p, tam:'P', canal:'direto', preco:pr, qtd:100}; }
+function simCalc(){
+  var cfg=D().config, imp=+cfg.imposto||0, L=SIM.linhas.map(function(l){
+    var x=SG.precificar(l.prod,l.tam,l.canal,{preco:l.preco}), c=SG.canal(l.canal)||{}, g={}; x.custo.linhas.forEach(function(k){ g[k.id]=k.valor; });
+    var q=+l.qtd||0, pr=+l.preco||0;
+    return {l:l, x:x, q:q, rec:pr*q, taxa:pr*(+c.taxa||0)*q, imp:pr*imp*q, ingr:((g.base||0)+(g.cob||0))*q, emb:((g.pote||0)+(g.acab||0))*q, kit:(g.kit||0)*q, ind:(g.ind||0)*q,
+      potes:q, lucroPote:x.lucro, margem:x.margem, semFicha:x.custo.semFicha, avisos:x.custo.avisos, sug:SG.precificar(l.prod,l.tam,l.canal,{margem:+cfg.margemAlvo}).sugerido, minimo:x.minimo};
+  });
+  var T={rec:0,taxa:0,imp:0,ingr:0,emb:0,kit:0,ind:0,potes:0}; L.forEach(function(r){ Object.keys(T).forEach(function(k){ T[k]+=r[k]; }); });
+  T.liq=T.rec-T.taxa-T.imp; T.var=T.ingr+T.emb+T.kit; T.mc=T.liq-T.var; T.lucro=T.mc-T.ind;
+  return {L:L, T:T};
+}
 VIEWS.simulador=function(){
-  if(SIM.margem==null) SIM.margem=+D().config.margemAlvo;
-  filtros(simFiltros(true)); sub('Defina a margem e veja o preço, ou defina o preço e veja a margem · nada é salvo até você usar o preço');
-  var h='<div class="card" style="padding:12px 16px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;flex:0 0 auto">'
-    + segH('sMod',[['margem','Quero esta margem'],['preco','Quero este preço']],SIM.modo,'simModo')
-    + '<div id="simCtl" style="display:flex;align-items:center;gap:12px;flex-wrap:wrap"></div></div><div id="simA" style="display:flex;flex-direction:column;gap:12px;flex:1 1 auto;min-height:0"></div>';
-  $('view').innerHTML=h; simCtl(); simOut();
+  if(!SIM.linhas) SIM.linhas=[simLinhaNova()];
+  sub('Monte as linhas (produto, tamanho, canal, preço e potes por mês) e veja o DRE do mês · ✓ grava o preço na tabela · passe o mouse na margem para ver o preço da meta');
+  var S=simCalc(), T=S.T, meta=+D().config.metaLucroMes||0, mgL=T.rec?T.lucro/T.rec:null, mcU=T.potes?T.mc/T.potes:0, indFixo=SG.indiretosMes();
+  var pe = mcU>0 ? Math.ceil(indFixo/mcU) : null, potesMeta = mcU>0 ? Math.ceil((meta+indFixo)/mcU) : null;
+  var h='<div class="hero"><div><div class="hl">Lucro do mês simulado</div><div class="hv '+(T.lucro>=0?'cg':'cr')+'">'+SG.brl(T.lucro)+'</div><div class="tsub">'+T.potes+' potes · receita '+SG.brl(T.rec)+'</div></div>'
+    + '<div class="hd"><div>Margem líquida<b class="'+corMg(mgL)+'">'+(mgL==null?'—':SG.pct(mgL,1))+'</b></div><div>Margem de contribuição<b>'+(T.rec?SG.pct(T.mc/T.rec,1):'—')+'</b></div><div>Meta de lucro<b class="'+(T.lucro>=meta?'cg':'cr')+'">'+(meta?SG.pct(T.lucro/meta,0):'—')+' de '+SG.brl0(meta)+'</b></div><div>Preço médio do pote<b>'+(T.potes?SG.brl(T.rec/T.potes):'—')+'</b></div></div></div>';
+  // linhas da simulação
+  var ps=D().produtos.filter(function(x){return x.ativo!==false||SIM.linhas.some(function(l){return l.prod===x.id;});});
+  var linhas=S.L.map(function(r,i){ var l=r.l;
+    return '<tr><td><select class="inp sm" style="width:100%;min-width:140px" onchange="simSet('+i+',\'prod\',this.value)">'+ps.map(function(x){return '<option value="'+x.id+'"'+(x.id===l.prod?' selected':'')+'>'+esc(x.nome)+'</option>';}).join('')+'</select></td>'
+      + '<td><select class="inp sm" style="width:58px" onchange="simSet('+i+',\'tam\',this.value)">'+D().tamanhos.map(function(t){return '<option value="'+t.id+'"'+(t.id===l.tam?' selected':'')+' title="'+t.ml+' ml">'+t.nome+'</option>';}).join('')+'</select></td>'
+      + '<td><select class="inp sm" style="width:86px" onchange="simSet('+i+',\'canal\',this.value)">'+D().canais.map(function(c){return '<option value="'+c.id+'"'+(c.id===l.canal?' selected':'')+'>'+({direto:'Direta',revenda:'Revenda',ifood:'iFood'}[c.id]||esc(c.nome))+'</option>';}).join('')+'</select></td>'
+      + '<td class="num"><input class="inp num sm" style="width:64px" value="'+nv(l.preco)+'" onchange="simSet('+i+',\'preco\',numIn(this.value)||0)" title="Preço do pote"></td>'
+      + '<td class="num"><input class="inp num sm" style="width:52px" value="'+nv(l.qtd,0)+'" onchange="simSet('+i+',\'qtd\',numIn(this.value)||0)" title="Potes por mês"></td>'
+      + '<td class="num">'+(r.semFicha?'<span class="st am">sem ficha</span>':SG.brl(r.x.custo.total))+'</td>'
+      + '<td class="num"><span class="'+(r.lucroPote>=0?'cg':'cr')+'">'+SG.brl(r.lucroPote)+'</span></td>'
+      + '<td class="num" title="Para a margem-meta: '+SG.brl(r.sug)+'"><span class="'+corMg(r.margem)+'">'+SG.pct(r.margem,1)+'</span></td>'
+      + '<td class="c" style="white-space:nowrap"><button class="btn sm" title="Gravar este preço na tabela de preços" onclick="simUsar('+i+')">✓</button> <button class="btn sm" title="Tirar a linha" onclick="SIM.linhas.splice('+i+',1);render()">×</button></td></tr>'; }).join('');
+  var tabL='<table class="dre sim"><thead><tr><th>Produto</th><th>Tam.</th><th>Canal</th><th class="num">Preço</th><th class="num">Potes</th><th class="num">Custo</th><th class="num">Lucro/pote</th><th class="num">Margem</th><th></th></tr></thead><tbody>'+linhas+'</tbody></table>';
+  // DRE
+  var pp=function(v){ return T.potes?SG.brl(v/T.potes):'—'; }, pc=function(v){ return T.rec?SG.pct(v/T.rec,1):'—'; };
+  var D_=[
+    ['Receita bruta', T.rec, 1],
+    ['(−) Taxas de canal (iFood, maquininha)', -T.taxa],
+    ['(−) Impostos sobre venda', -T.imp],
+    ['= Receita líquida', T.liq, 1],
+    ['(−) Ingredientes (gelato + cobertura)', -T.ingr],
+    ['(−) Embalagem (pote, lacre, adesivo)', -T.emb],
+    ['(−) Kit entrega (saco térmico, sacola)', -T.kit],
+    ['= Margem de contribuição', T.mc, 1],
+    ['(−) Custos indiretos (rateio por kg)', -T.ind],
+    ['= Lucro', T.lucro, 1, 1],
+  ];
+  var tabD='<table class="dre"><thead><tr><th>DRE do mês simulado</th><th class="num">R$ no mês</th><th class="num">% da receita</th><th class="num sep-l">Por pote</th></tr></thead><tbody>'
+    + D_.map(function(r){ var v=r[1]; return '<tr'+(r[2]?' class="total" style="position:static"':'')+'><td class="conta">'+r[0]+'</td><td class="num">'+(r[3]?'<span class="'+(v>=0?'cg':'cr')+'">'+SG.brl(v)+'</span>':SG.brl(v))+'</td><td class="num">'+(r[3]?'<span class="'+corMg(T.rec?v/T.rec:null)+'">'+pc(v)+'</span>':pc(Math.abs(v)))+'</td><td class="num sep-l">'+pp(v)+'</td></tr>'; }).join('')
+    + '</tbody></table>';
+  var avisos=[]; S.L.forEach(function(r){ r.avisos.forEach(function(a){ if(avisos.indexOf(a)<0) avisos.push(a); }); });
+  h+='<div class="split" style="grid-template-columns:minmax(0,1.65fr) minmax(0,1fr)"><div class="card tsec"><div class="thead-row"><div class="ttit">Produtos simulados</div><div class="tsub">mude preço e quantidade e veja o DRE ao lado</div><div class="dir"><button class="btn sm" onclick="simCarregaMes()" title="Usa os potes vendidos no mês, com o preço médio praticado">Carregar vendas de '+SG.nomeMes(SG.mesAtual())+'</button><button class="btn pri sm" onclick="SIM.linhas.push(simLinhaNova());render()">'+ic('mais')+'Adicionar produto</button></div></div><div class="twrap">'+tabL+'</div>'
+    + (avisos.length?'<div class="av2" style="margin-top:8px">'+avisos.map(esc).join(' · ')+'</div>':'')+'</div>'
+    + '<div class="card tsec"><div class="thead-row"><div class="ttit">DRE</div><div class="tsub">margem colorida pela meta de '+SG.pct(D().config.margemAlvo,0)+'</div></div><div class="twrap" style="flex:0 0 auto">'+tabD+'</div>'
+    + '<div class="mk" style="margin-top:12px"><div><small>Ponto de equilíbrio</small><b>'+(indFixo?(pe?pe+' potes':'—'):'sem custo fixo')+'</b></div><div><small>Potes para a meta</small><b>'+(potesMeta?potesMeta:'—')+'</b></div><div><small>Lucro por pote (média)</small><b class="'+(T.lucro>=0?'cg':'cr')+'">'+pp(T.lucro)+'</b></div></div>'
+    + '<div class="nota">Custos indiretos entram pelo rateio por kg definido em Parâmetros ('+SG.brl(SG.indiretosMes())+'/mês ÷ '+SG.num(D().config.kgMesRateio,1)+' kg). Mão de obra fica fora. Ponto de equilíbrio e potes para a meta tratam os indiretos como custo fixo do mês e mantêm o mesmo mix de produtos.</div></div></div>';
+  $('view').innerHTML=h;
 };
-function simModo(m){ SIM.modo=m; simCtl(); simOut(); }
-function simCtl(){
-  $('simCtl').innerHTML = SIM.modo==='margem'
-    ? '<input type="range" min="0.1" max="0.8" step="0.01" value="'+SIM.margem+'" oninput="SIM.margem=+this.value;$(\'mgL\').value=nv(SIM.margem*100,0);simOut()" style="width:260px"><input class="inp num" id="mgL" value="'+nv(SIM.margem*100,0)+'" style="width:70px" onchange="SIM.margem=Math.min(.9,Math.max(0,(numIn(this.value)||0)/100));simCtl();simOut()"><span class="tsub">% de margem sobre o preço</span>'
-    : '<span class="tsub">Preço do pote (R$)</span><input class="inp num" id="sPr" value="'+(SIM.preco!=null?nv(SIM.preco):'')+'" placeholder="ex.: 18,00" style="width:110px" oninput="SIM.preco=numIn(this.value);simOut()"><span class="tsub">vazio = preço da tabela</span>';
-}
-function simOut(){
-  graficos.forEach(function(g){g.destroy();}); graficos=[];
-  var porPreco=SIM.modo==='preco', p=SG.produto(SIM.prod), t=SG.tamanho(SIM.tam);
-  var x=SG.precificar(SIM.prod,SIM.tam,SIM.canal,porPreco?{preco:SIM.preco}:{margem:SIM.margem}); if(!x) return;
-  if(!porPreco) x=SG.precificar(SIM.prod,SIM.tam,SIM.canal,{margem:SIM.margem,preco:x.sugerido});
-  var alvo=+D().config.margemAlvo, cp=x.custo, mp=x.lucro>0?SG.metaPotes(x.lucro):null, cm=corMg(x.margem);
-  var usar=porPreco?(SIM.preco!=null?SIM.preco:x.preco):Math.ceil(x.preco||0);
-  var h='<div class="hero"><div><div class="hl">'+(porPreco?'Margem real a '+SG.brl(x.preco):'Preço para margem de '+SG.pct(SIM.margem,0))+' · '+esc(p.nome)+' '+t.nome+' · '+esc(nCanal(SIM.canal))+'</div>'
-    + '<div class="hv '+(porPreco?cm:'')+'">'+(porPreco?SG.pct(x.margem,1):SG.brl(x.preco))+'</div><div class="tsub">'+(porPreco?'lucro de '+SG.brl(x.lucro)+' por pote':'arredondando para '+SG.brl(Math.ceil(x.preco))+', a margem fica em '+SG.pct(SG.precificar(SIM.prod,SIM.tam,SIM.canal,{preco:Math.ceil(x.preco)}).margem,1))+'</div></div>'
-    + '<div class="hd"><div>Custo do pote<b>'+SG.brl(cp.total)+'</b></div><div>Preço mínimo (lucro zero)<b>'+SG.brl(x.minimo)+'</b></div><div>Preço de tabela hoje<b>'+(x.tabela!=null?SG.brl(x.tabela):'—')+'</b></div>'
-    + '<div><button class="btn pri" onclick="simSalva('+usar+')">Usar '+SG.brl(usar)+' na tabela</button></div></div></div>';
-  if(cp.avisos.length) h+='<div class="av2">'+cp.avisos.map(esc).join(' · ')+'</div>';
-  h+='<div class="kpis">'
-    + kpi('Lucro por pote','<span class="'+(x.lucro>=0?'cg':'cr')+'">'+SG.brl(x.lucro)+'</span>', 'preço '+SG.brl(x.preco)+(x.taxaR?' − taxa '+SG.brl(x.taxaR):'')+' − custo '+SG.brl(cp.total))
-    + kpi('Margem real','<span class="'+cm+'">'+SG.pct(x.margem,1)+'</span>', 'meta da casa '+SG.pct(alvo,0)+' · markup '+(x.markup?x.markup.toFixed(2).replace('.',',')+'×':'—'))
-    + kpi('Potes por mês p/ meta', mp?Math.ceil(mp.mes):'—', mp?SG.num(mp.dia,1)+' por dia · meta de lucro '+SG.brl0(D().config.metaLucroMes):'sem lucro, não atinge a meta')
-    + kpi('Faturamento na meta', mp?SG.brl0(Math.ceil(mp.mes)*x.preco):'—', 'vendendo só este pote neste canal')
-    + '</div>';
-  h+='<div class="gr2">'+gcard('gComp','Para onde vai o preço do pote', 'custo + taxa + lucro = '+SG.brl(x.preco), legQ('R$ por pote'))
-    + gcard('gIng','Ingredientes que mais pesam', 'na receita base, em '+SG.num(cp.g,0)+' g de gelato', legQ('R$ no pote'))+'</div>';
-  $('simA').innerHTML=h;
-  var ls=cp.linhas.map(function(l){return {n:l.nome,v:l.valor};}); if(x.taxaR) ls.push({n:'Taxa '+nCanal(SIM.canal),v:x.taxaR}); ls.push({n:'Lucro',v:x.lucro,luc:1});
-  barrasH('gComp',{labels:ls.map(function(l){return l.n;}), dados:ls.map(function(l){return +l.v.toFixed(2);}), cores:function(v,i,t){ return ls[i].luc?(v>=0?t.verde:t.vermelho):t.neutro; }});
-  var f=cp.g/1000*(1-(+p.pctCob||0)), ing=SG.composicao(p.receita).slice(0,8);
-  barrasH('gIng',{labels:ing.map(function(c){return c.nome;}), dados:ing.map(function(c){return +(c.custo*f).toFixed(2);})});
-}
-function simSalva(v){ if(!confirm('Definir '+SG.brl(v)+' como preço de tabela de '+SG.produto(SIM.prod).nome+' '+SIM.tam+' ('+nCanal(SIM.canal)+')?')) return; SG.definirPreco(SIM.prod,SIM.canal,SIM.tam,+(+v).toFixed(2)); SG.salvar(); toast('Preço de tabela atualizado'); }
+function simSet(i,k,v){ var l=SIM.linhas[i]; l[k]=v; if(k==='prod'||k==='tam'||k==='canal'){ var t=SG.precoTabela(l.prod,l.canal,l.tam); if(t!=null) l.preco=t; else { var x=SG.precificar(l.prod,l.tam,l.canal); l.preco=x&&x.sugerido?Math.ceil(x.sugerido):0; } } render(); }
+function simUsar(i){ var l=SIM.linhas[i]; if(!confirm('Gravar '+SG.brl(l.preco)+' como preço de tabela de '+SG.produto(l.prod).nome+' '+l.tam+' ('+nCanal(l.canal)+')?')) return; SG.definirPreco(l.prod,l.canal,l.tam,+(+l.preco).toFixed(2)); SG.salvar(); toast('Preço de tabela atualizado'); }
+function simCarregaMes(){ var ym=SG.mesAtual(), m={};
+  SG.vendasMes(ym).forEach(function(v){ v.itens.forEach(function(it){ if(!it.produto||!it.tam) return; var k=it.produto+'|'+it.tam+'|'+v.canal; m[k]=m[k]||{prod:it.produto,tam:it.tam,canal:v.canal,qtd:0,rec:0}; m[k].qtd+=it.qtd; m[k].rec+=it.qtd*it.preco; }); });
+  var ls=Object.values(m).map(function(o){ return {prod:o.prod,tam:o.tam,canal:o.canal,qtd:o.qtd,preco:+(o.rec/o.qtd).toFixed(2)}; });
+  if(!ls.length){ toast('Sem vendas em '+SG.nomeMes(ym)); return; } SIM.linhas=ls; render(); toast(ls.length+' linhas carregadas com o preço médio praticado'); }
 
 /* SIMULAR TODOS OS SABORES — um preço para todos e/ou alta de insumos */
 function ctxCen(){ var v=Object.assign({},SIM.var); if(SIM.varTodos) v['*']=SIM.varTodos; return Object.keys(v).length?{var:v}:null; }
