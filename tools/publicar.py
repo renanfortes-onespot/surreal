@@ -10,6 +10,7 @@ for p in ('index.html', 'gestao/index.html'):
     fp = os.path.join(R, p); s = open(fp, encoding='utf-8').read()
     s, n = re.subn(r"window\.SG_BUILD='[^']*';", "window.SG_BUILD='%s';" % v, s)
     assert n == 1, p
+    s = re.sub(r'(shared/(?:config|seed|core|remote|versao)\.js)\?v=\w+', r'\g<1>?v=%s' % v, s)
     open(fp, 'w', encoding='utf-8').write(s)
 fp = os.path.join(R, 'sw.js'); s = open(fp, encoding='utf-8').read()
 s = re.sub(r"const CACHE = 'surreal-[^']*';", "const CACHE = 'surreal-%s';" % v, s)

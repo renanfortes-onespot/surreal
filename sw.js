@@ -2,7 +2,7 @@
    Rede primeiro, cache como rede de segurança. Ao publicar, trocar CACHE.
    Redirecionamento (ex.: /gestao → /gestao/) volta como redirect de verdade: devolver
    a resposta já redirecionada numa navegação dá ERR_FAILED no Chrome. */
-const CACHE = 'surreal-20261016185654';
+const CACHE = 'surreal-20261016190524';
 const ESSENCIAIS = ['./', './index.html', './manifest.json', './shared/config.js', './shared/versao.js', './shared/core.js', './shared/remote.js', './img/logo-branco.png', './img/logo-navy.png', './img/icone-192.png'];
 self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(ESSENCIAIS)).then(() => self.skipWaiting())); });
 self.addEventListener('activate', e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim())); });

@@ -245,9 +245,10 @@
   }
 
   /* ───────────── estoque ─────────────
-     O histórico importado da planilha não mexe no estoque. O saldo nasce na
-     primeira CONTAGEM e depois anda sozinho: compra (+), produção (− insumos,
-     + potes), venda entregue (− potes, − kit de entrega), ajuste (±). */
+     INSUMOS: anda sozinho desde o começo — toda compra (+) menos todo uso em produção (−),
+     inclusive o histórico da planilha. A contagem é só para ACERTAR (substitui o saldo naquela data).
+     POTES PRONTOS: produção (+) menos pedido entregue (−) a partir do app; o histórico de potes
+     da planilha fica fora porque as vendas de agosto não têm produção lançada (daria negativo). */
   function consumoReceita(rid, kg, acc, pilha) {
     var r = receita(rid); if (!r) return acc;
     pilha = pilha || {}; if (pilha[rid]) return acc; pilha[rid] = 1;
@@ -271,8 +272,8 @@
   function movimentos() {
     var mv = [];
     D.contagens.forEach(function (c) { mv.push({ data: c.data, ts: c.ts || 0, tipo: 'contagem', c: c }); });
-    D.compras.forEach(function (c) { if (!c.historico) mv.push({ data: c.data, ts: c.ts || 1, tipo: 'compra', c: c }); });
-    D.producoes.forEach(function (p) { if (!p.historico) mv.push({ data: p.data, ts: p.ts || 1, tipo: 'producao', c: p }); });
+    D.compras.forEach(function (c) { mv.push({ data: c.data, ts: c.ts || 1, tipo: 'compra', c: c }); });
+    D.producoes.forEach(function (p) { mv.push({ data: p.data, ts: p.ts || 1, tipo: 'producao', c: p }); });
     D.vendas.forEach(function (v) { if (!v.historico && v.entregue) mv.push({ data: v.dataEntrega || v.data, ts: v.ts || 1, tipo: 'venda', c: v }); });
     D.ajustes.forEach(function (a) { mv.push({ data: a.data, ts: a.ts || 1, tipo: 'ajuste', c: a }); });
     return mv.sort(function (a, b) { return a.data < b.data ? -1 : a.data > b.data ? 1 : a.ts - b.ts; });
@@ -288,7 +289,7 @@
       } else if (m.tipo === 'compra') add(ins, c.insumo, +c.qtd || 0);
       else if (m.tipo === 'producao') {
         var cons = consumoProducao(c); Object.keys(cons).forEach(function (k) { add(ins, k, -cons[k]); });
-        if (c.produto) Object.keys(c.potes || {}).forEach(function (t) { add(potes, c.produto + '|' + t, +c.potes[t] || 0); });
+        if (c.produto && !c.historico) Object.keys(c.potes || {}).forEach(function (t) { add(potes, c.produto + '|' + t, +c.potes[t] || 0); });
       } else if (m.tipo === 'venda') {
         var kit = (canal(c.canal) || {}).kitEntrega;
         c.itens.forEach(function (it) { if (it.produto && it.tam) add(potes, it.produto + '|' + it.tam, -it.qtd); });
@@ -298,7 +299,7 @@
         if (c.pote) add(potes, c.pote, +c.qtd || 0);
       }
     });
-    return { insumos: ins, potes: potes, contado: contado, iniciado: D.contagens.length > 0 };
+    return { insumos: ins, potes: potes, contado: contado, iniciado: true, potesIniciado: Object.keys(contado.pote).length > 0 || D.producoes.some(function (p) { return !p.historico; }) };
   }
   function estoqueBaixo() {
     var e = estoque(), l = [];

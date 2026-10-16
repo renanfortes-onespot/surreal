@@ -10,12 +10,12 @@
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.SG_BUILD='20261016185654';</script>
-<script src="../shared/versao.js"></script>
-<script src="../shared/config.js"></script>
-<script src="../shared/seed.js"></script>
-<script src="../shared/core.js"></script>
-<script src="../shared/remote.js"></script>
+<script>window.SG_BUILD='20261016190524';</script>
+<script src="../shared/versao.js?v=20261016190524"></script>
+<script src="../shared/config.js?v=20261016190524"></script>
+<script src="../shared/seed.js?v=20261016190524"></script>
+<script src="../shared/core.js?v=20261016190524"></script>
+<script src="../shared/remote.js?v=20261016190524"></script>
 <style>
 /* ============================================================
    SURREAL — Painel de gestão (PC). OneSpot · 16/10/2026
@@ -1051,7 +1051,7 @@ function salvaDespesa(id){ var v=numIn($('deVal').value); if(!v){ $('deErro').te
 /* ESTOQUE */
 VIEWS.estoque=function(){
   var e=SG.estoque(), ts=SG.tamanhosAtivos();
-  sub(e.iniciado?'Saldo atual · nasce na contagem e anda sozinho com compras, produções e pedidos entregues':'Ainda sem contagem: comece pela contagem do que há hoje no freezer e no armário');
+  sub(V.est==='insumos'?'Insumos andam sozinhos: tudo o que foi comprado − tudo o que foi usado nas produções · a contagem só serve para acertar':'Potes prontos: produção − pedidos entregues · a contagem acerta o que há no freezer');
   var dims='<div class="dims"><button class="dimb'+(V.est==='potes'?' on':'')+'" onclick="V.est=\'potes\';render()">Potes prontos</button><button class="dimb'+(V.est==='insumos'?' on':'')+'" onclick="V.est=\'insumos\';render()">Insumos</button></div>';
   var bt='<button class="btn pri sm" onclick="abrirContagem()">'+ic('mais')+'Nova contagem</button>';
   var h=e.iniciado?'':'<div class="av2">O histórico da planilha não diz quanto há hoje no estoque. Faça uma contagem uma vez: a partir dela o saldo anda sozinho.</div>';
@@ -1061,12 +1061,13 @@ VIEWS.estoque=function(){
     h+=cadastro('Potes prontos para vender por sabor e tamanho · clique no sabor para acertar a contagem', busca('est','Sabor…'), bt, tabela('tEstP',[{t:'Sabor',f:function(o){return esc(o.p.nome);},s:function(o){return o.p.nome;},cls:'conta'}].concat(ts.map(function(t){ return {t:t.nome+' · '+t.ml+' ml',f:function(o){var q=o[t.id];return q==null?'<span class="muted">—</span>':'<span class="'+(q<0?'cr':'')+'">'+q+'</span>';},v:function(o){return o[t.id]||0;},cls:'num'}; })).concat([{t:'Total',f:function(o){return '<b style="color:var(--txt)">'+o.t+'</b>';},v:function(o){return o.t;},cls:'num'}]), ls, tot, function(o){ return "abrirAjuste('pote','"+o.p.id+"')"; }), dims);
   } else {
     var li=D().insumos.filter(function(i){return fOk('tipI',i.tipo)&&fOk('catI',i.cat)&&qOk('est',[i.nome,i.cat]);});
-    h+=cadastro('Saldo de insumos e embalagens · clique no insumo para acertar a contagem e o mínimo', busca('est','Insumo…'), bt, tabela('tEstI',[
+    var faltam=li.filter(function(i){return (e.insumos[i.id]||0)<0;}).length;
+    h+=cadastro('Compras − uso nas produções'+(faltam?' · <b class="amb">'+faltam+' insumos usados sem compra lançada</b> (comprados antes da planilha): lance a compra ou faça uma contagem':'')+' · clique no insumo para acertar', busca('est','Insumo…'), bt, tabela('tEstI',[
       {t:'Insumo',f:function(i){return esc(i.nome);},s:function(i){return i.nome;},cls:'conta'},
       {t:'Categoria',f:function(i){return esc(i.cat);},s:function(i){return i.cat;}},
-      {t:'Saldo',f:function(i){var s=e.insumos[i.id];return s==null?'<span class="muted">não contado</span>':'<span class="'+(s<0||(i.min&&s<i.min)?'cr':'')+'">'+SG.qtdFmt(s,i.un)+'</span>';},v:function(i){return e.insumos[i.id]==null?-1e9:e.insumos[i.id];},cls:'num'},
+      {t:'Saldo',f:function(i){var s=e.insumos[i.id];return s==null?'<span class="muted">sem movimento</span>':s<0?'<span class="muted" title="Usou '+SG.qtdFmt(-s,i.un)+' a mais do que as compras lançadas">—</span>':'<span class="'+(i.min&&s<i.min?'cr':'')+'">'+SG.qtdFmt(s,i.un)+'</span>';},v:function(i){return e.insumos[i.id]==null?-1e9:e.insumos[i.id];},cls:'num'},
       {t:'Mínimo',f:function(i){return i.min?SG.qtdFmt(i.min,i.un):'—';},v:function(i){return i.min;},cls:'num'},
-      {t:'Situação',f:function(i){var s=e.insumos[i.id];return s==null?'<span class="st cz">sem contagem</span>':s<0?'<span class="st vm">negativo</span>':i.min&&s<i.min?'<span class="st vm">abaixo do mínimo</span>':'<span class="st vd">ok</span>';}},
+      {t:'Situação',f:function(i){var s=e.insumos[i.id];return s==null?'<span class="st cz">sem compra nem uso</span>':s<0?'<span class="st am" title="Comprado antes da planilha ou compra não lançada">usou '+SG.qtdFmt(-s,i.un)+' sem compra lançada</span>':i.min&&s<i.min?'<span class="st vm">abaixo do mínimo</span>':'<span class="st vd">ok</span>';}},
       {t:'Valor em estoque',f:function(i){var s=e.insumos[i.id]||0;return s>0?SG.brl(s*SG.custoInsumo(i.id).valor):'—';},v:function(i){return Math.max(0,e.insumos[i.id]||0)*SG.custoInsumo(i.id).valor;},cls:'num'},
       {t:'Contado em',f:function(i){return e.contado.ins[i.id]?SG.dataBR(e.contado.ins[i.id]):'—';}},
     ], li, null, function(i){ return "abrirAjuste('insumo','"+i.id+"')"; }), dims);
@@ -1154,7 +1155,7 @@ VIEWS.insumos=function(){
       {t:'Tipo',f:function(i){return i.tipo==='embalagem'?'Embalagem':'Ingrediente';},s:function(i){return i.tipo;}},
       {t:'Custo atual',f:function(i){return '<b style="color:var(--txt)">'+SG.brl(SG.custoInsumo(i.id).valor)+'</b> /'+(i.un==='un'?'un':'kg');},v:function(i){return SG.custoInsumo(i.id).valor;},cls:'num'},
       {t:'Origem do custo',f:function(i){var c=SG.custoInsumo(i.id);return c.origem==='compra'?'<span class="st vd">compra '+SG.dataBR(c.data)+'</span>':c.origem==='estimado'?'<span class="st am">estimado</span>':'<span class="st cz">manual</span>';},s:function(i){return SG.custoInsumo(i.id).origem;}},
-      {t:'Estoque',f:function(i){var s=e.insumos[i.id];return s==null?'<span class="muted">—</span>':'<span class="'+(s<0||(i.min&&s<i.min)?'cr':'')+'">'+SG.qtdFmt(s,i.un)+'</span>';},v:function(i){return e.insumos[i.id]||0;},cls:'num'},
+      {t:'Estoque',f:function(i){var s=e.insumos[i.id];return s==null?'<span class="muted">—</span>':s<0?'<span class="amb" title="Usou mais do que as compras lançadas">sem compra</span>':'<span class="'+(i.min&&s<i.min?'cr':'')+'">'+SG.qtdFmt(s,i.un)+'</span>';},v:function(i){return e.insumos[i.id]||0;},cls:'num'},
       {t:'Usado em',f:function(i){var n=usos(i);return n?n+(n>1?' receitas':' receita'):'—';},v:usos,cls:'num'},
     ], ls, null, function(i){ return "abrirInsumo('"+i.id+"')"; }));
 };

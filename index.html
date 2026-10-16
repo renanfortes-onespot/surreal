@@ -13,12 +13,12 @@
 <link rel="icon" href="img/icone-192.png">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.SG_BUILD='20261016185654';</script>
-<script src="shared/versao.js"></script>
-<script src="shared/config.js"></script>
-<script src="shared/seed.js"></script>
-<script src="shared/core.js"></script>
-<script src="shared/remote.js"></script>
+<script>window.SG_BUILD='20261016190524';</script>
+<script src="shared/versao.js?v=20261016190524"></script>
+<script src="shared/config.js?v=20261016190524"></script>
+<script src="shared/seed.js?v=20261016190524"></script>
+<script src="shared/core.js?v=20261016190524"></script>
+<script src="shared/remote.js?v=20261016190524"></script>
 <style>
 /* ============================================================
    SURREAL · gelato artesanal — app (PWA)
@@ -545,7 +545,7 @@ TELAS.estoque = function(a){
   } else {
     var ins=D().insumos.slice().sort(function(x,y){return x.nome.localeCompare(y.nome);});
     h += ins.map(function(i){ var s=e.insumos[i.id]; if(s==null) return '';
-      var baixo=i.min>0&&s<i.min; return li({ic:i.tipo==='embalagem'?'caixa':'frasco', cor:s<0||baixo?'vm':'', t:esc(i.nome), s:(i.min?'mínimo '+SG.qtdFmt(i.min,i.un):'sem mínimo definido')+(e.contado.ins[i.id]?' · contado '+SG.dataCurta(e.contado.ins[i.id]):''), v:SG.qtdFmt(s,i.un)}); }).join('')
+      var baixo=i.min>0&&s<i.min; return li({ic:i.tipo==='embalagem'?'caixa':'frasco', cor:s<0?'am':baixo?'vm':'', t:esc(i.nome), s:(i.min?'mínimo '+SG.qtdFmt(i.min,i.un):'sem mínimo definido')+(e.contado.ins[i.id]?' · contado '+SG.dataCurta(e.contado.ins[i.id]):'')+(s<0?' · usou '+SG.qtdFmt(-s,i.un)+' sem compra lançada':''), v:s<0?'<span class="amb">sem compra</span>':SG.qtdFmt(s,i.un)}); }).join('')
       || '<div class="vazio">Nenhum insumo contado ainda.</div>';
   }
   return h;
