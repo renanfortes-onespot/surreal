@@ -138,6 +138,10 @@ table.dre tbody tr.lk{cursor:pointer;}
 table.dre tr.total td{font-weight:800;color:var(--txt);background:var(--cabec);border-top:1px solid var(--card-brd);position:sticky;bottom:0;}
 table.dre .sep-l{border-left:1px solid var(--card-brd);}
 table.dre.sim th,table.dre.sim td{padding-left:6px;padding-right:6px;}
+.dre-g table.dre{height:100%;font-size:13px;}
+.dre-g table.dre td{padding:8px 16px;}
+.dre-g table.dre th{padding:10px 16px;}
+.pilha > .kpi{flex:1 1 0;min-height:0;}
 table.dre.sim th:first-child,table.dre.sim td:first-child{padding-left:10px;}
 table.dre th .ar{opacity:.6;margin-left:4px;color:var(--acc2);}
 body.claro .twrap{background:rgba(255,255,255,.45);}
@@ -289,6 +293,7 @@ var I={
   celular:'<rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/>', mais:'<path d="M12 5v14M5 12h14"/>', baixar:'<path d="M12 4v11M7 10l5 5 5-5M5 20h14"/>',
   lupa:'<circle cx="11" cy="11" r="7"/><path d="M16.5 16.5 21 21"/>', chave:'<circle cx="8" cy="15" r="4"/><path d="M11 12l9-9M16 7l3 3"/>', sair:'<path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/>',
   tag:'<path d="M3 12V3h9l9 9-9 9z"/><circle cx="7.5" cy="7.5" r="1.3"/>',
+  lista:'<path d="M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01"/>',
 };
 function ic(n){ return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">'+I[n]+'</svg>'; }
 function aplicaTema(){ var c=false; try{c=localStorage.getItem('sg_tema')==='claro';}catch(e){} document.body.classList.toggle('claro',c); }
@@ -300,7 +305,7 @@ function eu(){ if(SGR.ativo&&SGR.perfil) return SGR.perfil; var id=null; try{id=
 /* ════════ navegação ════════ */
 var MENU=[
   ['Visões',[['resumo','Resumo Gerencial','resumo'],['vendasA','Vendas','vendas'],['financeiro','Resultado e caixa','fin'],['simulador','Simulador de preço (DRE)','sim'],['cenarios','Simular todos os sabores','grade']]],
-  ['Gestão à Vista',[['pedidos','Pedidos','vendas'],['producao','Produção','prod'],['compras','Compras','compra'],['despesas','Despesas','recibo'],['estoque','Estoque','estoque'],['fichas','Fichas técnicas','ficha'],['insumos','Insumos','insumo'],['produtos','Produtos e preços','tag'],['clientes','Clientes','clientes'],['parametros','Parâmetros','config']]],
+  ['Gestão à Vista',[['lancamentos','Lançamentos','lista'],['pedidos','Pedidos','vendas'],['producao','Produção','prod'],['compras','Compras','compra'],['despesas','Despesas','recibo'],['estoque','Estoque','estoque'],['fichas','Fichas técnicas','ficha'],['insumos','Insumos','insumo'],['produtos','Produtos e preços','tag'],['clientes','Clientes','clientes'],['parametros','Parâmetros','config']]],
 ];
 var TIT={}; MENU.forEach(function(s){ s[1].forEach(function(m){ TIT[m[0]]=m[1]; }); });
 var V={view:'resumo', ym:SG.mesAtual(), fPed:'todos', fCan:'', q:{}, dim:'sabor', est:'potes'};
@@ -558,11 +563,15 @@ VIEWS.simulador=function(){
     + D_.map(function(r){ var v=r[1]; return '<tr'+(r[2]?' class="total" style="position:static"':'')+'><td class="conta">'+r[0]+'</td><td class="num">'+(r[3]?'<span class="'+(v>=0?'cg':'cr')+'">'+SG.brl(v)+'</span>':SG.brl(v))+'</td><td class="num">'+(r[3]?'<span class="'+corMg(T.rec?v/T.rec:null)+'">'+pc(v)+'</span>':pc(Math.abs(v)))+'</td><td class="num sep-l">'+pp(v)+'</td></tr>'; }).join('')
     + '</tbody></table>';
   var avisos=[]; S.L.forEach(function(r){ r.avisos.forEach(function(a){ if(avisos.indexOf(a)<0) avisos.push(a); }); });
-  h+='<div class="split" style="grid-template-columns:minmax(0,1.65fr) minmax(0,1fr)"><div class="card tsec"><div class="thead-row"><div class="ttit">Produtos simulados</div><div class="tsub">mude preço e quantidade e veja o DRE ao lado</div><div class="dir"><button class="btn sm" onclick="simCarregaMes()" title="Usa os potes vendidos no mês, com o preço médio praticado">Carregar vendas de '+SG.nomeMes(SG.mesAtual())+'</button><button class="btn pri sm" onclick="SIM.linhas.push(simLinhaNova());render()">'+ic('mais')+'Adicionar produto</button></div></div><div class="twrap">'+tabL+'</div>'
-    + (avisos.length?'<div class="av2" style="margin-top:8px">'+avisos.map(esc).join(' · ')+'</div>':'')+'</div>'
-    + '<div class="card tsec"><div class="thead-row"><div class="ttit">DRE</div><div class="tsub">margem colorida pela meta de '+SG.pct(D().config.margemAlvo,0)+'</div></div><div class="twrap" style="flex:0 0 auto">'+tabD+'</div>'
-    + '<div class="mk" style="margin-top:12px"><div><small>Ponto de equilíbrio</small><b>'+(indFixo?(pe?pe+' potes':'—'):'sem custo fixo')+'</b></div><div><small>Potes para a meta</small><b>'+(potesMeta?potesMeta:'—')+'</b></div><div><small>Lucro por pote (média)</small><b class="'+(T.lucro>=0?'cg':'cr')+'">'+pp(T.lucro)+'</b></div></div>'
-    + '<div class="nota">Custos indiretos entram pelo rateio por kg definido em Parâmetros ('+SG.brl(SG.indiretosMes())+'/mês ÷ '+SG.num(D().config.kgMesRateio,1)+' kg). Mão de obra fica fora. Ponto de equilíbrio e potes para a meta tratam os indiretos como custo fixo do mês e mantêm o mesmo mix de produtos.</div></div></div>';
+  // linhas em cima (altura do conteúdo), DRE grande embaixo à esquerda, indicadores à direita
+  h+='<div class="card tsec" style="flex:0 0 auto"><div class="thead-row"><div class="ttit">Produtos simulados</div><div class="tsub">mude preço e quantidade · o DRE recalcula na hora</div><div class="dir"><button class="btn sm" onclick="simCarregaMes()" title="Usa os potes vendidos no mês, com o preço médio praticado">Carregar vendas de '+SG.nomeMes(SG.mesAtual())+'</button><button class="btn pri sm" onclick="SIM.linhas.push(simLinhaNova());render()">'+ic('mais')+'Adicionar produto</button></div></div><div class="twrap" style="flex:0 0 auto;max-height:30vh">'+tabL+'</div></div>';
+  h+='<div class="split" style="grid-template-columns:minmax(0,1.7fr) minmax(0,1fr)"><div class="card tsec"><div class="thead-row"><div class="ttit">DRE do mês simulado</div><div class="tsub">margem colorida pela meta de '+SG.pct(D().config.margemAlvo,0)+'</div></div><div class="twrap dre-g">'+tabD+'</div></div>'
+    + '<div class="pilha">'
+    + kpi('Ponto de equilíbrio', indFixo?(pe?pe+' potes':'—'):'sem custo fixo', indFixo?'potes/mês para cobrir '+SG.brl(indFixo)+' de custos fixos':'lance aluguel, energia… em Parâmetros')
+    + kpi('Potes para a meta', potesMeta?potesMeta+' potes':'—', 'para lucrar '+SG.brl0(meta)+' no mês, com este mix · hoje '+T.potes+' potes')
+    + kpi('Lucro por pote (média)', '<span class="'+(T.lucro>=0?'cg':'cr')+'">'+pp(T.lucro)+'</span>', 'preço médio '+(T.potes?SG.brl(T.rec/T.potes):'—')+' · custo médio '+(T.potes?SG.brl((T.var+T.ind)/T.potes):'—'))
+    + (avisos.length?'<div class="av2">'+avisos.map(esc).join(' · ')+'</div>':'')
+    + '<div class="nota" style="margin-top:0">Custos indiretos entram pelo rateio por kg de Parâmetros ('+SG.brl(SG.indiretosMes())+'/mês ÷ '+SG.num(D().config.kgMesRateio,1)+' kg). Mão de obra fica fora. Ponto de equilíbrio e potes para a meta tratam os indiretos como custo fixo do mês.</div></div></div>';
   $('view').innerHTML=h;
 };
 function simSet(i,k,v){ var l=SIM.linhas[i]; l[k]=v; if(k==='prod'||k==='tam'||k==='canal'){ var t=SG.precoTabela(l.prod,l.canal,l.tam); if(t!=null) l.preco=t; else { var x=SG.precificar(l.prod,l.tam,l.canal); l.preco=x&&x.sugerido?Math.ceil(x.sugerido):0; } } render(); }
@@ -604,6 +613,48 @@ VIEWS.cenarios=function(){
 };
 
 /* ════════════════════ GESTÃO À VISTA ════════════════════ */
+
+/* LANÇAMENTOS — tudo o que foi lançado, numa lista só; "+ Novo lançamento" escolhe o tipo */
+var TIPOS_L={pedido:['Pedido','vendas'], producao:['Produção','prod'], compra:['Compra','compra'], despesa:['Despesa','recibo'], contagem:['Contagem de estoque','estoque']};
+function todosLanc(){
+  var l=[];
+  D().vendas.forEach(function(v){ var st=[]; if(!v.pago) st.push('a receber'); if(!v.entregue) st.push('a entregar'); l.push({tipo:'pedido', id:v.id, data:v.data, desc:SG.nomeCliente(v), det:resumoItens(v)+' · '+nCanal(v.canal), valor:SG.totalVenda(v), sinal:1, st:st.join(' · '), hist:v.historico, ts:v.ts||0}); });
+  D().producoes.forEach(function(p){ var r=SG.receita(p.receita); l.push({tipo:'producao', id:p.id, data:p.data, desc:r?r.nome:p.receita, det:SG.qtdFmt(+p.kg,'kg')+(Object.keys(p.potes||{}).length?' → '+Object.keys(p.potes).map(function(k){return p.potes[k]+' '+k;}).join(' + '):''), valor:SG.custoReceitaKg(p.receita)*p.kg, sinal:0, hist:p.historico, ts:p.ts||0}); });
+  D().compras.forEach(function(c){ var i=SG.insumo(c.insumo); l.push({tipo:'compra', id:c.id, data:c.data, desc:i?i.nome:c.desc, det:SG.qtdFmt(c.qtd,i&&i.un)+' · '+SG.brl(c.valor/c.qtd)+'/'+(i&&i.un==='un'?'un':'kg'), valor:+c.valor, sinal:-1, hist:c.historico, ts:c.ts||0}); });
+  D().despesas.forEach(function(d){ l.push({tipo:'despesa', id:d.id, data:d.data, desc:d.desc, det:d.categoria, valor:+d.valor, sinal:-1, hist:d.historico, ts:d.ts||0}); });
+  D().contagens.forEach(function(c){ var n=Object.keys(c.insumos||{}).length+Object.keys(c.potes||{}).length; l.push({tipo:'contagem', id:c.id, data:c.data, desc:'Contagem de estoque', det:n+(n>1?' itens contados':' item contado'), valor:null, sinal:0, ts:c.ts||0}); });
+  return l;
+}
+VIEWS.lancamentos=function(){
+  var ft=V.fTipo||'';
+  filtros(fMes(true)+'<label class="tlbl">Tipo<select class="tsel" onchange="V.fTipo=this.value;render()"><option value="">Todos</option>'+Object.keys(TIPOS_L).map(function(k){return '<option value="'+k+'"'+(k===ft?' selected':'')+'>'+TIPOS_L[k][0]+'</option>';}).join('')+'</select></label>');
+  sub('Tudo o que foi lançado: pedidos, produção, compras, despesas e contagens');
+  var ls=todosLanc().filter(function(x){ return ymOk(x.data)&&(!ft||x.tipo===ft)&&qOk('lan',[x.desc,x.det,TIPOS_L[x.tipo][0]]); });
+  var ent=0, sai=0; ls.forEach(function(x){ if(x.sinal>0) ent+=x.valor; if(x.sinal<0) sai+=x.valor; });
+  if(!ORD.tLan) ORD.tLan={i:0,d:-1};
+  $('view').innerHTML=cadastro(ls.length+' lançamentos · entradas '+SG.brl(ent)+' · saídas '+SG.brl(sai)+' · clique para ver e editar', busca('lan','Cliente, sabor, insumo…'), btNovo('Novo lançamento','novoLanc()'),
+    tabela('tLan',[
+      {t:'Data',f:function(x){return SG.dataBR(x.data);},s:function(x){return (x.data||'')+String(x.ts).padStart(15,'0');}},
+      {t:'Tipo',f:function(x){return TIPOS_L[x.tipo][0];},s:function(x){return x.tipo;}},
+      {t:'Descrição',f:function(x){return '<span class="cl">'+esc(x.desc)+'</span>';},s:function(x){return x.desc;},cls:'conta'},
+      {t:'Detalhe',f:function(x){return '<span class="cl">'+esc(x.det)+'</span>';}},
+      {t:'Valor',f:function(x){ if(x.valor==null) return '—'; return x.sinal>0?'<span class="cg">+'+SG.brl(x.valor)+'</span>':x.sinal<0?'<span class="cr">−'+SG.brl(x.valor)+'</span>':'<span class="mut" title="custo da mistura">'+SG.brl(x.valor)+'</span>'; },v:function(x){return (x.valor||0)*(x.sinal||0);},cls:'num'},
+      {t:'Situação',f:function(x){ return x.st?'<span class="st am">'+x.st+'</span>':(x.tipo==='pedido'?'<span class="st vd">concluído</span>':''); }},
+      {t:'Origem',f:function(x){return x.hist?'<span class="mut">planilha</span>':'app';}},
+    ], ls, null, function(x){ return "abreLanc('"+x.tipo+"','"+x.id+"')"; }));
+};
+function abreLanc(t,id){ if(t==='pedido') abrirPedido(id); else if(t==='producao') abrirProducao(id); else if(t==='compra') abrirCompra(id); else if(t==='despesa') abrirDespesa(id); else verContagem(id); }
+function novoLanc(){
+  var op=[['pedido','Pedido','venda para um cliente','abrirPedido(null)'],['producao','Produção','lote de gelato feito','abrirProducao(null)'],['compra','Compra','insumo ou embalagem comprado','abrirCompra(null)'],['despesa','Despesa','marketing, conta, taxa…','abrirDespesa(null)'],['contagem','Contagem de estoque','o que tem no freezer e no armário','abrirContagem()']];
+  abrirModal('Novo lançamento','<div class="tsub" style="margin-bottom:12px">O que você quer lançar?</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">'
+    + op.map(function(o){ return '<button class="btn" style="justify-content:flex-start;padding:14px 16px;text-align:left;white-space:normal;gap:12px" onclick="'+o[3]+'"><span style="width:34px;height:34px;border-radius:9px;background:var(--hover);display:flex;align-items:center;justify-content:center;color:var(--acc2);flex:0 0 auto">'+ic(TIPOS_L[o[0]][1])+'</span><span><b style="display:block;color:var(--txt);font-size:13px">'+o[1]+'</b><small style="font-weight:600;color:var(--txt3)">'+o[2]+'</small></span></button>'; }).join('')+'</div>',
+    '<button class="btn" onclick="fecharModal()">Cancelar</button>');
+}
+function verContagem(id){ var c=D().contagens.filter(function(x){return x.id===id;})[0]; if(!c) return;
+  var l=Object.keys(c.potes||{}).map(function(k){ var pt=k.split('|'), p=SG.produto(pt[0]); return '<div class="lin"><div class="nm"><b>'+esc(p?p.nome:pt[0])+' '+pt[1]+'</b></div><div class="v">'+c.potes[k]+' potes</div></div>'; })
+    .concat(Object.keys(c.insumos||{}).map(function(k){ var i=SG.insumo(k); return '<div class="lin"><div class="nm"><b>'+esc(i?i.nome:k)+'</b></div><div class="v">'+SG.qtdFmt(c.insumos[k],i&&i.un)+'</div></div>'; }));
+  abrirModal('Contagem de estoque · '+SG.dataBR(c.data), l.join('')||'<div class="muted">Vazia.</div>', '<button class="btn warn" onclick="apagaReg(\'contagens\',\''+c.id+'\',\'Excluir esta contagem? O saldo volta ao cálculo anterior.\')">Excluir</button><span style="margin-right:auto"></span><button class="btn pri" onclick="fecharModal()">Fechar</button>');
+}
 
 /* PEDIDOS */
 function stPed(v){ return (v.entregue?'<span class="st vd">Entregue</span>':'<span class="st am">A entregar</span>'); }
