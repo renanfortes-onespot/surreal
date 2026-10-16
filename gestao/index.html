@@ -613,7 +613,7 @@ function mostraLogin(msg){ $('login').classList.add('on'); $('lgForm').style.dis
 function entrar(){ var e=$('lgEmail').value, s=$('lgSenha').value; if(!e||!s){ $('lgErro').textContent='Preencha e-mail e senha.'; return; }
   $('btEntrar').disabled=true; $('btEntrar').textContent='Entrando…'; $('lgErro').textContent='';
   SGR.entrar(e,s,CB).catch(function(x){ $('btEntrar').disabled=false; $('btEntrar').textContent='Entrar'; if(x.message) $('lgErro').textContent=x.message; }); }
-function trocaSenha(){ var n=prompt('Nova senha (mínimo 8 caracteres):'); if(!n) return; if(n.length<8){ alert('A senha precisa ter pelo menos 8 caracteres.'); return; } SGR.trocarSenha(n).then(function(){ toast('Senha trocada'); }).catch(function(e){ alert('Não deu: '+e.message); }); }
+function trocaSenha(){ var n=prompt('Nova senha (mínimo 6 caracteres):'); if(!n) return; if(n.length<6){ alert('A senha precisa ter pelo menos 6 caracteres.'); return; } SGR.trocarSenha(n).then(function(){ toast('Senha trocada'); }).catch(function(e){ alert('Não deu: '+e.message); }); }
 var CB={ login:mostraLogin, pronto:function(){ $('login').classList.remove('on'); render(); },
   status:function(s){ var d=$('sdot'); if(d) d.className='sdot'+(s==='sync'?' s':s==='off'?' off':''); } };
 aplicaTema();
