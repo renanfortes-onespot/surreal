@@ -10,12 +10,12 @@
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.SG_BUILD='20261016191843';</script>
-<script src="../shared/versao.js?v=20261016191843"></script>
-<script src="../shared/config.js?v=20261016191843"></script>
-<script src="../shared/seed.js?v=20261016191843"></script>
-<script src="../shared/core.js?v=20261016191843"></script>
-<script src="../shared/remote.js?v=20261016191843"></script>
+<script>window.SG_BUILD='20261016192034';</script>
+<script src="../shared/versao.js?v=20261016192034"></script>
+<script src="../shared/config.js?v=20261016192034"></script>
+<script src="../shared/seed.js?v=20261016192034"></script>
+<script src="../shared/core.js?v=20261016192034"></script>
+<script src="../shared/remote.js?v=20261016192034"></script>
 <style>
 /* ============================================================
    SURREAL — Painel de gestão (PC). OneSpot · 16/10/2026
@@ -191,7 +191,7 @@ body.claro table.dre tbody tr:nth-child(even) td{background:rgba(15,23,42,.025);
 .fld{display:flex;flex-direction:column;gap:5px;margin-bottom:12px;min-width:0;}
 .fld label{font-size:9.5px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.8px;}
 .fld label .ctx{text-transform:none;letter-spacing:0;font-weight:500;}
-.frow{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.frow{display:grid;grid-template-columns:1fr 1fr;gap:10px;align-items:end;}   /* caixas sempre alinhadas, mesmo com rótulo de 2 linhas */
 .frow.f3{grid-template-columns:repeat(3,1fr);} .frow.f4{grid-template-columns:repeat(4,1fr);}
 .inp{background:var(--inp);border:1px solid var(--card-brd);border-radius:8px;padding:8px 10px;font-size:12.5px;color:var(--txt);outline:0;width:100%;}
 .inp:focus{border-color:var(--acc2);}
@@ -1092,7 +1092,7 @@ function abrirAjuste(tipo, id){
     abrirModal('Contagem · '+p.nome, '<div class="tsub" style="margin-bottom:12px">Informe quantos potes há AGORA. Em branco = não mexe.</div><div class="frow f4">'+SG.tamanhosAtivos().map(function(t){ var s=e.potes[id+'|'+t.id]; return '<div class="fld"><label>'+t.nome+' · '+t.ml+' ml <span class="ctx">· hoje '+(s==null?'—':s)+'</span></label><input class="inp num" data-k="'+id+'|'+t.id+'" placeholder="'+(s==null?'':s)+'"></div>'; }).join('')+'</div>',
       '<button class="btn" onclick="fecharModal()">Cancelar</button><button class="btn pri" onclick="salvaContagem()">Salvar contagem</button>'); }
   else { var i=SG.insumo(id), s=e.insumos[id];
-    abrirModal('Estoque · '+i.nome, '<div class="frow"><div class="fld"><label>Quantidade AGORA ('+(i.un==='un'?'unidades':'gramas')+') <span class="ctx">· hoje '+SG.qtdFmt(s,i.un)+'</span></label><input class="inp num" data-k="'+id+'" data-ins="1" data-f="'+fU(i)+'" placeholder="'+(s==null?'':nv(s*fU(i),0))+'"></div><div class="fld"><label>Estoque mínimo ('+(i.un==='un'?'unidades':'gramas')+') <span class="ctx">· avisa quando ficar abaixo</span></label><input class="inp num" id="ajMin" value="'+nv(i.min*fU(i),0)+'"></div></div>',
+    abrirModal('Estoque · '+i.nome, '<div class="frow"><div class="fld"><label>Quantidade AGORA ('+(i.un==='un'?'unidades':'gramas')+') <span class="ctx">· hoje '+SG.qtdFmt(s,i.un)+'</span></label><input class="inp num" data-k="'+id+'" data-ins="1" data-f="'+fU(i)+'" placeholder="'+(s==null?'':nv(s*fU(i),0))+'"></div><div class="fld"><label>Estoque mínimo ('+(i.un==='un'?'unidades':'gramas')+') </label><input class="inp num" id="ajMin" value="'+nv(i.min*fU(i),0)+'"></div></div>',
       '<button class="btn" onclick="fecharModal()">Cancelar</button><button class="btn pri" onclick="SG.insumo(\''+id+'\').min=(numIn($(\'ajMin\').value)||0)/'+fU(i)+';salvaContagem()">Salvar</button>'); }
 }
 function abrirContagem(){
