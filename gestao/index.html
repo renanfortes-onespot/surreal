@@ -7,6 +7,7 @@
 <link rel="icon" href="../img/icone-192.png">
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script src="../shared/config.js"></script>
 <script src="../shared/seed.js"></script>
@@ -20,15 +21,15 @@
    Acento = azul-marinho Surreal (lavanda no escuro).
    ============================================================ */
 :root{
-  --fundo:#0B0A14; --side:#13112A; --card:#181534; --card-brd:#24203F; --linha:rgba(255,255,255,.06);
-  --txt:#ECEAF5; --txt2:#A29EBB; --txt3:#726E8C; --hover:rgba(255,255,255,.05);
-  --acc:#7C72E6; --acc2:#9D94F5; --verde:#3DD47A; --vermelho:#F4544A; --ambar:#F5A623; --cabec:#1E1B3A; --pop:#181534;
-  --inp:#0F0D20; --onespot:#F18F2F;
+  --fundo:#070B14; --side:#0E1628; --card:#121C33; --card-brd:#1E2B48; --linha:rgba(255,255,255,.06);
+  --txt:#E9EEF7; --txt2:#9AA7BF; --txt3:#6B7891; --hover:rgba(255,255,255,.05);
+  --acc:#2563EB; --acc2:#5B9BFF; --verde:#3DD47A; --vermelho:#F4544A; --ambar:#F5A623; --cabec:#17223D; --pop:#121C33;
+  --inp:#0A1222; --onespot:#F18F2F;
 }
 body.claro{
-  --fundo:#DAD8E6; --side:rgba(255,255,255,.62); --card:rgba(255,255,255,.78); --card-brd:rgba(43,37,96,.14); --linha:rgba(43,37,96,.10);
-  --txt:#1A1733; --txt2:#4D4968; --txt3:#7D7998; --hover:rgba(43,37,96,.06);
-  --acc:#2B2560; --acc2:#4A41A8; --verde:#14963F; --vermelho:#D7261B; --ambar:#C27C00; --cabec:#E6E4F0; --pop:#F7F6FB; --inp:#FFFFFF;
+  --fundo:#D7DEEA; --side:rgba(255,255,255,.62); --card:rgba(255,255,255,.80); --card-brd:rgba(20,45,100,.14); --linha:rgba(20,45,100,.10);
+  --txt:#121A2E; --txt2:#4A5670; --txt3:#7A879E; --hover:rgba(20,45,100,.06);
+  --acc:#173A8C; --acc2:#2563EB; --verde:#14963F; --vermelho:#D7261B; --ambar:#C27C00; --cabec:#E3E9F3; --pop:#F6F8FC; --inp:#FFFFFF;
 }
 *{margin:0;padding:0;box-sizing:border-box;}
 html,body{height:100%;overflow:hidden;}
@@ -36,7 +37,7 @@ body{font-family:'Montserrat',-apple-system,'Segoe UI',sans-serif;font-size:13px
 *{scrollbar-width:thin;scrollbar-color:color-mix(in srgb,var(--txt3) 42%,transparent) transparent;}
 button,input,select,textarea{font-family:inherit;}
 .app{position:absolute;inset:14px;display:flex;border-radius:12px;overflow:hidden;border:1px solid rgba(255,255,255,.08);box-shadow:0 28px 70px rgba(0,0,0,.5);}
-body.claro .app{border-color:rgba(43,37,96,.12);box-shadow:0 28px 70px rgba(43,37,96,.18);}
+body.claro .app{border-color:rgba(20,45,100,.12);box-shadow:0 28px 70px rgba(20,45,100,.18);}
 
 /* lateral */
 .side{width:248px;flex:0 0 248px;display:flex;flex-direction:column;background:var(--side);border-right:1px solid var(--linha);padding:18px 10px 12px;overflow:auto;scrollbar-width:none;backdrop-filter:blur(12px);}
@@ -181,7 +182,7 @@ input[type=range]{accent-color:var(--acc2);}
   <div class="nota" id="lgCarr" style="display:none;text-align:center">Carregando os dados…</div>
 </div></div>
 <script>
-if(!SGR.ativo && !window.SG_SEED){ document.addEventListener('DOMContentLoaded',function(){ document.body.innerHTML='<div style="padding:40px;text-align:center;font-family:Montserrat,sans-serif;color:#A29EBB">Surreal · painel em configuração.</div>'; }); throw new Error('sem configuração'); }
+if(!SGR.ativo && !window.SG_SEED){ document.addEventListener('DOMContentLoaded',function(){ document.body.innerHTML='<div style="padding:40px;text-align:center;font-family:Montserrat,sans-serif;color:#9AA7BF">Surreal · painel em configuração.</div>'; }); throw new Error('sem configuração'); }
 if(!SGR.ativo) SG.carregar();
 var D=function(){return SG.D;}, $=function(id){return document.getElementById(id);};
 function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
@@ -229,7 +230,7 @@ function side(){
     + '<div class="s-pe">'+(SGR.ativo
         ? '<div style="display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700"><span class="sdot '+(SGR.estado==='sync'?'s':SGR.estado==='off'?'off':'')+'" id="sdot" title="Sincronização"></span>'+esc(SGR.perfil.nome)+'</div><div style="display:flex;gap:6px"><button class="tool" style="flex:1;justify-content:center" onclick="trocaSenha()">Senha</button><button class="tool" style="flex:1;justify-content:center" onclick="SGR.sair()">Sair</button></div>'
         : '<select onchange="try{localStorage.setItem(\'sg_usuario\',this.value)}catch(e){};toast(\'Usuário: \'+this.options[this.selectedIndex].text)">'+D().config.usuarios.map(function(x){return '<option value="'+x.id+'"'+(x.id===u?' selected':'')+'>'+esc(x.nome)+'</option>';}).join('')+'</select>')
-    + '<button class="s-item" onclick="location.href=\'../\'">'+ic('celular')+'Abrir app do celular</button>'
+    + '<button class="s-item" onclick="baixarApp()">'+ic('baixar')+'Baixar app no celular</button><button class="s-item" onclick="location.href=\'../\'">'+ic('celular')+'Abrir app do celular</button>'
     + '<div class="s-por">por <b>OneSpot</b></div></div>';
 }
 function vai(v){ V.view=v; try{localStorage.setItem('sg_view',v);}catch(e){} render(); $('view').scrollTop=0; }
@@ -609,6 +610,18 @@ function novoProduto(){ var n=prompt('Nome do produto (ex.: Pistache com Calda d
 function backup(){ var a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([JSON.stringify(D(),null,1)],{type:'application/json'})); a.download='surreal-backup-'+SG.hoje()+'.json'; a.click(); }
 function restaura(f){ if(!f) return; var r=new FileReader(); r.onload=function(){ try{ var d=JSON.parse(r.result); if(!d.versao||!d.receitas) throw 0; if(!confirm('Substituir os dados atuais pelo backup?')) return; if(SGR.ativo){ SG.usar(d); SG.salvar(); toast('Backup restaurado e enviado'); } else { localStorage.setItem('sg_dados',JSON.stringify(d)); location.reload(); } }catch(e){ alert('Arquivo inválido'); } }; r.readAsText(f); }
 
+
+function baixarApp(){
+  var d=document.createElement('div'); d.id='qrBox'; d.style.cssText='position:fixed;inset:0;z-index:96;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center';
+  d.onclick=function(e){ if(e.target===d) d.remove(); };
+  var url='https://surreal.onespot.com.br/', qr='';
+  try{ var q=qrcode(0,'M'); q.addData(url); q.make(); qr=q.createSvgTag({cellSize:6,margin:2,scalable:true}); }catch(e){}
+  d.innerHTML='<div class="card" style="width:380px;max-width:92vw;text-align:center;padding:24px;background:var(--pop)"><div class="ct" style="font-size:16px">Baixar o app no celular</div><div class="cs" style="margin:6px 0 14px">Aponte a câmera do celular para o código</div>'
+    + '<div style="width:220px;margin:0 auto 14px;background:#fff;border-radius:12px;padding:10px">'+qr+'</div>'
+    + '<div class="nota" style="text-align:left;line-height:1.7"><b>Android (Chrome):</b> abra o link → ⋮ → <b>Instalar app</b>.<br><b>iPhone (Safari):</b> abra o link → Compartilhar → <b>Adicionar à Tela de Início</b>.<br>Ou digite: <b>surreal.onespot.com.br</b></div>'
+    + '<button class="tool pri" style="margin-top:16px;width:100%;justify-content:center" onclick="document.getElementById(\'qrBox\').remove()">Fechar</button></div>';
+  document.body.appendChild(d);
+}
 function mostraLogin(msg){ $('login').classList.add('on'); $('lgForm').style.display=''; $('lgCarr').style.display='none'; $('lgErro').textContent=msg||''; $('btEntrar').disabled=false; $('btEntrar').textContent='Entrar'; }
 function entrar(){ var e=$('lgEmail').value, s=$('lgSenha').value; if(!e||!s){ $('lgErro').textContent='Preencha e-mail e senha.'; return; }
   $('btEntrar').disabled=true; $('btEntrar').textContent='Entrando…'; $('lgErro').textContent='';

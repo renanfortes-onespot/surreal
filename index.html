@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
-<meta name="theme-color" content="#0B0A14">
+<meta name="theme-color" content="#070B14">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Surreal">
@@ -25,16 +25,16 @@
    Acento = azul-marinho Surreal (no escuro, a versão lavanda dele).
    ============================================================ */
 :root{
-  --bg:#0B0A14; --card:#15132A; --card2:#262344; --brd:#221F3A; --linha:#100E20;
-  --txt:#ECEAF5; --txt2:#A29EBB; --txt3:#6E6A88;
-  --acc:#6D62E0; --acc2:#9389F2; --verde:#3DD47A; --vermelho:#F4544A; --ambar:#F5A623; --nav:#15132A;
-  --acc-sombra:rgba(109,98,224,.36); --acc-fundo:rgba(147,137,242,.14);
+  --bg:#070B14; --card:#0F1729; --card2:#1D2A47; --brd:#1A2540; --linha:#0B1220;
+  --txt:#E9EEF7; --txt2:#9AA7BF; --txt3:#66738C;
+  --acc:#2563EB; --acc2:#5B9BFF; --verde:#3DD47A; --vermelho:#F4544A; --ambar:#F5A623; --nav:#0F1729;
+  --acc-sombra:rgba(37,99,235,.36); --acc-fundo:rgba(91,155,255,.14);
   --safe-top:env(safe-area-inset-top,0px); --safe-bot:env(safe-area-inset-bottom,0px);
 }
 body.claro{
-  --bg:#F1F0F6; --card:#FFFFFF; --card2:#DEDBEC; --brd:rgba(43,37,96,.13); --linha:#F8F7FC;
-  --txt:#1A1733; --txt2:#5B5775; --txt3:#9C98B3; --verde:#1E9E52; --vermelho:#D93A2E; --ambar:#C47E00; --nav:#FFFFFF;
-  --acc:#2B2560; --acc2:#4A41A8; --acc-sombra:rgba(43,37,96,.26); --acc-fundo:rgba(43,37,96,.08);
+  --bg:#EEF2F8; --card:#FFFFFF; --card2:#D9E1EE; --brd:rgba(20,45,100,.13); --linha:#F7F9FC;
+  --txt:#121A2E; --txt2:#53607A; --txt3:#93A0B6; --verde:#1E9E52; --vermelho:#D93A2E; --ambar:#C47E00; --nav:#FFFFFF;
+  --acc:#173A8C; --acc2:#2563EB; --acc-sombra:rgba(23,58,140,.26); --acc-fundo:rgba(37,99,235,.08);
 }
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
 html,body{height:100%;}
@@ -107,7 +107,7 @@ body.claro .li .ic.ac{border-color:var(--acc);color:var(--acc);}
 
 /* barra de baixo */
 .nav{position:absolute;left:16px;right:16px;bottom:calc(var(--safe-bot) + 14px);display:flex;justify-content:space-between;align-items:center;background:var(--nav);border-radius:18px;padding:8px 10px;box-shadow:0 14px 34px rgba(0,0,0,.45);z-index:10;}
-body.claro .nav{box-shadow:0 14px 34px rgba(26,23,51,.14);border:1px solid var(--brd);}
+body.claro .nav{box-shadow:0 14px 34px rgba(18,26,46,.14);border:1px solid var(--brd);}
 .app.foco .nav{display:none;}
 .nav button{flex:1;background:none;border:0;color:var(--txt2);font-size:10px;font-weight:500;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;padding:6px 0 4px;border-radius:12px;min-height:46px;}
 .nav button svg{width:21px;height:21px;}
@@ -184,7 +184,7 @@ input[type=range]{width:100%;accent-color:var(--acc2);height:28px;}
 
 /* simulador */
 .sim-hero{background:linear-gradient(160deg,var(--card) 0%,var(--linha) 100%);border:1px solid var(--brd);border-radius:20px;padding:20px 18px;margin-bottom:16px;}
-body.claro .sim-hero{box-shadow:0 14px 34px rgba(26,23,51,.08);}
+body.claro .sim-hero{box-shadow:0 14px 34px rgba(18,26,46,.08);}
 .sim-hero .rot{display:flex;justify-content:space-between;}
 .sim-hero .pv{font-size:38px;font-weight:700;letter-spacing:-.5px;margin-top:6px;}
 .sim-hero .sub{display:flex;gap:16px;margin-top:12px;flex-wrap:wrap;}
@@ -217,6 +217,11 @@ body.claro table.mini tr.on td{color:var(--acc);}
 @keyframes sobe{from{transform:translateY(40px);opacity:0;}to{transform:none;opacity:1;}}
 .sheet-cab{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
 .sheet-cab b{font-size:15px;font-weight:700;}
+.passo2{display:flex;gap:12px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--brd);font-size:13px;line-height:1.5;}
+.passo2 b{flex:0 0 26px;height:26px;border-radius:8px;background:var(--acc-fundo);color:var(--acc2);display:flex;align-items:center;justify-content:center;font-size:12px;}
+body.claro .passo2 b{color:var(--acc);}
+.lg-inst{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:14px;background:none;border:1px solid var(--brd);color:var(--txt);border-radius:12px;padding:12px;width:100%;font-size:13px;font-weight:600;cursor:pointer;}
+.lg-inst svg{width:17px;height:17px;}
 .sheet-cab button{background:none;border:0;color:var(--txt2);width:40px;height:40px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
 
 /* login */
@@ -269,6 +274,7 @@ body.claro table.mini tr.on td{color:var(--acc);}
       <button class="btn" id="btEntrar" onclick="entrar()">Entrar</button>
     </div>
     <div class="carregando" id="lgCarr" style="display:none">Carregando os dados…</div>
+    <button class="lg-inst" id="lgInstalar" onclick="instalar()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>Baixar o app no celular</button>
     <div class="lg-por">por <b>OneSpot</b></div>
   </div>
 </div>
@@ -278,7 +284,7 @@ body.claro table.mini tr.on td{color:var(--acc);}
    SURREAL — app. Telas renderizadas a partir do SG (shared/core.js).
    Navegação: pilha simples; abas da barra zeram a pilha.
    ============================================================ */
-if(!SGR.ativo && !window.SG_SEED){ document.addEventListener('DOMContentLoaded',function(){ document.body.innerHTML='<div style="padding:40px;text-align:center;font-family:Inter,sans-serif;color:#A29EBB">Surreal · app em configuração.</div>'; }); throw new Error('sem configuração'); }
+if(!SGR.ativo && !window.SG_SEED){ document.addEventListener('DOMContentLoaded',function(){ document.body.innerHTML='<div style="padding:40px;text-align:center;font-family:Inter,sans-serif;color:#9AA7BF">Surreal · app em configuração.</div>'; }); throw new Error('sem configuração'); }
 if(!SGR.ativo) SG.carregar();
 var D = function(){ return SG.D; };
 var $ = function(id){ return document.getElementById(id); };
@@ -306,12 +312,13 @@ var I = {
   engr:'<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.6 1.6 0 00-2.7 1.1V21a2 2 0 01-4 0v-.1a1.6 1.6 0 00-2.7-1.1l-.1.1a2 2 0 11-2.8-2.8l.1-.1A1.6 1.6 0 004 15a1.6 1.6 0 00-1.5-1H2.4a2 2 0 010-4h.1A1.6 1.6 0 004 9a1.6 1.6 0 00-.3-1.8l-.1-.1a2 2 0 112.8-2.8l.1.1A1.6 1.6 0 009 4.6V4.5a2 2 0 014 0v.1a1.6 1.6 0 002.7 1.1l.1-.1a2 2 0 112.8 2.8l-.1.1A1.6 1.6 0 0019.4 9c.2.6.8 1 1.5 1h.1a2 2 0 010 4h-.1a1.6 1.6 0 00-1.5 1z"/>',
   lista:'<path d="M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01"/>',
   grafico:'<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>',
+  baixar:'<path d="M12 4v11M7 10l5 5 5-5M5 20h14"/>',
 };
 function ic(n, w){ return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="'+(w||1.8)+'" stroke-linecap="round" stroke-linejoin="round">'+I[n]+'</svg>'; }
 
 /* ── tema e usuário ── */
 function aplicaTema(){ var c=false; try{ c = localStorage.getItem('sg_tema')==='claro'; }catch(e){} document.body.classList.toggle('claro', c);
-  document.querySelector('meta[name=theme-color]').content = c ? '#F1F0F6' : '#0B0A14'; }
+  document.querySelector('meta[name=theme-color]').content = c ? '#EEF2F8' : '#070B14'; }
 function alternaTema(){ var c=!document.body.classList.contains('claro'); try{ localStorage.setItem('sg_tema', c?'claro':'escuro'); }catch(e){} aplicaTema(); fechaMenu(); }
 function usuario(){ if(SGR.ativo&&SGR.perfil) return {id:SGR.perfil.id, nome:SGR.perfil.nome.split(' ')[0]}; var id=null; try{ id=localStorage.getItem('sg_usuario'); }catch(e){} var u=D().config.usuarios; return u.filter(function(x){return x.id===id;})[0] || u[0]; }
 function trocaUsuario(id){ try{ localStorage.setItem('sg_usuario', id); }catch(e){} fechaMenu(); topo(); toast('Olá, '+usuario().nome+'!'); }
@@ -323,7 +330,7 @@ function topo(){
   var dt=new Date(); $('sub').textContent = dt.toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'});
   $('menu').innerHTML = (SGR.ativo ? '<div class="t">'+esc(SGR.perfil.nome)+'</div><button onclick="fechaMenu();SGR.sincronizar();toast(\'Sincronizando…\')">Sincronizar agora</button><button onclick="trocaSenha()">Trocar minha senha</button><button onclick="SGR.sair()">Sair</button>'
       : '<div class="t">Quem está usando</div>' + D().config.usuarios.map(function(x){ return '<button onclick="trocaUsuario(\''+x.id+'\')">'+(x.id===u.id?'✓ ':'')+esc(x.nome)+'</button>'; }).join(''))
-    + '<div class="t">App</div><button onclick="alternaTema()">'+(document.body.classList.contains('claro')?'Modo escuro':'Modo claro')+'</button>'
+    + '<div class="t">App</div>'+(instalado()?'':'<button onclick="instalar()">Baixar o app no celular</button>')+'<button onclick="alternaTema()">'+(document.body.classList.contains('claro')?'Modo escuro':'Modo claro')+'</button>'
     + '<button onclick="location.href=\'gestao/\'">Abrir painel completo (PC)</button>';
 }
 function toast(t){ var e=$('toast'); e.textContent=t; e.classList.add('on'); clearTimeout(toast.t); toast.t=setTimeout(function(){ e.classList.remove('on'); }, 2200); }
@@ -630,6 +637,7 @@ TELAS.mais = function(){
   h += li({ic:'pessoas', t:'Clientes', s:D().clientes.length+' cadastrados', on:"abre('clientes')"});
   h += li({ic:'frasco', t:'Fichas técnicas', s:'Custo por kg de cada receita', on:"abre('fichas')"});
   h += li({ic:'conta', t:'Tabela de preços', s:'Preço por sabor, tamanho e canal', on:"abre('tabela')"});
+  if(!instalado()) h += li({ic:'baixar', cor:'ac', t:'Baixar o app no celular', s:'Ícone na tela de início, abre em tela cheia', on:'instalar()'});
   h += '<div class="sec" style="margin-top:16px">Mais detalhes</div>';
   h += li({ic:'pc', t:'Painel completo (PC)', s:'Gráficos, fichas editáveis, cenários e relatórios', on:"location.href='gestao/'"});
   return h;
@@ -698,6 +706,26 @@ function editaPrecoM(pid,cid,tid){ var x=SG.precificar(pid,tid,cid); var v=promp
 /* ── início ── */
 function iniciaApp(){ topo(); render();
 (function(){ var h=location.hash.slice(1), m={producao:'producaoNova', compra:'compraNova', despesa:'despesaNova'}; if(h==='pedido') novoPedido(); else if(m[h]) abre(m[h],{form:1}); if(h) history.replaceState(null,'',location.pathname); })(); }
+
+/* ── instalar o app (Android/PC: prompt nativo; iPhone: passo a passo) ── */
+var pedidoInstalar = null;
+function instalado(){ return (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true; }
+function ehIOS(){ return /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform==='MacIntel' && navigator.maxTouchPoints>1); }
+window.addEventListener('beforeinstallprompt', function(e){ e.preventDefault(); pedidoInstalar = e; mostraInstalar(); });
+window.addEventListener('appinstalled', function(){ pedidoInstalar = null; mostraInstalar(); toast('App instalado!'); });
+function mostraInstalar(){ var l=$('lgInstalar'); if(l) l.style.display = instalado() ? 'none' : ''; }
+function instalar(){
+  fechaMenu();
+  if (pedidoInstalar) { pedidoInstalar.prompt(); pedidoInstalar.userChoice.then(function(){ pedidoInstalar = null; }); return; }
+  var passos = ehIOS()
+    ? '<div class="passo2"><b>1</b><span>Abra este endereço no <b>Safari</b> (no Chrome do iPhone não dá).</span></div><div class="passo2"><b>2</b><span>Toque em <b>Compartilhar</b> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:16px;height:16px;display:inline;vertical-align:-3px"><path d="M12 3v12M7 8l5-5 5 5M5 13v6a2 2 0 002 2h10a2 2 0 002-2v-6"/></svg> na barra de baixo.</span></div><div class="passo2"><b>3</b><span>Escolha <b>Adicionar à Tela de Início</b> e toque em <b>Adicionar</b>.</span></div>'
+    : '<div class="passo2"><b>1</b><span>Abra este endereço no <b>Chrome</b>.</span></div><div class="passo2"><b>2</b><span>Toque nos <b>três pontinhos ⋮</b> no canto de cima.</span></div><div class="passo2"><b>3</b><span>Escolha <b>Instalar app</b> (ou <b>Adicionar à tela inicial</b>).</span></div>';
+  var d=document.createElement('div'); d.className='sheet'; d.onclick=function(e){ if(e.target===d) d.remove(); };
+  d.innerHTML='<div class="sheet-box"><div class="sheet-cab"><b>Instalar o app da Surreal</b><button onclick="this.closest(\'.sheet\').remove()">'+ic('x')+'</button></div>'
+    + (instalado()?'<div class="vazio">O app já está instalado neste aparelho.</div>':'<p style="font-size:12.5px;color:var(--txt2);line-height:1.55;margin-bottom:12px">Fica um ícone com o “S” da Surreal na tela do celular e o app abre em tela cheia, como qualquer outro.</p>'+passos)
+    + '<div class="vazio" style="margin-top:12px">Endereço: <b style="color:var(--txt)">surreal.onespot.com.br</b></div><button class="btn" onclick="this.closest(\'.sheet\').remove()">Entendi</button></div>';
+  document.body.appendChild(d);
+}
 /* login (modo remoto) */
 function mostraLogin(msg){ $('login').classList.add('on'); $('lgForm').style.display=''; $('lgCarr').style.display='none'; $('lgErro').textContent=msg||''; $('btEntrar').disabled=false; $('btEntrar').textContent='Entrar'; }
 function entrar(){ var e=$('lgEmail').value, s=$('lgSenha').value; if(!e||!s){ $('lgErro').textContent='Preencha e-mail e senha.'; return; }
@@ -709,7 +737,7 @@ var CB = {
   pronto: function(){ $('login').classList.remove('on'); $('sync').classList.add('on'); iniciaApp(); },
   status: function(s, m){ var e=$('sync'); e.className='sync on'+(s==='sync'?' sync-s':s==='off'?' sync-off':''); e.title = s==='ok'?'Sincronizado':s==='sync'?'Sincronizando…':(m||'Sem conexão'); }
 };
-aplicaTema();
+aplicaTema(); mostraInstalar();
 if(!SGR.ativo) iniciaApp();
 else { $('login').classList.add('on'); $('lgForm').style.display='none'; $('lgCarr').style.display=''; SGR.iniciar(CB); }
 if ('serviceWorker' in navigator && location.protocol==='https:') navigator.serviceWorker.register('sw.js').catch(function(){});
