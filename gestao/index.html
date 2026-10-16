@@ -10,7 +10,7 @@
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.SG_BUILD='20261016181850';</script>
+<script>window.SG_BUILD='20261016182742';</script>
 <script src="../shared/versao.js"></script>
 <script src="../shared/config.js"></script>
 <script src="../shared/seed.js"></script>
@@ -919,7 +919,8 @@ function abrirProducao(id){
   PR=p?JSON.parse(JSON.stringify(p)):{id:null,data:SG.hoje(),receita:'chocolate',produto:'chocolate-crumble',kg:1,potes:{}};
   var rs=D().receitas.filter(function(r){return r.tipo!=='base';});
   var dados='<div class="frow"><div class="fld"><label>Data</label><input class="inp" type="date" id="prData" value="'+PR.data+'"></div><div class="fld"><label>Mistura (kg)</label><input class="inp num" id="prKg" value="'+nv(PR.kg,3)+'" oninput="PR.kg=numIn(this.value)||0;prCalc()"></div></div>'
-    + '<div class="fld"><label>Receita</label><select class="inp" id="prRec" onchange="PR.receita=this.value;prProds();prCalc()">'+rs.map(function(r){return '<option value="'+r.id+'"'+(r.id===PR.receita?' selected':'')+'>'+esc(r.nome)+'</option>';}).join('')+'</select></div>'
+    + '<div class="fld"><label>Receita <span class="ctx">· lista as fichas técnicas; sabor sem ficha (ex.: Danoninho) não aparece — <a href="#" style="color:var(--acc2)" onclick="event.preventDefault();abrirReceita(null)">criar ficha técnica</a></span></label><select class="inp" id="prRec" onchange="PR.receita=this.value;prProds();prCalc()">'
+      + [['sabor','Sabores'],['cobertura','Coberturas e caldas']].map(function(g){ var l=rs.filter(function(r){return r.tipo===g[0];}); return l.length?'<optgroup label="'+g[1]+'">'+l.map(function(r){return '<option value="'+r.id+'"'+(r.id===PR.receita?' selected':'')+'>'+esc(r.nome)+'</option>';}).join('')+'</optgroup>':''; }).join('')+'</select></div>'
     + '<div class="fld"><label>Vai para o estoque como</label><select class="inp" id="prProd" onchange="PR.produto=this.value||null"></select></div>'
     + '<div class="fld"><label>Potes envasados</label><div class="frow f4">'+SG.tamanhosAtivos().map(function(t){return '<div class="fld" style="margin:0"><label>'+t.nome+' · '+t.ml+' ml</label><input class="inp num" data-t="'+t.id+'" value="'+(PR.potes[t.id]||'')+'" placeholder="0" oninput="prPotes()"></div>';}).join('')+'</div></div>'
     + '<div class="mk" id="prMk"></div><div class="erro" id="prErro"></div>';
