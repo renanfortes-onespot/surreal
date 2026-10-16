@@ -13,12 +13,12 @@
 <link rel="icon" href="img/icone-192.png">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.SG_BUILD='20261016193310';</script>
-<script src="shared/versao.js?v=20261016193310"></script>
-<script src="shared/config.js?v=20261016193310"></script>
-<script src="shared/seed.js?v=20261016193310"></script>
-<script src="shared/core.js?v=20261016193310"></script>
-<script src="shared/remote.js?v=20261016193310"></script>
+<script>window.SG_BUILD='20261016193538';</script>
+<script src="shared/versao.js?v=20261016193538"></script>
+<script src="shared/config.js?v=20261016193538"></script>
+<script src="shared/seed.js?v=20261016193538"></script>
+<script src="shared/core.js?v=20261016193538"></script>
+<script src="shared/remote.js?v=20261016193538"></script>
 <style>
 /* ============================================================
    SURREAL · gelato artesanal — app (PWA)
@@ -696,7 +696,7 @@ TELAS.ficha = function(a){
   var r=SG.receita(a.id), comp=SG.composicao(r.id), tot=comp.reduce(function(s,c){return s+c.custo;},0);
   var h=cab('frasco',esc(r.nome), SG.brl(SG.custoReceitaKg(r.id))+' por kg · '+SG.num(SG.pesoReceita(r.id),0)+' g de ingredientes');
   if(r.obs) h+='<div class="vazio">'+esc(r.obs)+'</div>';
-  h+='<table class="mini"><tr><th>Ingrediente</th><th>g/kg</th><th>R$/kg</th><th>Custo</th><th>%</th></tr>'+comp.map(function(c){ return '<tr><td>'+esc(c.nome)+(c.origem==='manual'?' <span class="tag">manual</span>':c.origem==='estimado'?' <span class="tag am">estimado</span>':'')+'</td><td>'+SG.num(c.g,1)+'</td><td>'+SG.brl(c.custoKg)+'</td><td>'+SG.brl(c.custo)+'</td><td>'+SG.pct(tot?c.custo/tot:0,0)+'</td></tr>'; }).join('')+'</table>';
+  h+='<table class="mini"><tr><th>Ingrediente</th><th>g/kg</th><th>R$/kg</th><th>Custo</th><th>%</th></tr>'+comp.map(function(c){ return '<tr><td>'+esc(c.nome)+(c.origem==='manual'?' <span class="tag">planilha</span>':c.origem==='estimado'?' <span class="tag am">estimado</span>':'')+'</td><td>'+SG.num(c.g,1)+'</td><td>'+SG.brl(c.custoKg)+'</td><td>'+SG.brl(c.custo)+'</td><td>'+SG.pct(tot?c.custo/tot:0,0)+'</td></tr>'; }).join('')+'</table>';
   h+='<div class="vazio">Para editar a receita, use o painel completo no computador.</div>';
   return h;
 };

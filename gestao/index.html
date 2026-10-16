@@ -10,12 +10,12 @@
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.SG_BUILD='20261016193310';</script>
-<script src="../shared/versao.js?v=20261016193310"></script>
-<script src="../shared/config.js?v=20261016193310"></script>
-<script src="../shared/seed.js?v=20261016193310"></script>
-<script src="../shared/core.js?v=20261016193310"></script>
-<script src="../shared/remote.js?v=20261016193310"></script>
+<script>window.SG_BUILD='20261016193538';</script>
+<script src="../shared/versao.js?v=20261016193538"></script>
+<script src="../shared/config.js?v=20261016193538"></script>
+<script src="../shared/seed.js?v=20261016193538"></script>
+<script src="../shared/core.js?v=20261016193538"></script>
+<script src="../shared/remote.js?v=20261016193538"></script>
 <style>
 /* ============================================================
    SURREAL — Painel de gestão (PC). OneSpot · 16/10/2026
@@ -1149,7 +1149,7 @@ function rfCalc(){
   var comp=SG.composicao('__rf'), ck=SG.custoReceitaKg('__rf'), peso=SG.pesoReceita('__rf'); D().receitas.pop();
   var tot=comp.reduce(function(s,c){return s+c.custo;},0);
   $('rfIt').innerHTML=RF.itens.length?RF.itens.map(function(it,i){ var c=comp.filter(function(x){return x.item===it;})[0]||{};
-    var orig=it.receita?'sub-receita':c.origem==='compra'?'última compra':c.origem==='estimado'?'estimado':'custo manual';
+    var orig=it.receita?'sub-receita':c.origem==='compra'?'última compra':c.origem==='estimado'?'estimado':c.custoKg?'planilha, até a 1ª compra':'sem compra lançada';
     return '<div class="lin"><div class="nm"><b>'+esc(c.nome)+'</b><small>'+SG.brl(c.custoKg)+'/kg · '+orig+'</small></div><input class="inp num sm" style="width:80px" value="'+nv(it.g,1)+'" onchange="RF.itens['+i+'].g=numIn(this.value)||0;rfCalc()" title="gramas"><span class="mut" style="font-size:11px">g</span><div class="v" style="width:76px">'+SG.brl(c.custo)+'</div><div class="mut" style="width:38px;text-align:right;font-size:11px">'+SG.pct(tot?c.custo/tot:0,0)+'</div><button class="x-btn" title="Remover" onclick="RF.itens.splice('+i+',1);rfCalc()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button></div>'; }).join('')
     :'<div class="muted" style="padding:10px 2px;font-size:12px">Sem ingredientes. Adicione embaixo.</div>';
   $('rfMk').innerHTML='<div><small>Custo por kg</small><b>'+SG.brl(ck)+'</b></div><div><small>Peso dos ingredientes</small><b>'+SG.num(peso,0)+' g</b></div><div><small>Custo da receita</small><b>'+SG.brl(tot)+'</b></div>';
@@ -1161,7 +1161,7 @@ function apagaReceita(id){ var us=D().produtos.filter(function(p){return p.recei
 
 /* INSUMOS */
 VIEWS.insumos=function(){
-  sub('Ingredientes e embalagens · o custo usado é o da última compra; sem compra, vale o custo manual');
+  sub('Ingredientes e embalagens · o custo é sempre o da última compra lançada · sem compra, vale o preço que veio da planilha');
   var e=SG.estoque(), ls=D().insumos.filter(function(i){return fOk('tipI',i.tipo)&&fOk('catI',i.cat)&&qOk('ins',[i.nome,i.cat]);});
   function usos(i){ return D().receitas.filter(function(r){return r.itens.some(function(x){return x.insumo===i.id;});}).length; }
   $('view').innerHTML=cadastro(ls.length+' insumos · clique no insumo para ver e editar', busca('ins','Insumo ou categoria…'), btNovo('Novo insumo','abrirInsumo(null)'),
@@ -1170,7 +1170,7 @@ VIEWS.insumos=function(){
       {t:'Categoria',f:function(i){return esc(i.cat);},s:function(i){return i.cat;}},
       {t:'Tipo',f:function(i){return i.tipo==='embalagem'?'Embalagem':'Ingrediente';},s:function(i){return i.tipo;}},
       {t:'Custo atual',f:function(i){return '<b style="color:var(--txt)">'+SG.brl(SG.custoInsumo(i.id).valor)+'</b> /'+(i.un==='un'?'un':'kg');},v:function(i){return SG.custoInsumo(i.id).valor;},cls:'num'},
-      {t:'Origem do custo',f:function(i){var c=SG.custoInsumo(i.id);return c.origem==='compra'?'<span class="st vd">compra '+SG.dataBR(c.data)+'</span>':c.origem==='estimado'?'<span class="st am">estimado</span>':'<span class="st cz">manual</span>';},s:function(i){return SG.custoInsumo(i.id).origem;}},
+      {t:'Origem do custo',f:function(i){var c=SG.custoInsumo(i.id);return c.origem==='compra'?'<span class="st vd">compra '+SG.dataBR(c.data)+'</span>':c.valor?'<span class="st am">planilha · até a 1ª compra</span>':'<span class="st vm">sem compra lançada</span>';},s:function(i){return SG.custoInsumo(i.id).origem;}},
       {t:'Estoque',f:function(i){var s=e.insumos[i.id];return s==null?'<span class="muted">—</span>':s<0?'<span class="amb" title="Usou mais do que as compras lançadas">sem compra</span>':'<span class="'+(i.min&&s<i.min?'cr':'')+'">'+SG.qtdFmt(s,i.un)+'</span>';},v:function(i){return e.insumos[i.id]||0;},cls:'num'},
       {t:'Usado em',f:function(i){var n=usos(i);return n?n+(n>1?' receitas':' receita'):'—';},v:usos,cls:'num'},
     ], ls, null, function(i){ return "abrirInsumo('"+i.id+"')"; }));
@@ -1180,16 +1180,16 @@ function abrirInsumo(id){
   var IF={tipo:i?i.tipo:'ingrediente'}; window.IF=IF;
   var dados='<div class="fld"><label>Nome</label><input class="inp" id="inNome" value="'+esc(i?i.nome:'')+'"></div>'
     + '<div class="frow"><div class="fld"><label>Tipo</label>'+segH('inTipo',[['ingrediente','Ingrediente'],['embalagem','Embalagem']],IF.tipo,'inTipoSet')+'</div><div class="fld"><label>Categoria</label><input class="inp" id="inCat" list="dlCat" value="'+esc(i?i.cat:'')+'"><datalist id="dlCat">'+Object.keys(cats).map(function(c){return '<option value="'+esc(c)+'">';}).join('')+'</datalist></div></div>'
-    + '<div class="frow"><div class="fld"><label>Custo manual (R$)</label><input class="inp num" id="inCusto" value="'+(i?nv(i.custoManual):'')+'"><div class="fdica">por kg (embalagem: por unidade) · vale sem compra</div></div><div class="fld"><label>Estoque mínimo</label><input class="inp num" id="inMin" value="'+(i&&i.min?nv(i.min*fU(i),0):'')+'" placeholder="ex.: 500"><div class="fdica">em gramas (embalagem: unidades)</div></div></div>'
-    + (i?'<div class="mk"><div><small>Custo em uso</small><b>'+SG.brl(SG.custoInsumo(i.id).valor)+'</b></div><div><small>Origem</small><b>'+({compra:'Última compra',manual:'Custo manual',estimado:'Estimado'})[SG.custoInsumo(i.id).origem]+'</b></div><div><small>Estoque</small><b>'+SG.qtdFmt(SG.estoque().insumos[i.id],i.un)+'</b></div></div>':'')+'<div class="erro" id="inErro"></div>';
+    + '<div class="frow"><div class="fld"><label>Estoque mínimo</label><input class="inp num" id="inMin" value="'+(i&&i.min?nv(i.min*fU(i),0):'')+'" placeholder="ex.: 500"><div class="fdica">em gramas (embalagem: unidades)</div></div><div></div></div>'
+    + (i?'<div class="mk"><div><small>Custo em uso</small><b>'+SG.brl(SG.custoInsumo(i.id).valor)+'</b></div><div><small>Origem</small><b>'+(SG.custoInsumo(i.id).origem==='compra'?'Última compra':SG.custoInsumo(i.id).valor?'Planilha (até a 1ª compra)':'Sem compra')+'</b></div><div><small>Estoque</small><b>'+SG.qtdFmt(SG.estoque().insumos[i.id],i.un)+'</b></div></div>':'')+'<div class="erro" id="inErro"></div>';
   var hist=i?D().compras.filter(function(c){return c.insumo===i.id;}).sort(function(a,b){return a.data<b.data?1:-1;}).map(function(c){ return '<div class="lin"><div class="nm"><b>'+SG.dataBR(c.data)+'</b><small>'+SG.qtdFmt(c.qtd,i.un)+' por '+SG.brl(c.valor)+'</small></div><div class="v">'+SG.brl(c.valor/c.qtd)+'/'+(i.un==='un'?'un':'kg')+'</div></div>'; }).join(''):'';
   var rec=i?D().receitas.filter(function(r){return r.itens.some(function(x){return x.insumo===i.id;});}).map(function(r){ var g=r.itens.filter(function(x){return x.insumo===i.id;})[0].g; return '<div class="lin"><div class="nm"><b>'+esc(r.nome)+'</b></div><div class="v">'+SG.num(g,1)+' g/kg</div></div>'; }).join(''):'';
-  abrirModal(i?'Insumo · '+i.nome:'Novo insumo', '<div class="wz-2col">'+col('Dados do insumo','nome, tipo, custo e mínimo',dados)+col('Histórico','compras e receitas que usam este insumo','<div class="sec2">Compras</div>'+(hist||'<div class="muted" style="font-size:12px">Nenhuma compra registrada.</div>')+'<div class="sec2">Usado nas receitas</div>'+(rec||'<div class="muted" style="font-size:12px">Nenhuma receita.</div>'))+'</div>',
+  abrirModal(i?'Insumo · '+i.nome:'Novo insumo', '<div class="wz-2col">'+col('Dados do insumo','nome, tipo e mínimo · o custo vem das compras',dados)+col('Histórico','compras e receitas que usam este insumo','<div class="sec2">Compras</div>'+(hist||'<div class="muted" style="font-size:12px">Nenhuma compra registrada.</div>')+'<div class="sec2">Usado nas receitas</div>'+(rec||'<div class="muted" style="font-size:12px">Nenhuma receita.</div>'))+'</div>',
     footPad("salvaInsumo("+(i?"'"+i.id+"'":'null')+")", i?"apagaInsumo('"+i.id+"')":null), true);
 }
 function inTipoSet(t){ window.IF.tipo=t; }
 function salvaInsumo(id){ var n=($('inNome').value||'').trim(); if(!n){ $('inErro').textContent='Informe o nome.'; return; }
-  var o={nome:n, tipo:window.IF.tipo, un:window.IF.tipo==='embalagem'?'un':'kg', cat:($('inCat').value||'Outros').trim(), custoManual:numIn($('inCusto').value)||0, min:(numIn($('inMin').value)||0)/(window.IF.tipo==='embalagem'?1:1000), estimado:false};
+  var o={nome:n, tipo:window.IF.tipo, un:window.IF.tipo==='embalagem'?'un':'kg', cat:($('inCat').value||'Outros').trim(), custoManual:id?(SG.insumo(id).custoManual||0):0, min:(numIn($('inMin').value)||0)/(window.IF.tipo==='embalagem'?1:1000), estimado:false};
   if(id) Object.assign(SG.insumo(id),o); else D().insumos.push(Object.assign({id:SG.novoId('i')},o));
   SG.salvar(true); fecharModal(); toast('Insumo salvo'); }
 function apagaInsumo(id){ var us=D().receitas.filter(function(r){return r.itens.some(function(x){return x.insumo===id;});}); if(us.length){ alert('Usado em: '+us.map(function(r){return r.nome;}).join(', ')+'. Tire das receitas antes.'); return; } apagaReg('insumos',id,'Excluir este insumo?'); }
