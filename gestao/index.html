@@ -10,7 +10,7 @@
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.SG_BUILD='20261016175825';</script>
+<script>window.SG_BUILD='20261016181722';</script>
 <script src="../shared/versao.js"></script>
 <script src="../shared/config.js"></script>
 <script src="../shared/seed.js"></script>
@@ -83,6 +83,29 @@ body.claro .s-item svg{color:var(--acc);}
 .tsel{background:var(--inp);border:1px solid var(--card-brd);border-radius:8px;padding:6px 9px;color:var(--txt);font-size:12px;font-weight:600;cursor:pointer;max-width:260px;}
 .tsel:focus{outline:none;border-color:var(--acc2);}
 .tsel option{background:var(--pop);color:var(--txt);}
+.ms-wrap{position:relative;}
+.ms-btn{display:flex;align-items:center;gap:7px;background:transparent;border:0;border-radius:7px;padding:6px 10px;color:var(--txt2);font-size:12.5px;font-weight:500;cursor:pointer;white-space:nowrap;}
+.ms-btn svg{width:13px;height:13px;}
+.ms-btn:hover{background:var(--hover);color:var(--txt);}
+.ms-wrap.ativo .ms-btn{background:var(--hover);color:var(--txt);}
+.ms-cnt{display:none;min-width:16px;height:16px;padding:0 5px;border-radius:9px;background:var(--acc2);color:#fff;font-size:9.5px;font-weight:800;line-height:16px;text-align:center;}
+.ms-panel{display:none;position:absolute;top:calc(100% + 6px);right:0;z-index:60;min-width:250px;max-width:360px;background:var(--pop);border:1px solid var(--card-brd);border-radius:10px;padding:6px;box-shadow:0 18px 44px rgba(0,0,0,.55),0 3px 10px rgba(0,0,0,.35);}
+body.claro .ms-panel{box-shadow:0 18px 44px rgba(15,23,42,.20),0 3px 10px rgba(15,23,42,.10);}
+.ms-panel.open{display:block;}
+.ms-search{display:flex;align-items:center;gap:7px;padding:6px 8px;margin-bottom:4px;border-bottom:1px solid var(--linha);color:var(--txt3);}
+.ms-search svg{width:12px;height:12px;}
+.ms-search input{flex:1;min-width:0;background:transparent;border:0;outline:0;font-size:12px;color:var(--txt);}
+.ms-list{max-height:300px;overflow:auto;}
+.ms-opt{display:flex;align-items:center;gap:9px;min-height:31px;padding:7px 9px;border-radius:7px;color:var(--txt);font-size:12.5px;cursor:pointer;white-space:nowrap;}
+.ms-opt:hover{background:var(--hover);}
+.ms-opt input[type=checkbox]{accent-color:var(--acc2);width:14px;height:14px;flex:0 0 14px;cursor:pointer;}
+.ms-opt span.t{overflow:hidden;text-overflow:ellipsis;}
+.ms-opt.all-opt{font-weight:700;border-bottom:1px solid var(--linha);margin-bottom:4px;border-radius:0;}
+.ms-only{margin-left:auto;font-size:9px;font-weight:700;color:var(--acc2);padding:1px 7px;border-radius:4px;opacity:0;flex:0 0 auto;}
+.ms-opt:hover .ms-only{opacity:1;}
+.ms-only:hover{background:color-mix(in srgb,var(--acc2) 20%,transparent);}
+.ms-limpa{background:transparent;border:0;color:var(--txt3);font-size:11px;font-weight:700;cursor:pointer;padding:6px 8px;border-radius:7px;}
+.ms-limpa:hover{background:var(--hover);color:var(--txt);}
 .tema{width:22px;height:22px;border-radius:50%;border:2px solid var(--txt);background:linear-gradient(90deg,var(--txt) 50%,transparent 50%);cursor:pointer;margin-left:6px;align-self:center;}
 
 /* ── visões ── */
@@ -296,6 +319,10 @@ var I={
   celular:'<rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/>', mais:'<path d="M12 5v14M5 12h14"/>', baixar:'<path d="M12 4v11M7 10l5 5 5-5M5 20h14"/>',
   lupa:'<circle cx="11" cy="11" r="7"/><path d="M16.5 16.5 21 21"/>', chave:'<circle cx="8" cy="15" r="4"/><path d="M11 12l9-9M16 7l3 3"/>', sair:'<path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/>',
   tag:'<path d="M3 12V3h9l9 9-9 9z"/><circle cx="7.5" cy="7.5" r="1.3"/>',
+  cal:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>',
+  tam:'<path d="M4 20h16M6 20V10M12 20V4M18 20v-7"/>',
+  ok:'<path d="M5 12l5 5 9-10"/>',
+  caixa:'<rect x="2" y="6" width="20" height="13" rx="2"/><path d="M2 10h20M6 15h4"/>',
   lista:'<path d="M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01"/>',
 };
 function ic(n){ return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">'+I[n]+'</svg>'; }
@@ -307,7 +334,7 @@ function eu(){ if(SGR.ativo&&SGR.perfil) return SGR.perfil; var id=null; try{id=
 
 /* ════════ navegação ════════ */
 var MENU=[
-  ['Visões',[['resumo','Resumo Gerencial','resumo'],['vendasA','Vendas','vendas'],['financeiro','Resultado e caixa','fin'],['simulador','Simulador de preço (DRE)','sim'],['cenarios','Simular todos os sabores','grade']]],
+  ['Visões',[['resumo','Resumo Gerencial','resumo'],['vendasA','Vendas','vendas'],['dre','DRE','fin'],['caixa','Caixa','caixa'],['simulador','Simulador de preço (DRE)','sim'],['cenarios','Simular todos os sabores','grade']]],
   ['Gestão à Vista',[['lancamentos','Lançamentos','lista'],['pedidos','Pedidos','vendas'],['producao','Produção','prod'],['compras','Compras','compra'],['despesas','Despesas','recibo'],['estoque','Estoque','estoque'],['fichas','Fichas técnicas','ficha'],['insumos','Insumos','insumo'],['produtos','Produtos e preços','tag'],['clientes','Clientes','clientes'],['parametros','Parâmetros','config']]],
 ];
 var TIT={}; MENU.forEach(function(s){ s[1].forEach(function(m){ TIT[m[0]]=m[1]; }); });
@@ -331,13 +358,78 @@ function vai(v){ V.view=v; try{localStorage.setItem('sg_view',v);}catch(e){} ren
 var graficos=[];
 function render(){
   graficos.forEach(function(g){g.destroy();}); graficos=[];
-  side(); $('tflt').innerHTML=''; $('tit').textContent=TIT[V.view]||''; (VIEWS[V.view]||VIEWS.resumo)();
+  side(); $('tit').textContent=TIT[V.view]||'';
+  if(!render.manterF||render._v!==V.view) barraFiltros(); render._v=V.view;
+  (VIEWS[V.view]||VIEWS.resumo)();
 }
 function sub(t){ $('tsub').textContent=t||''; }
-function filtros(h){ $('tflt').innerHTML=h; }
-function fMes(todos){ return '<label class="tlbl">Mês<select class="tsel" onchange="V.ym=this.value;render()">'+(todos?'<option value=""'+(V.ym===''?' selected':'')+'>Todos</option>':'')+SG.mesesComDados().slice().reverse().map(function(m){return '<option value="'+m+'"'+(m===V.ym?' selected':'')+'>'+SG.nomeMes(m)+' '+m.slice(0,4)+'</option>';}).join('')+'</select></label>'; }
-function ymOk(d){ return !V.ym||(d||'').slice(0,7)===V.ym; }
-function ymV(){ return V.ym||SG.mesAtual(); }
+function filtros(){}   /* os filtros moram na barra do topo (barraFiltros), por visão */
+
+/* ════════ filtros multisseleção — padrão "casca nova" 6.1 ════════
+   Set vazio = Todos. Desmarcar com tudo marcado = "todos menos este". "só" = só esta opção. */
+var F={per:new Set([SG.mesAtual()]), can:new Set(), sab:new Set(), tam:new Set(), cli:new Set(), sit:new Set(), tip:new Set(), catI:new Set(), catD:new Set(), tipR:new Set(), tipC:new Set(), tipI:new Set()};
+var SIT_L={pago:'Pago', receber:'A receber', entregue:'Entregue', entregar:'A entregar'};
+var FDEF={
+  per:{n:'Período', ic:'cal', itens:function(){ return SG.mesesComDados().slice().reverse(); }, lbl:function(m){ return SG.nomeMes(m)+' '+m.slice(0,4); }},
+  can:{n:'Canal', ic:'vendas', itens:function(){ return D().canais.map(function(c){return c.id;}); }, lbl:function(id){ return nCanal(id); }},
+  sab:{n:'Sabor', ic:'prod', itens:function(){ return D().produtos.slice().sort(function(a,b){return a.nome.localeCompare(b.nome);}).map(function(p){return p.id;}); }, lbl:function(id){ var p=SG.produto(id); return p?p.nome:id; }},
+  tam:{n:'Tamanho', ic:'tam', itens:function(){ return D().tamanhos.map(function(t){return t.id;}); }, lbl:function(id){ return nTam(id); }},
+  cli:{n:'Cliente', ic:'clientes', itens:function(){ return ['__ifood'].concat(D().clientes.slice().sort(function(a,b){return a.nome.localeCompare(b.nome);}).map(function(c){return c.id;})); }, lbl:function(id){ if(id==='__ifood') return 'iFood (repasses)'; var c=SG.cliente(id); return c?c.nome:id; }},
+  sit:{n:'Situação', ic:'ok', itens:function(){ return Object.keys(SIT_L); }, lbl:function(k){ return SIT_L[k]; }},
+  tip:{n:'Tipo', ic:'lista', itens:function(){ return Object.keys(TIPOS_L); }, lbl:function(k){ return TIPOS_L[k][0]; }},
+  catI:{n:'Categoria', ic:'tag', itens:function(){ var o={}; D().insumos.forEach(function(i){o[i.cat]=1;}); return Object.keys(o).sort(); }, lbl:function(x){return x;}},
+  catD:{n:'Categoria', ic:'tag', itens:function(){ var o={}; CATS_DESP.forEach(function(c){o[c]=1;}); D().despesas.forEach(function(d){o[d.categoria]=1;}); return Object.keys(o).sort(); }, lbl:function(x){return x;}},
+  tipR:{n:'Tipo', ic:'ficha', itens:function(){ return Object.keys(TIPOS_R); }, lbl:function(k){ return TIPOS_R[k]; }},
+  tipC:{n:'Tipo de cliente', ic:'clientes', itens:function(){ return ['consumidor','revenda']; }, lbl:function(k){ return k==='revenda'?'Revenda':'Consumidor'; }},
+  tipI:{n:'Tipo', ic:'insumo', itens:function(){ return ['ingrediente','embalagem']; }, lbl:function(k){ return k==='embalagem'?'Embalagem':'Ingrediente'; }},
+};
+var FVIS={
+  resumo:['per','can','sab','tam','cli'], vendasA:['per','can','sab','tam','cli'], dre:['per'], caixa:['per'], simulador:[], cenarios:['tam','can'],
+  lancamentos:['per','tip','can','cli','sit'], pedidos:['per','can','cli','sab','tam','sit'], producao:['per','sab'], compras:['per','tipI','catI'], despesas:['per','catD'],
+  estoque:['sab','tam','tipI','catI'], fichas:['tipR'], insumos:['tipI','catI'], produtos:['can','sab'], clientes:['tipC'], parametros:[]
+};
+function barraFiltros(){
+  var vis=FVIS[V.view]||[];
+  $('tflt').innerHTML=vis.map(function(k){ var n=F[k].size;
+    return '<div class="ms-wrap'+(n?' ativo':'')+'" id="ms-'+k+'"><button class="ms-btn" onclick="toggleMs(\''+k+'\')">'+ic(FDEF[k].ic)+FDEF[k].n+'<span class="ms-cnt" style="display:'+(n?'inline-block':'none')+'">'+n+'</span></button>'
+      + '<div class="ms-panel"><div class="ms-search">'+ic('lupa')+'<input type="text" placeholder="Pesquisar…" oninput="msLista(\''+k+'\')" onclick="event.stopPropagation()"></div><div class="ms-list"></div></div></div>'; }).join('')
+    + (vis.some(function(k){return F[k].size;})?'<button class="ms-limpa" onclick="limpaF()" title="Volta todos os filtros para Todos">Limpar</button>':'');
+}
+function msLista(k){
+  var w=$('ms-'+k); if(!w) return; var q=(w.querySelector('.ms-search input').value||'').toLowerCase(), d=FDEF[k], sel=F[k], todos=sel.size===0;
+  var it=d.itens().filter(function(v){ return d.lbl(v).toLowerCase().indexOf(q)>=0; });
+  w.querySelector('.ms-list').innerHTML=(!q?'<label class="ms-opt all-opt"><input type="checkbox" '+(todos?'checked':'')+' onchange="msTodos(\''+k+'\')"> Todos</label>':'')
+    + it.map(function(v){ return '<label class="ms-opt"><input type="checkbox" '+(todos||sel.has(v)?'checked':'')+' onchange="msMarca(\''+k+'\',\''+esc(v)+'\',this.checked)"><span class="t">'+esc(d.lbl(v))+'</span><span class="ms-only" onclick="event.preventDefault();event.stopPropagation();msSo(\''+k+'\',\''+esc(v)+'\')">só</span></label>'; }).join('')
+    || '<div class="muted" style="padding:8px 10px;font-size:12px">Nada encontrado.</div>';
+}
+function toggleMs(k){
+  document.querySelectorAll('.ms-panel.open').forEach(function(p){ if(p.closest('.ms-wrap').id!=='ms-'+k) p.classList.remove('open'); });
+  var p=document.querySelector('#ms-'+k+' .ms-panel'); p.classList.toggle('open');
+  if(p.classList.contains('open')){ msLista(k); var i=p.querySelector('input[type=text]'); setTimeout(function(){ i.focus(); },50); }
+}
+function msMarca(k,v,on){ var s=F[k];
+  if(s.size===0){ if(!on) FDEF[k].itens().forEach(function(x){ if(x!==v) s.add(x); }); }
+  else { if(on) s.add(v); else s.delete(v); var all=FDEF[k].itens(); if(all.length&&all.every(function(x){return s.has(x);})) s.clear(); }
+  aplicaF(k); }
+function msTodos(k){ F[k].clear(); aplicaF(k); }
+function msSo(k,v){ F[k].clear(); F[k].add(v); aplicaF(k); }
+function aplicaF(k){ msLista(k); var w=$('ms-'+k), n=F[k].size, c=w.querySelector('.ms-cnt'); c.textContent=n; c.style.display=n?'inline-block':'none'; w.classList.toggle('ativo',n>0);
+  var vis=FVIS[V.view]||[], tem=vis.some(function(x){return F[x].size;}), lb=document.querySelector('#tflt .ms-limpa');
+  if(tem&&!lb){ var b=document.createElement('button'); b.className='ms-limpa'; b.textContent='Limpar'; b.onclick=limpaF; $('tflt').appendChild(b); } else if(!tem&&lb) lb.remove();
+  render.manterF=true; render(); render.manterF=false; }
+function limpaF(){ (FVIS[V.view]||[]).forEach(function(k){ F[k].clear(); }); render(); }
+document.addEventListener('click',function(e){ if(!e.target.closest('.ms-wrap')) document.querySelectorAll('.ms-panel.open').forEach(function(p){p.classList.remove('open');}); });
+function fOk(k,v){ return F[k].size===0||F[k].has(v); }
+function prim(k,padrao){ return F[k].size?FDEF[k].itens().filter(function(x){return F[k].has(x);})[0]||padrao:padrao; }
+/* período: lista de meses escolhidos (vazio = todos os meses com dado) e mês de referência (o mais recente) */
+function perMeses(){ return F.per.size?Array.from(F.per).sort():SG.mesesComDados(); }
+function ymOk(d){ return F.per.size===0||F.per.has((d||'').slice(0,7)); }
+function ymV(){ var m=perMeses(); return m.length?m[m.length-1]:SG.mesAtual(); }
+function perTxt(){ var m=perMeses(); if(!F.per.size) return 'todo o período'; if(m.length===1) return SG.nomeMes(m[0])+' de '+m[0].slice(0,4); return m.length+' meses ('+SG.nomeMes(m[0],true)+' a '+SG.nomeMes(m[m.length-1],true)+')'; }
+/* vendas com os filtros de canal, cliente e situação; itens com sabor e tamanho */
+function vOk(v){ return fOk('can',v.canal) && fOk('cli',v.cliente||'__ifood') && (F.sit.size===0||(F.sit.has('pago')&&v.pago)||(F.sit.has('receber')&&!v.pago)||(F.sit.has('entregue')&&v.entregue)||(F.sit.has('entregar')&&!v.entregue)); }
+function itOk(it){ return (F.sab.size===0||F.sab.has(it.produto)) && (F.tam.size===0||F.tam.has(it.tam)); }
+function itFiltro(){ return F.sab.size>0||F.tam.size>0; }
 SG.aoMudar(function(){ if($('modal').classList.contains('on')) { side(); return; } var tw=document.querySelector('.view .twrap'), ts=tw?tw.scrollTop:0, st=$('view').scrollTop; render(); $('view').scrollTop=st; var t2=document.querySelector('.view .twrap'); if(t2) t2.scrollTop=ts; });
 
 /* tabela ordenável (clique no cabeçalho); onRow -> linha clicável abre a ficha */
@@ -379,9 +471,9 @@ function rgba(h,a){ return 'rgba('+parseInt(h.slice(1,3),16)+','+parseInt(h.slic
 function fmtN(v){ var a=Math.abs(v), s=a>=1e5?(a/1e3).toFixed(1).replace('.',',')+'k':Math.round(a).toLocaleString('pt-BR'); return (v<0?'-':'')+s; }
 function fmtR(v){ return Math.abs(v)<100 ? (v<0?'-':'')+'R$ '+Math.abs(v).toFixed(2).replace('.',',') : (v<0?'-':'')+'R$ '+fmtN(Math.abs(v)); }
 function barras(id, o){
-  var t=TM(), foco=function(i){ return o.foco==null||o.foco<0||o.foco===i; };
+  var t=TM(), semF=o.foco==null||o.foco<0||(Array.isArray(o.foco)&&!o.foco.length), foco=function(i){ return semF||(Array.isArray(o.foco)?o.foco.indexOf(i)>=0:o.foco===i); };
   var cores=o.dados.map(function(v,i){ return v==null?t.neutro:(o.cores?o.cores(v,i,t):t.neutro); });
-  var ds=[{type:'bar', label:o.nome||'', data:o.dados, backgroundColor:cores.map(function(c,i){ return rgba(c, o.foco==null||o.foco<0?.65:(foco(i)?.85:.3)); }),
+  var ds=[{type:'bar', label:o.nome||'', data:o.dados, backgroundColor:cores.map(function(c,i){ return rgba(c, semF?.65:(foco(i)?.85:.3)); }),
     borderColor:cores, borderWidth:1, borderRadius:3, barPercentage:.9, categoryPercentage:.92, order:2}];
   if(o.meta) ds.push({type:'line', label:o.nomeMeta||'Meta', data:o.meta, borderColor:t.ref, borderWidth:2, borderDash:[5,3], pointRadius:0, tension:0, order:1});
   var vs=o.dados.concat(o.meta||[]).filter(function(x){return x!=null;}), mx=Math.max.apply(null,vs.concat([0])), mn=Math.min.apply(null,vs.concat([0]));
@@ -413,49 +505,59 @@ var VIEWS={};
 
 /* ════════════════════ VISÕES ════════════════════ */
 
-/* RESUMO GERENCIAL */
+/* RESUMO GERENCIAL — respeita Período, Canal, Sabor, Tamanho e Cliente */
 VIEWS.resumo=function(){
-  var ym=ymV(), r=SG.resumo(ym), ant=SG.resumo(SG.addMes(ym,-1)), cx=SG.caixa(ym), meta=+D().config.metaLucroMes||0;
-  filtros(fMes(false)); sub('Surreal · gelato artesanal · '+SG.nomeMes(ym)+' de '+ym.slice(0,4));
-  function dl(a,b){ if(!b) return '<span class="mut">sem dado no mês anterior</span>'; var d=a/b-1; return '<b class="'+(d>=0?'cg':'cr')+'">'+(d>=0?'▲ ':'▼ ')+SG.pct(Math.abs(d),0)+'</b> vs '+SG.nomeMes(SG.addMes(ym,-1)); }
+  var ms=perMeses(), ym=ymV(), r=resumoF(ms), um=F.per.size===1, ant=um?resumoF([SG.addMes(ym,-1)]):null, meta=+D().config.metaLucroMes||0;
+  var cx={saldo:0}; ms.forEach(function(m){ cx.saldo+=SG.caixa(m).saldo; });
+  var metaP=meta*ms.length;
+  sub('Surreal · gelato artesanal · '+perTxt());
+  function dl(a,b){ if(!ant) return '<span class="mut">'+perTxt()+'</span>'; if(!b) return '<span class="mut">sem dado no mês anterior</span>'; var d=a/b-1; return '<b class="'+(d>=0?'cg':'cr')+'">'+(d>=0?'▲ ':'▼ ')+SG.pct(Math.abs(d),0)+'</b> vs '+SG.nomeMes(SG.addMes(ym,-1)); }
   var top=Object.values(r.porProduto).filter(function(p){return p.qtd;}).sort(function(a,b){return b.qtd-a.qtd;});
   var cli=Object.keys(r.porCliente).map(function(k){return {n:k,v:r.porCliente[k]};}).sort(function(a,b){return b.v-a.v;});
-  var h='<div class="hero"><div><div class="hl">Faturamento do mês</div><div class="hv">'+SG.brl(r.faturamento)+'</div><div class="tsub">'+dl(r.faturamento,ant.faturamento)+'</div></div>'
-    + '<div class="hd"><div>Lucro estimado<b class="'+(r.lucro>=0?'cg':'cr')+'">'+SG.brl(r.lucro)+'</b></div><div>Margem<b class="'+corMg(r.margem)+'">'+SG.pct(r.margem,0)+'</b></div><div>Meta de lucro<b class="'+(r.lucro>=meta?'cg':'cr')+'">'+SG.pct(meta?r.lucro/meta:0,0)+' de '+SG.brl0(meta)+'</b></div><div>Saldo de caixa<b class="'+(cx.saldo>=0?'cg':'cr')+'">'+SG.brl(cx.saldo)+'</b></div></div></div>';
+  var h='<div class="hero"><div><div class="hl">Faturamento · '+perTxt()+'</div><div class="hv">'+SG.brl(r.faturamento)+'</div><div class="tsub">'+dl(r.faturamento,ant&&ant.faturamento)+'</div></div>'
+    + '<div class="hd"><div>Lucro estimado<b class="'+(r.lucro>=0?'cg':'cr')+'">'+SG.brl(r.lucro)+'</b></div><div>Margem<b class="'+corMg(r.margem)+'">'+SG.pct(r.margem,0)+'</b></div><div>Meta de lucro<b class="'+(r.lucro>=metaP?'cg':'cr')+'">'+SG.pct(metaP?r.lucro/metaP:0,0)+' de '+SG.brl0(metaP)+'</b></div><div>Saldo de caixa<b class="'+(cx.saldo>=0?'cg':'cr')+'">'+SG.brl(cx.saldo)+'</b></div></div></div>';
   h+='<div class="kpis">'
-    + kpi('Potes vendidos', r.potes, dl(r.potes,ant.potes))
+    + kpi('Potes vendidos', r.potes, dl(r.potes,ant&&ant.potes))
     + kpi('Ticket médio', SG.brl(r.ticket), r.pedidos+' pedidos · '+(r.aReceber?'<b class="amb">'+SG.brl(r.aReceber)+'</b> a receber':'nada a receber'))
-    + kpi('Sabor mais vendido', top.length?esc(top[0].nome):'—', top.length?top[0].qtd+' potes · '+SG.pct(r.potes?top[0].qtd/r.potes:0,0)+' do mês':'sem vendas', true)
-    + kpi('Melhor cliente', cli.length?esc(cli[0].n):'—', cli.length?SG.brl(cli[0].v)+' · '+cli.length+' clientes compraram no mês':'sem vendas', true)
+    + kpi('Sabor mais vendido', top.length?esc(top[0].nome):'—', top.length?top[0].qtd+' potes · '+SG.pct(r.potes?top[0].qtd/r.potes:0,0)+' dos potes':'sem vendas', true)
+    + kpi('Melhor cliente', cli.length?esc(cli[0].n):'—', cli.length?SG.brl(cli[0].v)+' · '+cli.length+' clientes compraram':'sem vendas', true)
     + '</div>';
-  h+='<div class="gr2">'+gcard('gMes','Lucro · Mensal', ym.slice(0,4)+' · faturamento − custo dos potes − taxas', legQ('Lucro do mês')+legL('Meta de lucro'))
-    + gcard('gTop','Potes por sabor', SG.nomeMes(ym)+' de '+ym.slice(0,4), legQ('Potes vendidos'))+'</div>';
+  h+='<div class="gr2">'+gcard('gMes','Lucro · Mensal', ym.slice(0,4)+' · faturamento − custo dos potes − taxas · com os filtros', legQ('Lucro do mês')+legL('Meta de lucro'))
+    + gcard('gTop','Potes por sabor', perTxt(), legQ('Potes vendidos'))+'</div>';
   $('view').innerHTML=h;
-  var ms=anoMeses(ym), luc=ms.map(function(m){ var x=SG.resumo(m); return x.pedidos?+x.lucro.toFixed(2):null; });
-  barras('gMes',{labels:ms.map(function(m){return SG.MES3[+m.slice(5)-1];}), dados:luc, meta:ms.map(function(){return meta;}), nome:'Lucro', nomeMeta:'Meta', foco:ms.indexOf(ym), cores:function(v,i,t){ return v>=meta?t.verde:t.vermelho; }});
+  var an=anoMeses(ym), luc=an.map(function(m){ var x=resumoF([m]); return x.pedidos?+x.lucro.toFixed(2):null; });
+  barras('gMes',{labels:an.map(function(m){return SG.MES3[+m.slice(5)-1];}), dados:luc, meta:an.map(function(){return meta;}), nome:'Lucro', nomeMeta:'Meta', foco:F.per.size?an.map(function(m,i){return F.per.has(m)?i:-1;}).filter(function(i){return i>=0;}):null, cores:function(v,i,t){ return v>=meta?t.verde:t.vermelho; }});
   barrasH('gTop',{labels:top.map(function(p){return p.nome;}), dados:top.map(function(p){return p.qtd;}), fmt:function(v){return v+' potes';}});
 };
 
 /* VENDAS — análise por dimensão, mês + YTD */
 function linhasVenda(meses){
-  var l=[]; D().vendas.forEach(function(v){ if(meses.indexOf((v.data||'').slice(0,7))<0) return; var tx=SG.taxaCanal(v.canal), tot=v.itens.reduce(function(s,i){return s+i.qtd*i.preco;},0)||1, dsc=+v.desconto||0;
-    v.itens.forEach(function(it){ var rec=it.qtd*it.preco*(1-dsc/tot), repasse=!it.produto&&!it.tam, c=SG.resultadoVenda({canal:v.canal,itens:[it],desconto:0}).custo;
-      l.push({v:v, it:it, rec:rec, custo:c, lucro:rec-c-(repasse?0:rec*tx), potes:it.tam?it.qtd:0}); }); });
+  var l=[]; D().vendas.forEach(function(v){ if(meses.indexOf((v.data||'').slice(0,7))<0||!vOk(v)) return; var tx=SG.taxaCanal(v.canal), tot=v.itens.reduce(function(s,i){return s+i.qtd*i.preco;},0)||1, dsc=+v.desconto||0;
+    v.itens.forEach(function(it){ if(!itOk(it)) return; var rec=it.qtd*it.preco*(1-dsc/tot), repasse=!it.produto&&!it.tam, c=SG.resultadoVenda({canal:v.canal,itens:[it],desconto:0}).custo;
+      l.push({v:v, it:it, rec:rec, custo:c, taxa:repasse?0:rec*tx, lucro:rec-c-(repasse?0:rec*tx), potes:it.tam?it.qtd:0}); }); });
   return l;
+}
+function resumoF(meses){
+  var r={faturamento:0,lucro:0,custo:0,taxa:0,potes:0,pedidos:0,aReceber:0,porProduto:{},porCliente:{}}, ped={};
+  linhasVenda(meses).forEach(function(x){ r.faturamento+=x.rec; r.lucro+=x.lucro; r.custo+=x.custo; r.taxa+=x.taxa; r.potes+=x.potes; if(!ped[x.v.id]){ ped[x.v.id]=1; r.pedidos++; }
+    if(!x.v.pago) r.aReceber+=x.rec;
+    var k=x.it.produto||('?'+(x.it.desc||'')), o=r.porProduto[k]=r.porProduto[k]||{nome:SG.nomeItem(x.it),qtd:0,receita:0}; o.qtd+=x.potes; o.receita+=x.rec;
+    var cn=SG.nomeCliente(x.v); r.porCliente[cn]=(r.porCliente[cn]||0)+x.rec; });
+  r.ticket=r.pedidos?r.faturamento/r.pedidos:0; r.margem=r.faturamento?r.lucro/r.faturamento:0; return r;
 }
 var DIMS={sabor:['Sabor',function(x){return SG.nomeItem(x.it);}], cliente:['Cliente',function(x){return SG.nomeCliente(x.v);}], canal:['Canal',function(x){return nCanal(x.v.canal);}], tamanho:['Tamanho',function(x){return x.it.tam?nTam(x.it.tam):'Sem tamanho (repasse)';}]};
 VIEWS.vendasA=function(){
-  var ym=ymV(), ytd=anoMeses(ym).filter(function(m){return m<=ym;}), dim=DIMS[V.dim];
-  filtros(fMes(false)); sub('Vendas por '+dim[0].toLowerCase()+' · '+SG.nomeMes(ym)+' e acumulado do ano (YTD = janeiro a '+SG.nomeMes(ym)+')');
+  var ym=ymV(), ms=perMeses(), ytd=anoMeses(ym).filter(function(m){return m<=ym;}), dim=DIMS[V.dim];
+  sub('Vendas por '+dim[0].toLowerCase()+' · '+perTxt()+' e acumulado do ano (YTD = janeiro a '+SG.nomeMes(ym)+' de '+ym.slice(0,4)+')');
   var A={}, tm={rec:0,potes:0,lucro:0}, ty={rec:0,potes:0,lucro:0};
   function soma(ls, k, t){ ls.forEach(function(x){ var n=dim[1](x), o=A[n]=A[n]||{n:n,m:{rec:0,potes:0,lucro:0},y:{rec:0,potes:0,lucro:0}}; o[k].rec+=x.rec; o[k].potes+=x.potes; o[k].lucro+=x.lucro; t.rec+=x.rec; t.potes+=x.potes; t.lucro+=x.lucro; }); }
-  soma(linhasVenda([ym]),'m',tm); soma(linhasVenda(ytd),'y',ty);
-  var r=SG.resumo(ym);
-  var h='<div class="hero"><div><div class="hl">Faturamento · '+SG.nomeMes(ym)+'</div><div class="hv">'+SG.brl(r.faturamento)+'</div></div><div class="hd"><div>Potes<b>'+r.potes+'</b></div><div>Pedidos<b>'+r.pedidos+'</b></div><div>Ticket médio<b>'+SG.brl(r.ticket)+'</b></div><div>Lucro<b class="'+(r.lucro>=0?'cg':'cr')+'">'+SG.brl(r.lucro)+'</b></div><div>Faturamento no ano<b>'+SG.brl(ty.rec)+'</b></div></div></div>';
+  soma(linhasVenda(ms),'m',tm); soma(linhasVenda(ytd),'y',ty);
+  var r=resumoF(ms);
+  var h='<div class="hero"><div><div class="hl">Faturamento · '+perTxt()+'</div><div class="hv">'+SG.brl(r.faturamento)+'</div></div><div class="hd"><div>Potes<b>'+r.potes+'</b></div><div>Pedidos<b>'+r.pedidos+'</b></div><div>Ticket médio<b>'+SG.brl(r.ticket)+'</b></div><div>Lucro<b class="'+(r.lucro>=0?'cg':'cr')+'">'+SG.brl(r.lucro)+'</b></div><div>Faturamento no ano<b>'+SG.brl(ty.rec)+'</b></div></div></div>';
   var mg=function(o){ return o.rec?o.lucro/o.rec:null; };
   var cols=[
     {t:dim[0],f:function(o){return esc(o.n);},s:function(o){return o.n;},cls:'conta'},
-    {t:'Potes',f:function(o){return o.m.potes||'—';},v:function(o){return o.m.potes;},cls:'num'},
+    {t:'<span class="ytd">Período</span>Potes',f:function(o){return o.m.potes||'—';},v:function(o){return o.m.potes;},cls:'num'},
     {t:'Faturamento',f:function(o){return o.m.rec?SG.brl(o.m.rec):'—';},v:function(o){return o.m.rec;},cls:'num'},
     {t:'Lucro',f:function(o){return o.m.rec?'<span class="'+(o.m.lucro>=0?'cg':'cr')+'">'+SG.brl(o.m.lucro)+'</span>':'—';},v:function(o){return o.m.lucro;},cls:'num'},
     {t:'Margem',f:function(o){var m=mg(o.m);return m==null?'—':'<span class="'+corMg(m)+'">'+SG.pct(m,0)+'</span>';},v:function(o){return mg(o.m)||-9;},cls:'num'},
@@ -471,37 +573,92 @@ VIEWS.vendasA=function(){
   $('view').innerHTML=h;
 };
 
-/* RESULTADO E CAIXA — mês + YTD */
-VIEWS.financeiro=function(){
-  var ym=ymV(), ano=ym.slice(0,4), ytdM=anoMeses(ym).filter(function(m){return m<=ym;});
-  filtros(fMes(false)); sub('Resultado = vendas − custo dos potes − taxas · Caixa = o que entrou − o que saiu');
-  var A={r:SG.resumo(ym),c:SG.caixa(ym)}, y={r:{faturamento:0,taxa:0,custo:0,lucro:0}, c:{entradas:0,compras:0,despesas:0,saldo:0}};
-  ytdM.forEach(function(m){ var r=SG.resumo(m), c=SG.caixa(m); ['faturamento','taxa','custo','lucro'].forEach(function(k){y.r[k]+=r[k];}); ['entradas','compras','despesas','saldo'].forEach(function(k){y.c[k]+=c[k];}); });
+/* ═════ DRE (competência) × CAIXA ═════
+   DRE: venda entra na data do pedido; insumo só vira custo quando é USADO NA PRODUÇÃO
+        (o que foi comprado e não produzido fica no estoque); kit de entrega quando o pedido é entregue;
+        despesas na data. Valores dos insumos ao custo de hoje (última compra).
+   CAIXA: dinheiro na data em que entra (pedido pago) e sai (compra e despesa). */
+function dreMeses(ms){
+  var o={rec:0,taxa:0,ins:0,emb:0,kit:0,desp:{},despT:0,lotes:0,kg:0,potes:0};
+  var kitU=(D().config.kitEntrega||[]).reduce(function(t,id){return t+SG.custoInsumo(id).valor;},0);
+  D().vendas.forEach(function(v){ if(ms.indexOf((v.data||'').slice(0,7))<0) return; var r=SG.resultadoVenda(v); o.rec+=r.receita; o.taxa+=r.taxa; o.potes+=SG.potesVenda(v);
+    if(v.entregue&&(SG.canal(v.canal)||{}).kitEntrega&&v.itens.some(function(i){return i.tam;})) o.kit+=kitU; });
+  D().producoes.forEach(function(pr){ if(ms.indexOf((pr.data||'').slice(0,7))<0) return; o.lotes++; o.kg+=+pr.kg||0; var c=SG.consumoProducao(pr);
+    Object.keys(c).forEach(function(id){ var i=SG.insumo(id), val=c[id]*SG.custoInsumo(id).valor; if(i&&i.tipo==='embalagem') o.emb+=val; else o.ins+=val; }); });
+  D().despesas.forEach(function(d){ if(ms.indexOf((d.data||'').slice(0,7))<0) return; o.desp[d.categoria]=(o.desp[d.categoria]||0)+(+d.valor||0); o.despT+=+d.valor||0; });
+  o.liq=o.rec-o.taxa; o.cprod=o.ins+o.emb+o.kit; o.bruto=o.liq-o.cprod; o.res=o.bruto-o.despT; return o;
+}
+function caixaMeses(ms){
+  var o={ent:0,comp:0,compI:0,compE:0,desp:{},despT:0,receber:0};
+  D().vendas.forEach(function(v){ if(ms.indexOf((v.data||'').slice(0,7))<0) return; var t=SG.totalVenda(v); if(v.pago) o.ent+=t; else o.receber+=t; });
+  D().compras.forEach(function(c){ if(ms.indexOf((c.data||'').slice(0,7))<0) return; var i=SG.insumo(c.insumo); o.comp+=+c.valor||0; if(i&&i.tipo==='embalagem') o.compE+=+c.valor||0; else o.compI+=+c.valor||0; });
+  D().despesas.forEach(function(d){ if(ms.indexOf((d.data||'').slice(0,7))<0) return; o.desp[d.categoria]=(o.desp[d.categoria]||0)+(+d.valor||0); o.despT+=+d.valor||0; });
+  o.sai=o.comp+o.despT; o.saldo=o.ent-o.sai; return o;
+}
+function tabelaPY(linhas, A, Y, rotA){
+  return '<table class="dre"><thead><tr><th>Linha</th><th class="num">'+rotA+'</th><th class="num">% receita</th><th class="num sep-l"><span class="ytd">YTD</span>Acumulado</th><th class="num">% receita</th></tr></thead><tbody>'
+    + linhas.map(function(l){ var a=l.f(A), y=l.f(Y), ra=l.base?l.base(A):A.rec, ry=l.base?l.base(Y):Y.rec;
+      var fm=function(v){ return v==null?'—':l.cor?'<span class="'+(v>=0?'cg':'cr')+'">'+SG.brl(v)+'</span>':SG.brl(v); };
+      var pc=function(v,r){ return v==null||!r?'—':l.cor?'<span class="'+corMg(v/r)+'">'+SG.pct(v/r,1)+'</span>':SG.pct(Math.abs(v)/r,1); };
+      return '<tr'+(l.tot?' class="total" style="position:static"':'')+'><td class="conta"'+(l.sub?' style="padding-left:28px;font-weight:500;color:var(--txt2)"':'')+'>'+l.n+'</td><td class="num">'+fm(a)+'</td><td class="num">'+(l.semPct?'':pc(a,ra))+'</td><td class="num sep-l">'+fm(y)+'</td><td class="num">'+(l.semPct?'':pc(y,ry))+'</td></tr>'; }).join('')
+    + '</tbody></table>';
+}
+function rotPer(){ return F.per.size===1?SG.nomeMes(ymV()):'Período'; }
+
+/* DRE — competência */
+VIEWS.dre=function(){
+  var ms=perMeses(), ym=ymV(), ano=ym.slice(0,4), ytd=anoMeses(ym).filter(function(m){return m<=ym;});
+  var A=dreMeses(ms), Y=dreMeses(ytd);
+  sub('Competência: venda na data do pedido · insumo vira custo só quando é usado na produção · '+perTxt());
+  var cats={}; [A,Y].forEach(function(o){ Object.keys(o.desp).forEach(function(k){cats[k]=1;}); });
   var L=[
-    ['Faturamento',function(z){return z.r.faturamento;},1],
-    ['(−) Taxas de canal',function(z){return -z.r.taxa;}],
-    ['(−) Custo dos potes vendidos',function(z){return -z.r.custo;}],
-    ['= Lucro bruto',function(z){return z.r.lucro;},1,1],
-    ['Margem bruta',function(z){return z.r.faturamento?z.r.lucro/z.r.faturamento:null;},0,0,1],
-    ['Entradas de caixa (pedidos pagos)',function(z){return z.c.entradas;}],
-    ['(−) Compras de insumos',function(z){return -z.c.compras;}],
-    ['(−) Despesas',function(z){return -z.c.despesas;}],
-    ['= Saldo de caixa',function(z){return z.c.saldo;},1,1],
-  ];
-  var fm=function(l,v){ if(v==null) return '—'; if(l[4]) return '<span class="'+corMg(v)+'">'+SG.pct(v,0)+'</span>'; return l[3]?'<span class="'+(v>=0?'cg':'cr')+'">'+SG.brl(v)+'</span>':SG.brl(v); };
-  var h='<div class="hero"><div><div class="hl">Saldo de caixa · '+SG.nomeMes(ym)+'</div><div class="hv '+(A.c.saldo>=0?'cg':'cr')+'">'+SG.brl(A.c.saldo)+'</div></div>'
-    + '<div class="hd"><div>Entradas<b>'+SG.brl(A.c.entradas)+'</b></div><div>Saídas<b>'+SG.brl(A.c.compras+A.c.despesas)+'</b></div><div>Lucro bruto<b class="'+(A.r.lucro>=0?'cg':'cr')+'">'+SG.brl(A.r.lucro)+'</b></div><div>Saldo no ano<b class="'+(y.c.saldo>=0?'cg':'cr')+'">'+SG.brl(y.c.saldo)+'</b></div></div></div>';
-  h+='<div class="split"><div class="card tsec"><div class="thead-row"><div class="tsub">YTD = janeiro a '+SG.nomeMes(ym)+' de '+ano+'</div></div><div class="twrap"><table class="dre"><thead><tr><th>Linha</th><th class="num">'+SG.nomeMes(ym)+'</th><th class="num sep-l"><span class="ytd">YTD</span>Acumulado</th></tr></thead><tbody>'
-    + L.map(function(l){ return '<tr'+(l[2]?' class="total" style="position:static"':'')+'><td class="conta">'+l[0]+'</td><td class="num">'+fm(l,l[1](A))+'</td><td class="num sep-l">'+fm(l,l[1](y))+'</td></tr>'; }).join('')
-    + '</tbody></table></div><div class="nota">Custo dos potes = ficha técnica a preço de hoje + embalagem. A diferença entre lucro e caixa é insumo comprado e ainda não vendido (fica no estoque).</div></div>';
-  var cats={}; ytdM.forEach(function(m){ var c=SG.caixa(m).categorias; Object.keys(c).forEach(function(k){cats[k]=(cats[k]||0)+c[k];}); });
-  var ck=Object.keys(cats).sort(function(a,b){return cats[b]-cats[a];});
-  h+='<div class="pilha">'+gcard('gCx','Saldo de caixa · Mensal', ano+' · entradas − compras − despesas', legQ('Saldo do mês'))
-    + gcard('gCat','Para onde foi o dinheiro', 'saídas de janeiro a '+SG.nomeMes(ym), legQ('R$'))+'</div></div>';
+    {n:'Receita bruta (pedidos)', f:function(o){return o.rec;}, tot:1},
+    {n:'(−) Taxas de canal e impostos', f:function(o){return -o.taxa;}},
+    {n:'= Receita líquida', f:function(o){return o.liq;}, tot:1},
+    {n:'(−) Insumos usados na produção', f:function(o){return -o.ins;}},
+    {n:'(−) Embalagens usadas (pote, lacre, adesivo)', f:function(o){return -o.emb;}},
+    {n:'(−) Kit de entrega (pedidos entregues)', f:function(o){return -o.kit;}},
+    {n:'= Lucro bruto', f:function(o){return o.bruto;}, tot:1, cor:1},
+    {n:'(−) Despesas', f:function(o){return -o.despT;}},
+  ].concat(Object.keys(cats).sort().map(function(k){ return {n:k, f:function(o){return -(o.desp[k]||0);}, sub:1}; }))
+   .concat([{n:'= Resultado do período', f:function(o){return o.res;}, tot:1, cor:1}]);
+  var h='<div class="hero"><div><div class="hl">Resultado · '+perTxt()+'</div><div class="hv '+(A.res>=0?'cg':'cr')+'">'+SG.brl(A.res)+'</div><div class="tsub">'+A.lotes+' lotes produzidos · '+SG.num(A.kg,1)+' kg · '+A.potes+' potes vendidos</div></div>'
+    + '<div class="hd"><div>Receita<b>'+SG.brl(A.rec)+'</b></div><div>Lucro bruto<b class="'+(A.bruto>=0?'cg':'cr')+'">'+SG.brl(A.bruto)+'</b></div><div>Margem líquida<b class="'+corMg(A.rec?A.res/A.rec:null)+'">'+(A.rec?SG.pct(A.res/A.rec,1):'—')+'</b></div><div>Resultado no ano<b class="'+(Y.res>=0?'cg':'cr')+'">'+SG.brl(Y.res)+'</b></div></div></div>';
+  h+='<div class="split"><div class="card tsec"><div class="thead-row"><div class="ttit">DRE</div><div class="tsub">YTD = janeiro a '+SG.nomeMes(ym)+' de '+ano+'</div></div><div class="twrap">'+tabelaPY(L,A,Y,rotPer())+'</div>'
+    + '<div class="nota">Compra de insumo NÃO entra aqui: só vira custo quando o insumo é usado num lote de produção (valor ao custo da última compra). Meses sem produção lançada mostram custo zero — o diário de produção da planilha começa em setembro.</div></div>';
+  h+='<div class="pilha">'+gcard('gDre','Resultado · Mensal', ano+' · competência', legQ('Resultado do mês'))+gcard('gDreC','Para onde foi a receita', perTxt(), legQ('R$'))+'</div></div>';
   $('view').innerHTML=h;
-  var ms=anoMeses(ym), sal=ms.map(function(m){ var c=SG.caixa(m); return (c.entradas||c.saidas)?+c.saldo.toFixed(2):null; });
-  barras('gCx',{labels:ms.map(function(m){return SG.MES3[+m.slice(5)-1];}), dados:sal, nome:'Saldo', foco:ms.indexOf(ym), cores:function(v,i,t){return v>=0?t.verde:t.vermelho;}});
-  barrasH('gCat',{labels:ck, dados:ck.map(function(k){return +cats[k].toFixed(2);})});
+  var an=anoMeses(ym), res=an.map(function(m){ var o=dreMeses([m]); return (o.rec||o.cprod||o.despT)?+o.res.toFixed(2):null; });
+  barras('gDre',{labels:an.map(function(m){return SG.MES3[+m.slice(5)-1];}), dados:res, nome:'Resultado', foco:F.per.size?an.map(function(m,i){return F.per.has(m)?i:-1;}).filter(function(i){return i>=0;}):null, cores:function(v,i,t){return v>=0?t.verde:t.vermelho;}});
+  var comp=[['Insumos',A.ins],['Embalagens',A.emb],['Kit de entrega',A.kit],['Taxas',A.taxa]].concat(Object.keys(A.desp).map(function(k){return [k,A.desp[k]];})).concat([['Resultado',A.res]]).filter(function(x){return Math.abs(x[1])>0.004;});
+  barrasH('gDreC',{labels:comp.map(function(x){return x[0];}), dados:comp.map(function(x){return +x[1].toFixed(2);}), cores:function(v,i,t){ return comp[i][0]==='Resultado'?(v>=0?t.verde:t.vermelho):t.neutro; }});
+};
+
+/* CAIXA — o dinheiro na data em que entra e sai */
+VIEWS.caixa=function(){
+  var ms=perMeses(), ym=ymV(), ano=ym.slice(0,4), ytd=anoMeses(ym).filter(function(m){return m<=ym;});
+  var A=caixaMeses(ms), Y=caixaMeses(ytd);
+  sub('Caixa: entra quando o pedido é pago · sai na compra de insumo e na despesa · '+perTxt());
+  var cats={}; [A,Y].forEach(function(o){ Object.keys(o.desp).forEach(function(k){cats[k]=1;}); });
+  var base=function(o){return o.ent;};
+  var L=[
+    {n:'Entradas (pedidos pagos)', f:function(o){return o.ent;}, tot:1, base:base},
+    {n:'(−) Compras de ingredientes', f:function(o){return -o.compI;}, base:base},
+    {n:'(−) Compras de embalagens', f:function(o){return -o.compE;}, base:base},
+    {n:'(−) Despesas', f:function(o){return -o.despT;}, base:base},
+  ].concat(Object.keys(cats).sort().map(function(k){ return {n:k, f:function(o){return -(o.desp[k]||0);}, sub:1, base:base}; }))
+   .concat([{n:'= Saldo de caixa', f:function(o){return o.saldo;}, tot:1, cor:1, base:base}, {n:'A receber (pedidos não pagos)', f:function(o){return o.receber;}, semPct:1}]);
+  var acum=0; anoMeses(ym).forEach(function(m){ if(m<=ym) acum+=caixaMeses([m]).saldo; });
+  var h='<div class="hero"><div><div class="hl">Saldo de caixa · '+perTxt()+'</div><div class="hv '+(A.saldo>=0?'cg':'cr')+'">'+SG.brl(A.saldo)+'</div><div class="tsub">entrou '+SG.brl(A.ent)+' · saiu '+SG.brl(A.sai)+'</div></div>'
+    + '<div class="hd"><div>Entradas<b>'+SG.brl(A.ent)+'</b></div><div>Saídas<b>'+SG.brl(A.sai)+'</b></div><div>A receber<b class="'+(A.receber?'amb':'')+'">'+SG.brl(A.receber)+'</b></div><div>Saldo acumulado no ano<b class="'+(acum>=0?'cg':'cr')+'">'+SG.brl(acum)+'</b></div></div></div>';
+  h+='<div class="split"><div class="card tsec"><div class="thead-row"><div class="ttit">Fluxo de caixa</div><div class="tsub">YTD = janeiro a '+SG.nomeMes(ym)+' de '+ano+' · % sobre as entradas</div></div><div class="twrap">'+tabelaPY(L,A,Y,rotPer())+'</div>'
+    + '<div class="nota">No caixa a compra de insumo sai no dia da compra, mesmo que ainda não tenha sido usada — por isso o caixa e o DRE do mesmo mês são diferentes.</div></div>';
+  h+='<div class="pilha">'+gcard('gCx','Saldo de caixa · Mensal', ano+' · entradas − compras − despesas', legQ('Saldo do mês'))+gcard('gCat','Para onde foi o dinheiro', perTxt(), legQ('R$'))+'</div></div>';
+  $('view').innerHTML=h;
+  var an=anoMeses(ym), sal=an.map(function(m){ var c=caixaMeses([m]); return (c.ent||c.sai)?+c.saldo.toFixed(2):null; });
+  barras('gCx',{labels:an.map(function(m){return SG.MES3[+m.slice(5)-1];}), dados:sal, nome:'Saldo', foco:F.per.size?an.map(function(m,i){return F.per.has(m)?i:-1;}).filter(function(i){return i>=0;}):null, cores:function(v,i,t){return v>=0?t.verde:t.vermelho;}});
+  var cs=[['Ingredientes',A.compI],['Embalagens',A.compE]].concat(Object.keys(A.desp).map(function(k){return [k,A.desp[k]];})).filter(function(x){return x[1]>0.004;}).sort(function(a,b){return b[1]-a[1];});
+  barrasH('gCat',{labels:cs.map(function(x){return x[0];}), dados:cs.map(function(x){return +x[1].toFixed(2);})});
 };
 
 /* SIMULADOR DE PREÇO — "quero esta margem" (sai o preço) ou "quero este preço" (sai a margem) */
@@ -597,7 +754,7 @@ function simCarregaMes(){ var ym=SG.mesAtual(), m={};
 /* SIMULAR TODOS OS SABORES — um preço para todos e/ou alta de insumos */
 function ctxCen(){ var v=Object.assign({},SIM.var); if(SIM.varTodos) v['*']=SIM.varTodos; return Object.keys(v).length?{var:v}:null; }
 VIEWS.cenarios=function(){
-  filtros(simFiltros(false)); sub('Teste um preço único para todos os sabores e/ou uma alta (ou queda) no preço dos insumos · nada é salvo');
+  SIM.tam=prim('tam','P'); SIM.canal=prim('can','direto'); sub('Tamanho e canal pelos filtros do topo (vale o primeiro marcado) · teste um preço único para todos os sabores e/ou uma alta (ou queda) no preço dos insumos · nada é salvo');
   var ctx=ctxCen(), alvo=+D().config.margemAlvo, ins=D().insumos.slice().sort(function(a,b){return a.nome.localeCompare(b.nome);});
   var tags=Object.keys(SIM.var).map(function(k){var i=SG.insumo(k);return '<button class="dimb on" title="Remover" onclick="delete SIM.var[\''+k+'\'];render()">'+esc(i?i.nome:k)+' '+(SIM.var[k]>0?'+':'')+SG.pct(SIM.var[k],0)+' ×</button>';}).join(' ');
   var h='<div class="card" style="padding:12px 16px;flex:0 0 auto"><div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap">'
@@ -639,10 +796,9 @@ function todosLanc(){
   return l;
 }
 VIEWS.lancamentos=function(){
-  var ft=V.fTipo||'';
-  filtros(fMes(true)+'<label class="tlbl">Tipo<select class="tsel" onchange="V.fTipo=this.value;render()"><option value="">Todos</option>'+Object.keys(TIPOS_L).map(function(k){return '<option value="'+k+'"'+(k===ft?' selected':'')+'>'+TIPOS_L[k][0]+'</option>';}).join('')+'</select></label>');
+  var ft='';
   sub('Tudo o que foi lançado: pedidos, produção, compras, despesas e contagens');
-  var ls=todosLanc().filter(function(x){ return ymOk(x.data)&&(!ft||x.tipo===ft)&&qOk('lan',[x.desc,x.det,TIPOS_L[x.tipo][0]]); });
+  var soPed=F.can.size||F.cli.size||F.sit.size, ls=todosLanc().filter(function(x){ return ymOk(x.data)&&fOk('tip',x.tipo)&&(!soPed||(x.tipo==='pedido'&&vOk(D().vendas.filter(function(v){return v.id===x.id;})[0])))&&qOk('lan',[x.desc,x.det,TIPOS_L[x.tipo][0]]); });
   var ent=0, sai=0; ls.forEach(function(x){ if(x.sinal>0) ent+=x.valor; if(x.sinal<0) sai+=x.valor; });
   if(!ORD.tLan) ORD.tLan={i:0,d:-1};
   $('view').innerHTML=cadastro(ls.length+' lançamentos · entradas '+SG.brl(ent)+' · saídas '+SG.brl(sai)+' · clique para ver e editar', busca('lan','Cliente, sabor, insumo…'), btNovo('Novo lançamento','novoLanc()'),
@@ -674,9 +830,7 @@ function stPed(v){ return (v.entregue?'<span class="st vd">Entregue</span>':'<sp
 function stPag(v){ return (v.pago?'<span class="st vd">Pago</span>':'<span class="st vm">A receber</span>'); }
 function resumoItens(v){ if(v.itens.length===1){ var i=v.itens[0]; return i.qtd+'× '+SG.nomeItem(i)+(i.tam?' '+i.tam:''); } return SG.potesVenda(v)+' potes · '+v.itens.length+' sabores'; }
 VIEWS.pedidos=function(){
-  filtros(fMes(true)+'<label class="tlbl">Situação<select class="tsel" onchange="V.fPed=this.value;render()">'+[['todos','Todas'],['abertos','Em aberto'],['receber','A receber'],['entregar','A entregar']].map(function(o){return '<option value="'+o[0]+'"'+(o[0]===V.fPed?' selected':'')+'>'+o[1]+'</option>';}).join('')+'</select></label>'
-    +'<label class="tlbl">Canal<select class="tsel" onchange="V.fCan=this.value;render()"><option value="">Todos</option>'+D().canais.map(function(c){return '<option value="'+c.id+'"'+(c.id===V.fCan?' selected':'')+'>'+esc(c.nome)+'</option>';}).join('')+'</select></label>');
-  var f=V.fPed, ls=D().vendas.filter(function(v){ return ymOk(v.data)&&(!V.fCan||v.canal===V.fCan)&&(f==='todos'||(f==='abertos'&&(!v.pago||!v.entregue))||(f==='receber'&&!v.pago)||(f==='entregar'&&!v.entregue))&&qOk('ped',[SG.nomeCliente(v),resumoItens(v)]); });
+  var ls=D().vendas.filter(function(v){ return ymOk(v.data)&&vOk(v)&&(!itFiltro()||v.itens.some(itOk))&&qOk('ped',[SG.nomeCliente(v),resumoItens(v)]); });
   var tot=ls.reduce(function(s,v){return s+SG.totalVenda(v);},0), pt=ls.reduce(function(s,v){return s+SG.potesVenda(v);},0);
   sub('Lançamento e acompanhamento de pedidos');
   if(!ORD.tPed) ORD.tPed={i:0,d:-1};
@@ -741,8 +895,8 @@ function salvaPedido(){
 
 /* PRODUÇÃO */
 VIEWS.producao=function(){
-  filtros(fMes(true)); sub('Lotes produzidos · cada lote baixa os insumos da ficha técnica e soma os potes no estoque');
-  var ls=D().producoes.filter(function(p){ var r=SG.receita(p.receita); return ymOk(p.data)&&qOk('prd',[r&&r.nome]); });
+  sub('Lotes produzidos · cada lote baixa os insumos da ficha técnica e soma os potes no estoque');
+  var ls=D().producoes.filter(function(p){ var r=SG.receita(p.receita); return ymOk(p.data)&&(F.sab.size===0||F.sab.has(p.produto))&&qOk('prd',[r&&r.nome]); });
   var tk=0,tp=0; ls.forEach(function(p){ tk+=+p.kg||0; Object.keys(p.potes||{}).forEach(function(k){tp+=p.potes[k];}); });
   if(!ORD.tPrd) ORD.tPrd={i:0,d:-1};
   $('view').innerHTML=cadastro(ls.length+' lotes · '+SG.num(tk,1)+' kg de mistura · '+tp+' potes envasados · clique no lote para ver e editar', busca('prd','Sabor…'), btNovo('Nova produção','abrirProducao(null)'),
@@ -785,8 +939,8 @@ function salvaProducao(){ PR.data=$('prData').value||SG.hoje(); if(!PR.kg){ $('p
 
 /* COMPRAS */
 VIEWS.compras=function(){
-  filtros(fMes(true)); sub('Compras de insumos e embalagens · a última compra vira o custo do insumo');
-  var ls=D().compras.filter(function(c){ var i=SG.insumo(c.insumo); return ymOk(c.data)&&qOk('com',[i&&i.nome,c.desc]); });
+  sub('Compras de insumos e embalagens · a última compra vira o custo do insumo');
+  var ls=D().compras.filter(function(c){ var i=SG.insumo(c.insumo); return ymOk(c.data)&&(!i||(fOk('tipI',i.tipo)&&fOk('catI',i.cat)))&&qOk('com',[i&&i.nome,c.desc]); });
   if(!ORD.tCom) ORD.tCom={i:0,d:-1};
   $('view').innerHTML=cadastro(ls.length+' compras · '+SG.brl(ls.reduce(function(s,c){return s+(+c.valor||0);},0))+' · clique na compra para ver e editar', busca('com','Insumo…'), btNovo('Nova compra','abrirCompra(null)'),
     tabela('tCom',[
@@ -819,8 +973,8 @@ function salvaCompra(id){ var q=numIn($('coQtd').value), v=numIn($('coVal').valu
 /* DESPESAS */
 var CATS_DESP=['Aluguel','Energia','Água','Gás','Marketing','Embalagens','Equipamentos','Taxas','Outros'];
 VIEWS.despesas=function(){
-  filtros(fMes(true)); sub('Gastos que não são insumo: marketing, contas, taxas, equipamentos');
-  var ls=D().despesas.filter(function(d){ return ymOk(d.data)&&qOk('des',[d.desc,d.categoria]); });
+  sub('Gastos que não são insumo: marketing, contas, taxas, equipamentos');
+  var ls=D().despesas.filter(function(d){ return ymOk(d.data)&&fOk('catD',d.categoria)&&qOk('des',[d.desc,d.categoria]); });
   if(!ORD.tDes) ORD.tDes={i:0,d:-1};
   $('view').innerHTML=cadastro(ls.length+' despesas · '+SG.brl(ls.reduce(function(s,d){return s+(+d.valor||0);},0))+' · clique na despesa para ver e editar', busca('des','Descrição ou categoria…'), btNovo('Nova despesa','abrirDespesa(null)'),
     tabela('tDes',[
@@ -850,11 +1004,11 @@ VIEWS.estoque=function(){
   var bt='<button class="btn pri sm" onclick="abrirContagem()">'+ic('mais')+'Nova contagem</button>';
   var h=e.iniciado?'':'<div class="av2">O histórico da planilha não diz quanto há hoje no estoque. Faça uma contagem uma vez: a partir dela o saldo anda sozinho.</div>';
   if(V.est==='potes'){
-    var ls=SG.produtosAtivos().filter(function(p){return qOk('est',[p.nome]);}).map(function(p){ var o={p:p,t:0}; ts.forEach(function(t){ o[t.id]=e.potes[p.id+'|'+t.id]; o.t+=o[t.id]||0; }); return o; });
+    var ts=ts.filter(function(t){return fOk('tam',t.id);}); var ls=SG.produtosAtivos().filter(function(p){return fOk('sab',p.id)&&qOk('est',[p.nome]);}).map(function(p){ var o={p:p,t:0}; ts.forEach(function(t){ o[t.id]=e.potes[p.id+'|'+t.id]; o.t+=o[t.id]||0; }); return o; });
     var tot=['Total']; ts.forEach(function(t){ tot.push(ls.reduce(function(s,o){return s+(o[t.id]||0);},0)); }); tot.push(ls.reduce(function(s,o){return s+o.t;},0));
     h+=cadastro('Potes prontos para vender por sabor e tamanho · clique no sabor para acertar a contagem', busca('est','Sabor…'), bt, tabela('tEstP',[{t:'Sabor',f:function(o){return esc(o.p.nome);},s:function(o){return o.p.nome;},cls:'conta'}].concat(ts.map(function(t){ return {t:t.nome+' · '+t.ml+' ml',f:function(o){var q=o[t.id];return q==null?'<span class="muted">—</span>':'<span class="'+(q<0?'cr':'')+'">'+q+'</span>';},v:function(o){return o[t.id]||0;},cls:'num'}; })).concat([{t:'Total',f:function(o){return '<b style="color:var(--txt)">'+o.t+'</b>';},v:function(o){return o.t;},cls:'num'}]), ls, tot, function(o){ return "abrirAjuste('pote','"+o.p.id+"')"; }), dims);
   } else {
-    var li=D().insumos.filter(function(i){return qOk('est',[i.nome,i.cat]);});
+    var li=D().insumos.filter(function(i){return fOk('tipI',i.tipo)&&fOk('catI',i.cat)&&qOk('est',[i.nome,i.cat]);});
     h+=cadastro('Saldo de insumos e embalagens · clique no insumo para acertar a contagem e o mínimo', busca('est','Insumo…'), bt, tabela('tEstI',[
       {t:'Insumo',f:function(i){return esc(i.nome);},s:function(i){return i.nome;},cls:'conta'},
       {t:'Categoria',f:function(i){return esc(i.cat);},s:function(i){return i.cat;}},
@@ -893,7 +1047,7 @@ function salvaContagem(){
 var TIPOS_R={sabor:'Sabor', cobertura:'Cobertura / calda', base:'Base'};
 VIEWS.fichas=function(){
   sub('Receitas em gramas por kg · custo com o preço da última compra de cada insumo');
-  var ls=D().receitas.filter(function(r){return qOk('fic',[r.nome,TIPOS_R[r.tipo]]);});
+  var ls=D().receitas.filter(function(r){return fOk('tipR',r.tipo)&&qOk('fic',[r.nome,TIPOS_R[r.tipo]]);});
   function usos(r){ return D().produtos.filter(function(p){return p.receita===r.id||p.cobertura===r.id;}).length + D().receitas.filter(function(x){return x.itens.some(function(i){return i.receita===r.id;});}).length; }
   $('view').innerHTML=cadastro(ls.length+' receitas · clique na receita para ver e editar os ingredientes', busca('fic','Receita…'), btNovo('Nova receita','abrirReceita(null)'),
     tabela('tFic',[
@@ -939,7 +1093,7 @@ function apagaReceita(id){ var us=D().produtos.filter(function(p){return p.recei
 /* INSUMOS */
 VIEWS.insumos=function(){
   sub('Ingredientes e embalagens · o custo usado é o da última compra; sem compra, vale o custo manual');
-  var e=SG.estoque(), ls=D().insumos.filter(function(i){return qOk('ins',[i.nome,i.cat]);});
+  var e=SG.estoque(), ls=D().insumos.filter(function(i){return fOk('tipI',i.tipo)&&fOk('catI',i.cat)&&qOk('ins',[i.nome,i.cat]);});
   function usos(i){ return D().receitas.filter(function(r){return r.itens.some(function(x){return x.insumo===i.id;});}).length; }
   $('view').innerHTML=cadastro(ls.length+' insumos · clique no insumo para ver e editar', busca('ins','Insumo ou categoria…'), btNovo('Novo insumo','abrirInsumo(null)'),
     tabela('tIns',[
@@ -973,10 +1127,10 @@ function apagaInsumo(id){ var us=D().receitas.filter(function(r){return r.itens.
 
 /* PRODUTOS E PREÇOS */
 VIEWS.produtos=function(){
-  var alvo=+D().config.margemAlvo, cid=V.pc||'direto';
-  filtros('<label class="tlbl">Canal na tabela<select class="tsel" onchange="V.pc=this.value;render()">'+D().canais.map(function(c){return '<option value="'+c.id+'"'+(c.id===cid?' selected':'')+'>'+esc(c.nome)+'</option>';}).join('')+'</select></label>');
-  sub('Cardápio: sabor = receita base + cobertura · preço por canal e tamanho · margem colorida pela meta de '+SG.pct(alvo,0));
-  var ls=D().produtos.filter(function(p){return qOk('pro',[p.nome]);}), ts=D().tamanhos;
+  var alvo=+D().config.margemAlvo, cid=prim('can','direto');
+  /* canal da tabela = primeiro marcado no filtro Canal */
+  sub('Cardápio: sabor = receita base + cobertura · preços do canal '+nCanal(cid)+' (filtro Canal) · margem colorida pela meta de '+SG.pct(alvo,0));
+  var ls=D().produtos.filter(function(p){return fOk('sab',p.id)&&qOk('pro',[p.nome]);}), ts=D().tamanhos;
   var cols=[{t:'Produto',f:function(p){return esc(p.nome);},s:function(p){return p.nome;},cls:'conta'},
     {t:'Situação',f:function(p){return p.ativo===false?'<span class="st cz">inativo</span>':'<span class="st vd">no cardápio</span>';},s:function(p){return p.ativo===false?'1':'0';}}];
   ts.forEach(function(t,k){ cols.push({t:(k===0?'<span class="ytd">'+esc(nCanal(cid).replace(' (mercadinhos)',''))+'</span>':'')+t.nome+' · '+t.ml, f:function(p){ var x=SG.precificar(p.id,t.id,cid); if(x.tabela==null) return '<span class="muted">—</span>'; return '<b style="color:var(--txt)">'+SG.brl(x.tabela)+'</b> '+(x.custo.semFicha?'':'<span class="'+corMg(x.margem)+'">'+SG.pct(x.margem,0)+'</span>'); }, v:function(p){ return SG.precoTabela(p.id,cid,t.id)||0; }, cls:'num'+(k===0?' sep-l':'')}); });
@@ -1020,7 +1174,7 @@ VIEWS.clientes=function(){
   sub('Todos os clientes · ranking por faturamento total');
   var agg={}; D().vendas.forEach(function(v){ if(!v.cliente) return; var a=agg[v.cliente]=agg[v.cliente]||{n:0,t:0,p:0,u:null}; a.n++; a.t+=SG.totalVenda(v); a.p+=SG.potesVenda(v); if(!a.u||v.data>a.u) a.u=v.data; });
   var hj=new Date(SG.hoje()), dias=function(d){ return d?Math.round((hj-new Date(d))/864e5):null; }, g=function(c){return agg[c.id]||{n:0,t:0,p:0,u:null};};
-  var ls=D().clientes.filter(function(c){return qOk('cli',[c.nome,c.fone]);});
+  var ls=D().clientes.filter(function(c){return fOk('tipC',c.tipo||'consumidor')&&qOk('cli',[c.nome,c.fone]);});
   if(!ORD.tCli) ORD.tCli={i:5,d:-1};
   $('view').innerHTML=cadastro(D().clientes.length+' clientes · '+D().clientes.filter(function(c){return c.tipo==='revenda';}).length+' revendas · clique no cliente para ver e editar', busca('cli','Nome ou telefone…'), btNovo('Novo cliente','abrirCliente(null)'),
     tabela('tCli',[
