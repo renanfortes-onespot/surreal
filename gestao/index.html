@@ -10,12 +10,12 @@
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.SG_BUILD='20261016194944';</script>
-<script src="../shared/versao.js?v=20261016194944"></script>
-<script src="../shared/config.js?v=20261016194944"></script>
-<script src="../shared/seed.js?v=20261016194944"></script>
-<script src="../shared/core.js?v=20261016194944"></script>
-<script src="../shared/remote.js?v=20261016194944"></script>
+<script>window.SG_BUILD='20261016195554';</script>
+<script src="../shared/versao.js?v=20261016195554"></script>
+<script src="../shared/config.js?v=20261016195554"></script>
+<script src="../shared/seed.js?v=20261016195554"></script>
+<script src="../shared/core.js?v=20261016195554"></script>
+<script src="../shared/remote.js?v=20261016195554"></script>
 <style>
 /* ============================================================
    SURREAL — Painel de gestão (PC). OneSpot · 16/10/2026
@@ -390,7 +390,7 @@ var FDEF={
   tipI:{n:'Tipo', ic:'insumo', itens:function(){ return ['ingrediente','embalagem']; }, lbl:function(k){ return k==='embalagem'?'Embalagem':'Ingrediente'; }},
 };
 var FVIS={
-  resumo:['per','can','sab','tam','cli'], vendasA:['per','can','sab','tam','cli'], dre:['per'], caixa:['per'], simulador:[], cenarios:['tam','can'],
+  resumo:['per','can','sab','tam','cli'], vendasA:['per','can','sab','tam','cli'], dre:['per'], caixa:['per'], simulador:[], cenarios:[],
   lancamentos:['per','tip','can','cli','sit'], pedidos:['per','can','cli','sab','tam','sit'], producao:['per','sab'], compras:['per','tipI','catI'], despesas:['per','catD'], saidas:['per','tipS','catS'],
   estoque:['sab','tam','tipI','catI'], fichas:['tipR'], insumos:['tipI','catI'], produtos:['can','sab'], clientes:['tipC'], parametros:[]
 };
@@ -779,22 +779,34 @@ function simCarregaMes(){ var ym=SG.mesAtual(), m={};
 /* SIMULAR TODOS OS SABORES — um preço para todos e/ou alta de insumos */
 function ctxCen(){ var v=Object.assign({},SIM.var); if(SIM.varTodos) v['*']=SIM.varTodos; return Object.keys(v).length?{var:v}:null; }
 VIEWS.cenarios=function(){
-  SIM.tam=prim('tam','P'); SIM.canal=prim('can','direto'); sub('Tamanho e canal pelos filtros do topo (vale o primeiro marcado) · teste um preço único para todos os sabores e/ou uma alta (ou queda) no preço dos insumos · nada é salvo');
+  /* tamanho e canal escolhidos aqui mesmo (toggles); "Todos" mostra uma linha por sabor × tamanho */
+  if(!SIM.tamC) SIM.tamC='*'; if(!SIM.canC) SIM.canC='direto';
+  sub('Teste um preço único para todos os sabores e/ou uma alta (ou queda) no preço dos insumos · nada é salvo');
   var ctx=ctxCen(), alvo=+D().config.margemAlvo, ins=D().insumos.slice().sort(function(a,b){return a.nome.localeCompare(b.nome);});
   var tags=Object.keys(SIM.var).map(function(k){var i=SG.insumo(k);return '<button class="dimb on" title="Remover" onclick="delete SIM.var[\''+k+'\'];render()">'+esc(i?i.nome:k)+' '+(SIM.var[k]>0?'+':'')+SG.pct(SIM.var[k],0)+' ×</button>';}).join(' ');
-  var h='<div class="card" style="padding:12px 16px;flex:0 0 auto"><div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap">'
+  var segT='<div class="dims">'+[['*','Todos']].concat(D().tamanhos.map(function(t){return [t.id,t.nome+' '+t.ml];})).map(function(o){return '<button class="dimb'+(o[0]===SIM.tamC?' on':'')+'" onclick="SIM.tamC=\''+o[0]+'\';render()">'+o[1]+'</button>';}).join('')+'</div>';
+  var segC='<div class="dims">'+D().canais.map(function(c){return '<button class="dimb'+(c.id===SIM.canC?' on':'')+'" onclick="SIM.canC=\''+c.id+'\';render()">'+esc(c.nome.replace(' (mercadinhos)',''))+(c.taxa?' · '+SG.pct(c.taxa,0):'')+'</button>';}).join('')+'</div>';
+  var h='<div class="card" style="padding:12px 16px;flex:0 0 auto;display:flex;flex-direction:column;gap:10px">'
+    + '<div style="display:flex;gap:18px;flex-wrap:wrap;align-items:center"><div style="display:flex;gap:8px;align-items:center"><span class="tsub" style="font-weight:800;text-transform:uppercase;letter-spacing:.7px">Tamanho</span>'+segT+'</div><div style="display:flex;gap:8px;align-items:center"><span class="tsub" style="font-weight:800;text-transform:uppercase;letter-spacing:.7px">Canal</span>'+segC+'</div></div>'
+    + '<div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap">'
     + '<div class="fld" style="margin:0"><label>Preço a testar (R$)</label><input class="inp num" value="'+(SIM.precoTodos!=null?nv(SIM.precoTodos):'')+'" placeholder="tabela" style="width:110px" onchange="SIM.precoTodos=numIn(this.value);render()"></div>'
-    + '<div class="fld" style="margin:0"><label>Todos os insumos (%)</label><input class="inp num" value="'+(SIM.varTodos?nv(SIM.varTodos*100,0):'')+'" placeholder="0" style="width:100px" onchange="SIM.varTodos=(numIn(this.value)||0)/100;render()"></div>'
+    + '<div class="fld" style="margin:0"><label>Todos os insumos (%)</label><input class="inp num" value="'+(SIM.varTodos?nv(SIM.varTodos*100,0):'')+'" placeholder="0" style="width:110px" onchange="SIM.varTodos=(numIn(this.value)||0)/100;render()"></div>'
     + '<div class="fld" style="margin:0"><label>Um insumo</label><select class="inp" id="cIns" style="width:240px">'+ins.map(function(i){return '<option value="'+i.id+'">'+esc(i.nome)+'</option>';}).join('')+'</select></div>'
     + '<div class="fld" style="margin:0"><label>Variação (%)</label><input class="inp num" id="cVar" style="width:90px" placeholder="ex.: 15"></div>'
     + '<button class="btn pri" onclick="var v=numIn($(\'cVar\').value);if(v==null)return;SIM.var[$(\'cIns\').value]=v/100;render()">Aplicar</button>'
     + '<button class="btn" onclick="SIM.var={};SIM.varTodos=0;SIM.precoTodos=null;render()">Limpar</button>'+(tags?'<div class="dims">'+tags+'</div>':'')+'</div></div>';
-  var ls=D().produtos.filter(function(p){return p.receita&&p.ativo!==false;}).map(function(p){
-    var a=SG.precificar(p.id,SIM.tam,SIM.canal,{}), pr=SIM.precoTodos!=null?SIM.precoTodos:a.tabela, b=SG.precificar(p.id,SIM.tam,SIM.canal,pr!=null?{preco:pr}:{},ctx);
-    return {p:p,a:a,b:b,pr:pr,meta:SG.precificar(p.id,SIM.tam,SIM.canal,{margem:alvo},ctx).sugerido}; });
+  var tams=SIM.tamC==='*'?D().tamanhos.map(function(t){return t.id;}):[SIM.tamC], cid=SIM.canC, ls=[];
+  D().produtos.filter(function(p){return p.receita&&p.ativo!==false;}).forEach(function(p){ tams.forEach(function(tid){
+    var a=SG.precificar(p.id,tid,cid,{}), pr=SIM.precoTodos!=null?SIM.precoTodos:a.tabela, b=SG.precificar(p.id,tid,cid,pr!=null?{preco:pr}:{},ctx);
+    ls.push({p:p,tid:tid,a:a,b:b,pr:pr,meta:SG.precificar(p.id,tid,cid,{margem:alvo},ctx).sugerido}); }); });
   var fm=function(m){ return m==null||!isFinite(m)?'—':'<span class="'+corMg(m)+'">'+SG.pct(m,0)+'</span>'; };
-  h+='<div class="card tsec"><div class="thead-row"><div class="tsub">'+esc(nTam(SIM.tam))+' · '+esc(nCanal(SIM.canal))+' · verde = atinge a meta de '+SG.pct(alvo,0)+' · âmbar = lucra abaixo da meta · vermelho = prejuízo</div></div><div class="twrap">'+tabela('tCen',[
-    {t:'Sabor',f:function(l){return esc(l.p.nome);},s:function(l){return l.p.nome;},cls:'conta'},
+  var md=function(arr){ arr=arr.filter(function(x){return x!=null&&isFinite(x);}); return arr.length?arr.reduce(function(s,x){return s+x;},0)/arr.length:null; };
+  var comP=ls.filter(function(l){return l.pr!=null;}), comT=ls.filter(function(l){return l.a.tabela!=null;});
+  var tot=['<b>Média</b> · '+ls.length+' linhas', '', SG.brl(md(ls.map(function(l){return l.a.custo.total;}))), comT.length?SG.brl(md(comT.map(function(l){return l.a.tabela;}))):'—', comT.length?fm(md(comT.map(function(l){return l.a.margem;}))):'—',
+    SG.brl(md(ls.map(function(l){return l.b.custo.total;}))), comP.length?SG.brl(md(comP.map(function(l){return l.pr;}))):'—', comP.length?'<span class="'+(md(comP.map(function(l){return l.b.lucro;}))>=0?'cg':'cr')+'">'+SG.brl(md(comP.map(function(l){return l.b.lucro;})))+'</span>':'—', comP.length?fm(md(comP.map(function(l){return l.b.margem;}))):'—', SG.brl(md(ls.map(function(l){return l.meta;})))];
+  h+='<div class="card tsec"><div class="thead-row"><div class="tsub">'+(SIM.tamC==='*'?'Todos os tamanhos':esc(nTam(SIM.tamC)))+' · '+esc(nCanal(cid))+' · verde = atinge a meta de '+SG.pct(alvo,0)+' · âmbar = lucra abaixo da meta · vermelho = prejuízo · linha "Média" no fim (média simples das linhas)</div></div><div class="twrap">'+tabela('tCen',[
+    {t:'Sabor',f:function(l){return esc(l.p.nome);},s:function(l){return l.p.nome+l.tid;},cls:'conta'},
+    {t:'Tam.',f:function(l){return esc(SG.tamanho(l.tid).nome);},s:function(l){return l.tid;}},
     {t:'Custo hoje',f:function(l){return SG.brl(l.a.custo.total);},v:function(l){return l.a.custo.total;},cls:'num'},
     {t:'Preço tabela',f:function(l){return l.a.tabela!=null?SG.brl(l.a.tabela):'—';},v:function(l){return l.a.tabela||0;},cls:'num'},
     {t:'Margem hoje',f:function(l){return l.a.tabela!=null?fm(l.a.margem):'—';},v:function(l){return l.a.tabela!=null?l.a.margem:-9;},cls:'num'},
@@ -803,7 +815,7 @@ VIEWS.cenarios=function(){
     {t:'Lucro/pote',f:function(l){return l.pr!=null?'<span class="'+(l.b.lucro>=0?'cg':'cr')+'">'+SG.brl(l.b.lucro)+'</span>':'—';},v:function(l){return l.pr!=null?l.b.lucro:-99;},cls:'num'},
     {t:'Margem simulada',f:function(l){return l.pr!=null?fm(l.b.margem):'—';},v:function(l){return l.pr!=null?l.b.margem:-9;},cls:'num'},
     {t:'Preço p/ meta',f:function(l){return SG.brl(l.meta);},v:function(l){return l.meta||0;},cls:'num'},
-  ],ls)+'</div></div>';
+  ],ls,tot)+'</div></div>';
   $('view').innerHTML=h;
 };
 
