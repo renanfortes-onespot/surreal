@@ -1,0 +1,8 @@
+# Dados e receitas da Surreal NUNCA vão para o repositório público:
+# ficam só no Supabase (e no computador do Renan).
+shared/seed.js
+tools/
+*.xlsx
+*.sql.local
+segredos/
+__pycache__/

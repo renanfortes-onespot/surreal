@@ -1,0 +1,19 @@
+# Mantém o Supabase grátis acordado (ele pausa após ~7 dias sem uso).
+# Chama a função sg_ping a cada 2 dias (não lê dado nenhum), o que conta como atividade.
+name: keepalive
+on:
+  schedule:
+    - cron: '23 10 */2 * *'
+  workflow_dispatch:
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: ping
+        run: |
+          URL=$(sed -n "s/.*url: '\([^']*\)'.*/\1/p" shared/config.js)
+          KEY=$(sed -n "s/.*key: '\([^']*\)'.*/\1/p" shared/config.js)
+          code=$(curl -s -o /dev/null -w '%{http_code}' -X POST "$URL/rest/v1/rpc/sg_ping" -H "apikey: $KEY" -H "Content-Type: application/json" -d '{}')
+          echo "HTTP $code"
+          test "$code" = 200
