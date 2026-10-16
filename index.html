@@ -13,12 +13,12 @@
 <link rel="icon" href="img/icone-192.png">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.SG_BUILD='20261016202040';</script>
-<script src="shared/versao.js?v=20261016202040"></script>
-<script src="shared/config.js?v=20261016202040"></script>
-<script src="shared/seed.js?v=20261016202040"></script>
-<script src="shared/core.js?v=20261016202040"></script>
-<script src="shared/remote.js?v=20261016202040"></script>
+<script>window.SG_BUILD='20261016203000';</script>
+<script src="shared/versao.js?v=20261016203000"></script>
+<script src="shared/config.js?v=20261016203000"></script>
+<script src="shared/seed.js?v=20261016203000"></script>
+<script src="shared/core.js?v=20261016203000"></script>
+<script src="shared/remote.js?v=20261016203000"></script>
 <style>
 /* ============================================================
    SURREAL · gelato artesanal — app (PWA)
@@ -204,6 +204,13 @@ body.claro .sim-hero{box-shadow:0 14px 34px rgba(18,26,46,.08);}
 .res .n small{display:block;font-size:10px;color:var(--txt3);margin-top:2px;}
 .aviso2{display:flex;gap:9px;align-items:flex-start;font-size:11.5px;line-height:1.45;color:var(--ambar);background:rgba(245,166,35,.09);border:1px solid rgba(245,166,35,.25);border-radius:10px;padding:10px 12px;margin-bottom:12px;}
 .aviso2 svg{width:16px;height:16px;flex:0 0 auto;margin-top:1px;}
+.ingl{margin-bottom:16px;}
+.ing{display:grid;grid-template-columns:1fr auto;gap:2px 10px;padding:10px 2px;border-bottom:1px solid var(--brd);}
+.ing-t{min-width:0;font-size:13px;}.ing-t b{font-weight:600;}
+.ing-s{font-size:11px;color:var(--txt3);margin-top:2px;font-variant-numeric:tabular-nums;}
+.ing-v{text-align:right;font-variant-numeric:tabular-nums;font-size:13px;white-space:nowrap;}.ing-v span{display:block;font-size:11px;color:var(--txt3);margin-top:2px;}
+.ing-b{grid-column:1/-1;height:3px;border-radius:2px;background:var(--brd);margin-top:6px;overflow:hidden;}.ing-b i{display:block;height:100%;background:var(--acc);border-radius:2px;}
+.ing.tot{border-bottom:0;}.ing.tot b{color:var(--txt);font-weight:700;}
 table.mini{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:16px;}
 table.mini th{font-size:10px;color:var(--txt3);font-weight:500;text-align:right;padding:6px 4px;border-bottom:1px solid var(--brd);}
 table.mini th:first-child,table.mini td:first-child{text-align:left;}
@@ -696,7 +703,7 @@ TELAS.ficha = function(a){
   var r=SG.receita(a.id), comp=SG.composicao(r.id), tot=comp.reduce(function(s,c){return s+c.custo;},0);
   var h=cab('frasco',esc(r.nome), SG.brl(SG.custoReceitaKg(r.id))+' por kg · '+SG.num(SG.pesoReceita(r.id),0)+' g de ingredientes');
   if(r.obs) h+='<div class="vazio">'+esc(r.obs)+'</div>';
-  h+='<table class="mini"><tr><th>Ingrediente</th><th>g/kg</th><th>R$/kg</th><th>Custo</th><th>%</th></tr>'+comp.map(function(c){ return '<tr><td>'+esc(c.nome)+(c.origem==='manual'?' <span class="tag">planilha</span>':c.origem==='estimado'?' <span class="tag am">estimado</span>':'')+'</td><td>'+SG.num(c.g,1)+'</td><td>'+SG.brl(c.custoKg)+'</td><td>'+SG.brl(c.custo)+'</td><td>'+SG.pct(tot?c.custo/tot:0,0)+'</td></tr>'; }).join('')+'</table>';
+  h+='<div style="margin:4px 2px 6px;font-size:11px;color:var(--txt3)">Em 1 kg de gelato: quanto vai de cada ingrediente e quanto ele custa · % = fatia do custo total</div><div class="ingl">'+comp.map(function(c){ var pc=tot?c.custo/tot:0; return '<div class="ing"><div class="ing-t"><b>'+esc(c.nome)+'</b>'+(c.origem==='manual'?' <span class="tag">planilha</span>':c.origem==='estimado'?' <span class="tag am">estimado</span>':'')+'<div class="ing-s">'+SG.num(c.g,0)+' g · '+SG.brl(c.custoKg)+'/kg</div></div><div class="ing-v"><b>'+SG.brl(c.custo)+'</b><span>'+SG.pct(pc,0)+'</span></div><div class="ing-b"><i style="width:'+Math.max(1,pc*100).toFixed(1)+'%"></i></div></div>'; }).join('')+'<div class="ing tot"><div class="ing-t"><b>Total por kg</b><div class="ing-s">'+SG.num(SG.pesoReceita(r.id),0)+' g de ingredientes</div></div><div class="ing-v"><b>'+SG.brl(tot)+'</b><span>100%</span></div></div></div>';
   h+='<div class="vazio">Para editar a receita, use o painel completo no computador.</div>';
   return h;
 };
