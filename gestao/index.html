@@ -10,12 +10,12 @@
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.SG_BUILD='20261016193538';</script>
-<script src="../shared/versao.js?v=20261016193538"></script>
-<script src="../shared/config.js?v=20261016193538"></script>
-<script src="../shared/seed.js?v=20261016193538"></script>
-<script src="../shared/core.js?v=20261016193538"></script>
-<script src="../shared/remote.js?v=20261016193538"></script>
+<script>window.SG_BUILD='20261016194944';</script>
+<script src="../shared/versao.js?v=20261016194944"></script>
+<script src="../shared/config.js?v=20261016194944"></script>
+<script src="../shared/seed.js?v=20261016194944"></script>
+<script src="../shared/core.js?v=20261016194944"></script>
+<script src="../shared/remote.js?v=20261016194944"></script>
 <style>
 /* ============================================================
    SURREAL — Painel de gestão (PC). OneSpot · 16/10/2026
@@ -512,7 +512,8 @@ var VIEWS={};
 
 /* ════════════════════ VISÕES ════════════════════ */
 
-var RDIM={sabor:['Potes por sabor','Potes vendidos','Sabor'], cliente:['Faturamento por cliente','R$ faturado','Cliente'], canal:['Faturamento por canal','R$ faturado','Canal'], tamanho:['Potes por tamanho','Potes vendidos','Tamanho']};
+var RDIM={sabor:['sabor','Sabor'], cliente:['cliente','Cliente'], canal:['canal','Canal'], tamanho:['tamanho','Tamanho']};
+function rmed(){ return V.rmed||(V.rdim==='cliente'||V.rdim==='canal'?'rs':'qtd'); }   /* medida do gráfico: R$ ou potes */
 /* RESUMO GERENCIAL — respeita Período, Canal, Sabor, Tamanho e Cliente */
 VIEWS.resumo=function(){
   var ms=perMeses(), ym=ymV(), r=resumoF(ms), um=F.per.size===1, ant=um?resumoF([SG.addMes(ym,-1)]):null, meta=+D().config.metaLucroMes||0;
@@ -531,14 +532,15 @@ VIEWS.resumo=function(){
     + kpi('Melhor cliente', cli.length?esc(cli[0].n):'—', cli.length?SG.brl(cli[0].v)+' · '+cli.length+' clientes compraram':'sem vendas', true)
     + '</div>';
   h+='<div class="gr2">'+gcard('gMes','Lucro · Mensal', ym.slice(0,4)+' · faturamento − custo dos potes − taxas · com os filtros', legQ('Lucro do mês')+legL('Meta de lucro'))
-    + gcard('gTop', RDIM[V.rdim||'sabor'][0], perTxt(), legQ(RDIM[V.rdim||'sabor'][1]), '<div class="dims">'+Object.keys(RDIM).map(function(k){return '<button class="dimb'+(k===(V.rdim||'sabor')?' on':'')+'" onclick="V.rdim=\''+k+'\';render()">'+RDIM[k][2]+'</button>';}).join('')+'</div>')+'</div>';
+    + gcard('gTop', (rmed()==='rs'?'Faturamento':'Potes vendidos')+' por '+RDIM[V.rdim||'sabor'][0], perTxt(), legQ(rmed()==='rs'?'R$ faturado':'Potes vendidos'),
+        '<div class="dims" style="margin-right:6px">'+[['rs','R$'],['qtd','Potes']].map(function(m){return '<button class="dimb'+(m[0]===rmed()?' on':'')+'" onclick="V.rmed=\''+m[0]+'\';render()" title="'+(m[0]==='rs'?'Valor faturado':'Quantidade de potes')+'">'+m[1]+'</button>';}).join('')+'</div>'
+        + '<div class="dims">'+Object.keys(RDIM).map(function(k){return '<button class="dimb'+(k===(V.rdim||'sabor')?' on':'')+'" onclick="V.rdim=\''+k+'\';render()">'+RDIM[k][1]+'</button>';}).join('')+'</div>')+'</div>';
   $('view').innerHTML=h;
   var an=anoMeses(ym), luc=an.map(function(m){ var x=resumoF([m]); return x.pedidos?+x.lucro.toFixed(2):null; });
   barras('gMes',{labels:an.map(function(m){return SG.MES3[+m.slice(5)-1];}), dados:luc, meta:an.map(function(){return meta;}), nome:'Lucro', nomeMeta:'Meta', foco:F.per.size?an.map(function(m,i){return F.per.has(m)?i:-1;}).filter(function(i){return i>=0;}):null, cores:function(v,i,t){ return v>=meta?t.verde:t.vermelho; }});
-  var rd=V.rdim||'sabor', ag={};
-  if(rd==='sabor') top.forEach(function(p){ ag[p.nome]=p.qtd; });
-  else linhasVenda(ms).forEach(function(x){ var k=rd==='cliente'?SG.nomeCliente(x.v):rd==='canal'?nCanal(x.v.canal):(x.it.tam?nTam(x.it.tam):null); if(!k) return; ag[k]=(ag[k]||0)+(rd==='tamanho'?x.potes:x.rec); });
-  var ks=Object.keys(ag).sort(function(a,b){return ag[b]-ag[a];}).slice(0,12), emPotes=rd==='sabor'||rd==='tamanho';
+  var rd=V.rdim||'sabor', emPotes=rmed()==='qtd', ag={};
+  linhasVenda(ms).forEach(function(x){ var k=rd==='sabor'?SG.nomeItem(x.it):rd==='cliente'?SG.nomeCliente(x.v):rd==='canal'?nCanal(x.v.canal):(x.it.tam?nTam(x.it.tam):null); if(!k) return; var v=emPotes?x.potes:x.rec; if(emPotes&&!v) return; ag[k]=(ag[k]||0)+v; });
+  var ks=Object.keys(ag).sort(function(a,b){return ag[b]-ag[a];}).slice(0,12);
   barrasH('gTop',{labels:ks, dados:ks.map(function(k){return +ag[k].toFixed(2);}), fmt:emPotes?function(v){return v+' potes';}:fmtR});
 };
 
