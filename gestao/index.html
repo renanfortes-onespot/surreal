@@ -10,7 +10,7 @@
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.SG_BUILD='20261016181722';</script>
+<script>window.SG_BUILD='20261016181850';</script>
 <script src="../shared/versao.js"></script>
 <script src="../shared/config.js"></script>
 <script src="../shared/seed.js"></script>
@@ -690,7 +690,7 @@ VIEWS.simulador=function(){
   sub('Adicione produtos (tamanho, canal, preço e potes por mês) e veja o DRE do mês · na ficha do produto dá para gravar o preço na tabela');
   var S=simCalc(), T=S.T, meta=+D().config.metaLucroMes||0, mgL=T.rec?T.lucro/T.rec:null, mcU=T.potes?T.mc/T.potes:0, indFixo=SG.indiretosMes();
   var pe = mcU>0 ? Math.ceil(indFixo/mcU) : null, potesMeta = mcU>0 ? Math.ceil((meta+indFixo)/mcU) : null;
-  var h='<div class="hero"><div><div class="hl">Lucro do mês simulado</div><div class="hv '+(T.lucro>=0?'cg':'cr')+'">'+SG.brl(T.lucro)+'</div><div class="tsub">'+T.potes+' potes · receita '+SG.brl(T.rec)+'</div></div>'
+  var h='<div class="hero"><div><div class="hl">Lucro de um mês com estas vendas</div><div class="hv '+(T.lucro>=0?'cg':'cr')+'">'+SG.brl(T.lucro)+'</div><div class="tsub">'+T.potes+' potes · receita '+SG.brl(T.rec)+'</div></div>'
     + '<div class="hd"><div>Margem líquida<b class="'+corMg(mgL)+'">'+(mgL==null?'—':SG.pct(mgL,1))+'</b></div><div>Margem de contribuição<b>'+(T.rec?SG.pct(T.mc/T.rec,1):'—')+'</b></div><div>Meta de lucro<b class="'+(T.lucro>=meta?'cg':'cr')+'">'+(meta?SG.pct(T.lucro/meta,0):'—')+' de '+SG.brl0(meta)+'</b></div><div>Preço médio do pote<b>'+(T.potes?SG.brl(T.rec/T.potes):'—')+'</b></div></div></div>';
   // linhas da simulação — só leitura; clicar abre a ficha da linha
   var tabL=tabela('tSim',[
@@ -716,13 +716,13 @@ VIEWS.simulador=function(){
     ['(−) Custos indiretos (rateio por kg)', -T.ind],
     ['= Lucro', T.lucro, 1, 1],
   ];
-  var tabD='<table class="dre"><thead><tr><th>DRE do mês simulado</th><th class="num">R$ no mês</th><th class="num">% da receita</th><th class="num sep-l">Por pote</th></tr></thead><tbody>'
+  var tabD='<table class="dre"><thead><tr><th>DRE do mês simulado</th><th class="num">'+'Total ('+T.potes+' potes)'+'</th><th class="num">% da receita</th><th class="num sep-l">Por pote</th></tr></thead><tbody>'
     + D_.map(function(r){ var v=r[1]; return '<tr'+(r[2]?' class="total" style="position:static"':'')+'><td class="conta">'+r[0]+'</td><td class="num">'+(r[3]?'<span class="'+(v>=0?'cg':'cr')+'">'+SG.brl(v)+'</span>':SG.brl(v))+'</td><td class="num">'+(r[3]?'<span class="'+corMg(T.rec?v/T.rec:null)+'">'+pc(v)+'</span>':pc(Math.abs(v)))+'</td><td class="num sep-l">'+pp(v)+'</td></tr>'; }).join('')
     + '</tbody></table>';
   var avisos=[]; S.L.forEach(function(r){ r.avisos.forEach(function(a){ if(avisos.indexOf(a)<0) avisos.push(a); }); });
   h+='<div class="split" style="grid-template-columns:minmax(0,1fr) minmax(0,1fr)"><div class="card tsec"><div class="thead-row"><div class="ttit">Produtos simulados</div><div class="tsub">clique na linha para mudar preço e quantidade</div><div class="dir"><button class="btn sm" onclick="simCarregaMes()" title="Usa os potes vendidos no mês, com o preço médio praticado">Carregar vendas de '+SG.nomeMes(SG.mesAtual())+'</button>'+btNovo('Adicionar produto','abrirSimLinha(null)')+'</div></div><div class="twrap">'+tabL+'</div>'
     + (avisos.length?'<div class="av2" style="margin-top:8px">'+avisos.map(esc).join(' · ')+'</div>':'')+'</div>'
-    + '<div class="card tsec"><div class="thead-row"><div class="ttit">DRE do mês simulado</div><div class="tsub">margem colorida pela meta de '+SG.pct(D().config.margemAlvo,0)+'</div></div><div class="twrap" style="flex:0 0 auto">'+tabD+'</div>'
+    + '<div class="card tsec"><div class="thead-row"><div class="ttit">DRE do mês simulado</div><div class="tsub">um mês vendendo as quantidades da esquerda ·</div><div class="tsub">margem colorida pela meta de '+SG.pct(D().config.margemAlvo,0)+'</div></div><div class="twrap" style="flex:0 0 auto">'+tabD+'</div>'
     + '<div class="mk" style="margin-top:12px"><div><small>Ponto de equilíbrio</small><b>'+(indFixo?(pe?pe+' potes':'—'):'sem custo fixo')+'</b></div><div><small>Potes para a meta</small><b>'+(potesMeta?potesMeta:'—')+'</b></div><div><small>Lucro por pote (média)</small><b class="'+(T.lucro>=0?'cg':'cr')+'">'+pp(T.lucro)+'</b></div></div>'
     + '<div class="nota">Custos indiretos entram pelo rateio por kg de Parâmetros ('+SG.brl(SG.indiretosMes())+'/mês ÷ '+SG.num(D().config.kgMesRateio,1)+' kg). Mão de obra fica fora. Ponto de equilíbrio e potes para a meta tratam os indiretos como custo fixo do mês e mantêm o mesmo mix.</div></div></div>';
   $('view').innerHTML=h;
@@ -743,7 +743,10 @@ function slTam(t){ SL.tam=t; slPreco(); } function slCan(c){ SL.canal=c; slPreco
 function slPreco(){ var t=SG.precoTabela(SL.prod,SL.canal,SL.tam); if(t==null){ var x=SG.precificar(SL.prod,SL.tam,SL.canal); t=x&&x.sugerido?Math.ceil(x.sugerido):0; } SL.preco=t; $('slPr').value=nv(t); slCalc(); }
 function slCalc(){ var x=SG.precificar(SL.prod,SL.tam,SL.canal,{preco:SL.preco}), m=SG.precificar(SL.prod,SL.tam,SL.canal,{margem:+D().config.margemAlvo});
   $('slMk').innerHTML='<div><small>Custo do pote</small><b>'+SG.brl(x.custo.total)+'</b></div><div><small>Lucro por pote</small><b class="'+(x.lucro>=0?'cg':'cr')+'">'+SG.brl(x.lucro)+'</b></div><div><small>Margem</small><b class="'+corMg(x.margem)+'">'+SG.pct(x.margem,1)+'</b></div>';
-  $('slMk2').innerHTML='<div><small>Preço p/ meta '+SG.pct(D().config.margemAlvo,0)+'</small><b>'+SG.brl(m.sugerido)+'</b></div><div><small>Preço mínimo</small><b>'+SG.brl(x.minimo)+'</b></div><div><small>Lucro no mês</small><b class="'+(x.lucro>=0?'cg':'cr')+'">'+SG.brl(x.lucro*(SL.qtd||0))+'</b></div>'; }
+  var tx=SG.taxaCanal(SL.canal);
+  $('slMk2').innerHTML='<div><small>Preço p/ meta '+SG.pct(D().config.margemAlvo,0)+'</small><b>'+SG.brl(m.sugerido)+'</b></div>'
+    + (tx>0?'<div title="Abaixo disso a taxa do canal come o lucro"><small>Preço de empate (lucro zero)</small><b>'+SG.brl(x.minimo)+'</b></div>':'<div title="Preço ÷ custo"><small>Markup</small><b>'+(x.markup?x.markup.toFixed(2).replace('.',',')+'×':'—')+'</b></div>')
+    + '<div><small>Lucro com '+(SL.qtd||0)+' potes/mês</small><b class="'+(x.lucro>=0?'cg':'cr')+'">'+SG.brl(x.lucro*(SL.qtd||0))+'</b></div>'; }
 function slAplicar(){ var o={prod:SL.prod,tam:SL.tam,canal:SL.canal,preco:SL.preco,qtd:SL.qtd}; if(SL.i==null) SIM.linhas.push(o); else SIM.linhas[SL.i]=o; fecharModal(); }
 function slGravar(){ if(!confirm('Gravar '+SG.brl(SL.preco)+' como preço de tabela de '+SG.produto(SL.prod).nome+' '+SL.tam+' ('+nCanal(SL.canal)+')?')) return; SG.definirPreco(SL.prod,SL.canal,SL.tam,+(+SL.preco).toFixed(2)); SG.salvar(true); toast('Preço de tabela atualizado'); }
 function simCarregaMes(){ var ym=SG.mesAtual(), m={};
