@@ -3,4 +3,4 @@
    quem faz login e está ativo em sg_usuarios (RLS).
    No localhost o app roda a DEMO local; para testar o remoto aqui:
    localStorage.setItem('sg_modo','remoto') */
-window.SG_REMOTO = { url: '', key: '' };
+window.SG_REMOTO = { url: 'https://xloleeetomjlhzerarxr.supabase.co', key: 'sb_publishable_gYi6oahqHvQCjJuLCBfBCA_pyc7sI9f' };
