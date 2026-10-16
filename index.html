@@ -13,12 +13,12 @@
 <link rel="icon" href="img/icone-192.png">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.SG_BUILD='20261016190524';</script>
-<script src="shared/versao.js?v=20261016190524"></script>
-<script src="shared/config.js?v=20261016190524"></script>
-<script src="shared/seed.js?v=20261016190524"></script>
-<script src="shared/core.js?v=20261016190524"></script>
-<script src="shared/remote.js?v=20261016190524"></script>
+<script>window.SG_BUILD='20261016191843';</script>
+<script src="shared/versao.js?v=20261016191843"></script>
+<script src="shared/config.js?v=20261016191843"></script>
+<script src="shared/seed.js?v=20261016191843"></script>
+<script src="shared/core.js?v=20261016191843"></script>
+<script src="shared/remote.js?v=20261016191843"></script>
 <style>
 /* ============================================================
    SURREAL · gelato artesanal — app (PWA)
@@ -620,14 +620,14 @@ function salvaCompra(){ var q=(numIn($('coQtd').value)||0)/(SG.insumo($('coIns')
 var CATS_DESP = ['Aluguel','Energia','Água','Gás','Marketing','Embalagens','Equipamentos','Taxas','Outros'];
 TELAS.despesaNova = function(){
   var h = cab('recibo','Registrar despesa','Gasto que não é insumo (marketing, taxa, conta…)');
-  h += '<div class="campo"><label>Categoria</label><select id="deCat">'+CATS_DESP.map(function(c){return '<option>'+c+'</option>';}).join('')+'</select></div>';
+  h += '<div class="campo"><label>Conta</label><select id="deCat">'+(function(SEL){ return SG.PACOTES_OBZ.map(function(pc){ var l=SG.contasOBZ().filter(function(c){return c.pacote===pc;}); return l.length?'<optgroup label="'+pc+'">'+l.map(function(c){return '<option value="'+c.id+'"'+(c.id===SEL?' selected':'')+'>'+esc(c.nome)+'</option>';}).join('')+'</optgroup>':''; }).join(''); })('anuncios')+'</select></div>';
   h += '<div class="campo"><label>Descrição</label><input id="deDesc" placeholder="ex.: Impulsionamento Instagram"></div>';
   h += '<div class="lado"><div class="campo"><label>Valor (R$)</label><input id="deVal" inputmode="decimal"></div><div class="campo"><label>Data</label><input id="deData" type="date" value="'+SG.hoje()+'"></div></div>';
   h += '<button class="btn" onclick="salvaDespesa()">'+ic('ok')+'Salvar despesa</button>';
   return h;
 };
 function salvaDespesa(){ var v=numIn($('deVal').value); if(!v){ toast('Informe o valor'); return; }
-  D().despesas.push({id:SG.novoId('d'), data:$('deData').value||SG.hoje(), categoria:$('deCat').value, desc:$('deDesc').value||$('deCat').value, valor:v, ts:Date.now(), por:usuario().id}); SG.salvar(true); volta(); toast('Despesa registrada'); }
+  var ct=SG.contaOBZ($('deCat').value); D().despesas.push({id:SG.novoId('d'), data:$('deData').value||SG.hoje(), conta:ct.id, categoria:ct.nome, desc:$('deDesc').value||ct.nome, valor:v, ts:Date.now(), por:usuario().id}); SG.salvar(true); volta(); toast('Despesa registrada'); }
 
 /* MAIS */
 TELAS.mais = function(){

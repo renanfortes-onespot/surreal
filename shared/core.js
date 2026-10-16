@@ -108,8 +108,34 @@
   }
 
   /* ───────────── indiretos ───────────── */
-  function indiretosMes() { return D.config.indiretos.reduce(function (s, i) { return s + (+i.valor || 0); }, 0); }
-  function indiretoKg() { var k = +D.config.kgMesRateio || 0; return k > 0 ? indiretosMes() / k : 0; }
+  /* ───────────── OBZ: custos fixos do mês por pacote (orçamento base zero) ─────────────
+     Substitui os "custos indiretos rateados por kg": fixo fica como fixo do mês (não entra no
+     custo do pote). As despesas lançadas caem numa conta OBZ, para comparar orçado × realizado. */
+  var PACOTES_OBZ = ['Ocupação', 'Marketing', 'Manutenção', 'Administrativo', 'Pessoal'];
+  var CONTAS_PADRAO = [
+    ['aluguel', 'Ocupação', 'Aluguel'], ['energia', 'Ocupação', 'Energia elétrica'], ['agua', 'Ocupação', 'Água'], ['gas', 'Ocupação', 'Gás'],
+    ['anuncios', 'Marketing', 'Impulsionamento / anúncios'], ['marca', 'Marketing', 'Materiais de marca (adesivos, impressos)'], ['degustacao', 'Marketing', 'Degustações e brindes'],
+    ['manutencao', 'Manutenção', 'Manutenção de equipamentos'], ['limpeza', 'Manutenção', 'Limpeza / utensílios'],
+    ['internet', 'Administrativo', 'Internet / celular'], ['contador', 'Administrativo', 'Contador'], ['das', 'Administrativo', 'DAS / MEI'], ['bancarias', 'Administrativo', 'Taxas bancárias'], ['outros-adm', 'Administrativo', 'Outros administrativos'],
+    ['prolabore', 'Pessoal', 'Pró-labore'], ['ajudante', 'Pessoal', 'Ajudante'],
+  ];
+  var CAT_ANTIGA = { 'Marketing': 'anuncios', 'Embalagens': 'marca', 'Aluguel': 'aluguel', 'Energia': 'energia', 'Água': 'agua', 'Gás': 'gas', 'Equipamentos': 'manutencao', 'Taxas': 'bancarias', 'Outros': 'outros-adm' };
+  function contasOBZ() {
+    if (!D.config.obz) {
+      var antigos = {}; (D.config.indiretos || []).forEach(function (i) { antigos[i.id] = +i.valor || 0; });
+      D.config.obz = CONTAS_PADRAO.map(function (c) { return { id: c[0], pacote: c[1], nome: c[2], valor: antigos[c[0]] || 0 }; });
+      setTimeout(function () { salvar(true); }, 0);
+    }
+    var mudou = false;
+    D.despesas.forEach(function (d) { if (!d.conta) { var id = CAT_ANTIGA[d.categoria] || 'outros-adm', c = por(D.config.obz, id); d.conta = id; d.categoria = c ? c.nome : d.categoria; mudou = true; } });
+    if (mudou) setTimeout(function () { salvar(true); }, 0);
+    return D.config.obz;
+  }
+  function contaOBZ(id) { return por(contasOBZ(), id); }
+  function pacoteDespesa(d) { var c = d.conta && contaOBZ(d.conta); return c ? c.pacote : 'Outros'; }
+  function indiretosMes() { return contasOBZ().reduce(function (s, i) { return s + (+i.valor || 0); }, 0); }
+  function obzPorPacote() { var o = {}; contasOBZ().forEach(function (c) { o[c.pacote] = (o[c.pacote] || 0) + (+c.valor || 0); }); return o; }
+  function indiretoKg() { return 0; }   // rateio por kg desativado: fixo é fixo do mês (OBZ)
 
   /* ───────────── custo do pote (produto × tamanho × canal) ─────────────
      ingredientes = gramas × custo/kg da mistura (base + cobertura)
@@ -319,7 +345,7 @@
     brl: brl, brl0: brl0, pct: pct, num: num, hoje: hoje, dataBR: dataBR, dataCurta: dataCurta, nomeMes: nomeMes, mesAtual: mesAtual, addMes: addMes, MES3: MES3,
     insumo: insumo, receita: receita, produto: produto, tamanho: tamanho, canal: canal, cliente: cliente,
     ultimaCompra: ultimaCompra, custoInsumo: custoInsumo, custoReceitaKg: custoReceitaKg, pesoReceita: pesoReceita, composicao: composicao,
-    indiretosMes: indiretosMes, indiretoKg: indiretoKg, custoPote: custoPote, taxaCanal: taxaCanal,
+    indiretosMes: indiretosMes, indiretoKg: indiretoKg, contasOBZ: contasOBZ, contaOBZ: contaOBZ, pacoteDespesa: pacoteDespesa, obzPorPacote: obzPorPacote, PACOTES_OBZ: PACOTES_OBZ, custoPote: custoPote, taxaCanal: taxaCanal,
     precoTabela: precoTabela, definirPreco: definirPreco, precificar: precificar, metaPotes: metaPotes,
     totalVenda: totalVenda, potesVenda: potesVenda, resultadoVenda: resultadoVenda, vendasMes: vendasMes, nomeItem: nomeItem, nomeCliente: nomeCliente,
     resumo: resumo, mesesComDados: mesesComDados, caixa: caixa, extrato: extrato,

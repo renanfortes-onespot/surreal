@@ -10,12 +10,12 @@
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.SG_BUILD='20261016190524';</script>
-<script src="../shared/versao.js?v=20261016190524"></script>
-<script src="../shared/config.js?v=20261016190524"></script>
-<script src="../shared/seed.js?v=20261016190524"></script>
-<script src="../shared/core.js?v=20261016190524"></script>
-<script src="../shared/remote.js?v=20261016190524"></script>
+<script>window.SG_BUILD='20261016191843';</script>
+<script src="../shared/versao.js?v=20261016191843"></script>
+<script src="../shared/config.js?v=20261016191843"></script>
+<script src="../shared/seed.js?v=20261016191843"></script>
+<script src="../shared/core.js?v=20261016191843"></script>
+<script src="../shared/remote.js?v=20261016191843"></script>
 <style>
 /* ============================================================
    SURREAL — Painel de gestão (PC). OneSpot · 16/10/2026
@@ -378,7 +378,7 @@ var FDEF={
   sit:{n:'Situação', ic:'ok', itens:function(){ return Object.keys(SIT_L); }, lbl:function(k){ return SIT_L[k]; }},
   tip:{n:'Tipo', ic:'lista', itens:function(){ return Object.keys(TIPOS_L); }, lbl:function(k){ return TIPOS_L[k][0]; }},
   catI:{n:'Categoria', ic:'tag', itens:function(){ var o={}; D().insumos.forEach(function(i){o[i.cat]=1;}); return Object.keys(o).sort(); }, lbl:function(x){return x;}},
-  catD:{n:'Categoria', ic:'tag', itens:function(){ var o={}; CATS_DESP.forEach(function(c){o[c]=1;}); D().despesas.forEach(function(d){o[d.categoria]=1;}); return Object.keys(o).sort(); }, lbl:function(x){return x;}},
+  catD:{n:'Categoria', ic:'tag', itens:function(){ var o={}; SG.contasOBZ().forEach(function(c){o[c.nome]=1;}); D().despesas.forEach(function(d){o[d.categoria]=1;}); return Object.keys(o).sort(); }, lbl:function(x){return x;}},
   tipR:{n:'Tipo', ic:'ficha', itens:function(){ return Object.keys(TIPOS_R); }, lbl:function(k){ return TIPOS_R[k]; }},
   tipC:{n:'Tipo de cliente', ic:'clientes', itens:function(){ return ['consumidor','revenda']; }, lbl:function(k){ return k==='revenda'?'Revenda':'Consumidor'; }},
   tipS:{n:'Tipo', ic:'lista', itens:function(){ return Object.keys(TIPO_S); }, lbl:function(k){ return TIPO_S[k]; }},
@@ -497,7 +497,7 @@ function barrasH(id, o){
       scales:{x:{display:false, beginAtZero:true, grid:{display:false}}, y:{ticks:Object.assign({}, t.tick, {font:{family:'Montserrat',size:11,weight:'600'}, callback:function(v){ var s=this.getLabelForValue(v); return s.length>30?s.slice(0,29)+'…':s; }}), grid:{display:false}, border:{display:false}}}}});
 }
 function anoMeses(ym){ var y=ym.slice(0,4), l=[]; for(var i=1;i<=12;i++) l.push(y+'-'+String(i).padStart(2,'0')); return l; }
-function gcard(id, tit, subt, leg){ return '<div class="card gcard"><div class="gtit">'+tit+'</div><div class="gsub">'+(subt||'')+'</div>'+(leg?'<div class="gleg">'+leg+'</div>':'')+'<div class="gcv"><canvas id="'+id+'"></canvas></div></div>'; }
+function gcard(id, tit, subt, leg, dir){ return '<div class="card gcard"><div style="display:flex;align-items:flex-start;gap:8px"><div class="gtit" style="flex:1">'+tit+'</div>'+(dir||'')+'</div><div class="gsub">'+(subt||'')+'</div>'+(leg?'<div class="gleg">'+leg+'</div>':'')+'<div class="gcv"><canvas id="'+id+'"></canvas></div></div>'; }
 function legQ(t){ return '<span style="color:var(--txt2)"><i class="sq"></i>'+t+'</span>'; }
 function legL(t){ return '<span style="color:var(--txt2)"><i></i>'+t+'</span>'; }
 function kpi(l,v,m,nome){ return '<div class="kpi"><div class="kl">'+l+'</div><div class="kv'+(nome?' kvn':'')+'">'+v+'</div><div class="km">'+(m||'')+'</div></div>'; }
@@ -508,6 +508,7 @@ var VIEWS={};
 
 /* ════════════════════ VISÕES ════════════════════ */
 
+var RDIM={sabor:['Potes por sabor','Potes vendidos','Sabor'], cliente:['Faturamento por cliente','R$ faturado','Cliente'], canal:['Faturamento por canal','R$ faturado','Canal'], tamanho:['Potes por tamanho','Potes vendidos','Tamanho']};
 /* RESUMO GERENCIAL — respeita Período, Canal, Sabor, Tamanho e Cliente */
 VIEWS.resumo=function(){
   var ms=perMeses(), ym=ymV(), r=resumoF(ms), um=F.per.size===1, ant=um?resumoF([SG.addMes(ym,-1)]):null, meta=+D().config.metaLucroMes||0;
@@ -526,11 +527,15 @@ VIEWS.resumo=function(){
     + kpi('Melhor cliente', cli.length?esc(cli[0].n):'—', cli.length?SG.brl(cli[0].v)+' · '+cli.length+' clientes compraram':'sem vendas', true)
     + '</div>';
   h+='<div class="gr2">'+gcard('gMes','Lucro · Mensal', ym.slice(0,4)+' · faturamento − custo dos potes − taxas · com os filtros', legQ('Lucro do mês')+legL('Meta de lucro'))
-    + gcard('gTop','Potes por sabor', perTxt(), legQ('Potes vendidos'))+'</div>';
+    + gcard('gTop', RDIM[V.rdim||'sabor'][0], perTxt(), legQ(RDIM[V.rdim||'sabor'][1]), '<div class="dims">'+Object.keys(RDIM).map(function(k){return '<button class="dimb'+(k===(V.rdim||'sabor')?' on':'')+'" onclick="V.rdim=\''+k+'\';render()">'+RDIM[k][2]+'</button>';}).join('')+'</div>')+'</div>';
   $('view').innerHTML=h;
   var an=anoMeses(ym), luc=an.map(function(m){ var x=resumoF([m]); return x.pedidos?+x.lucro.toFixed(2):null; });
   barras('gMes',{labels:an.map(function(m){return SG.MES3[+m.slice(5)-1];}), dados:luc, meta:an.map(function(){return meta;}), nome:'Lucro', nomeMeta:'Meta', foco:F.per.size?an.map(function(m,i){return F.per.has(m)?i:-1;}).filter(function(i){return i>=0;}):null, cores:function(v,i,t){ return v>=meta?t.verde:t.vermelho; }});
-  barrasH('gTop',{labels:top.map(function(p){return p.nome;}), dados:top.map(function(p){return p.qtd;}), fmt:function(v){return v+' potes';}});
+  var rd=V.rdim||'sabor', ag={};
+  if(rd==='sabor') top.forEach(function(p){ ag[p.nome]=p.qtd; });
+  else linhasVenda(ms).forEach(function(x){ var k=rd==='cliente'?SG.nomeCliente(x.v):rd==='canal'?nCanal(x.v.canal):(x.it.tam?nTam(x.it.tam):null); if(!k) return; ag[k]=(ag[k]||0)+(rd==='tamanho'?x.potes:x.rec); });
+  var ks=Object.keys(ag).sort(function(a,b){return ag[b]-ag[a];}).slice(0,12), emPotes=rd==='sabor'||rd==='tamanho';
+  barrasH('gTop',{labels:ks, dados:ks.map(function(k){return +ag[k].toFixed(2);}), fmt:emPotes?function(v){return v+' potes';}:fmtR});
 };
 
 /* VENDAS — análise por dimensão, mês + YTD */
@@ -588,14 +593,14 @@ function dreMeses(ms){
     if(v.entregue&&(SG.canal(v.canal)||{}).kitEntrega&&v.itens.some(function(i){return i.tam;})) o.kit+=kitU; });
   D().producoes.forEach(function(pr){ if(ms.indexOf((pr.data||'').slice(0,7))<0) return; o.lotes++; o.kg+=+pr.kg||0; var c=SG.consumoProducao(pr);
     Object.keys(c).forEach(function(id){ var i=SG.insumo(id), val=c[id]*SG.custoInsumo(id).valor; if(i&&i.tipo==='embalagem') o.emb+=val; else o.ins+=val; }); });
-  D().despesas.forEach(function(d){ if(ms.indexOf((d.data||'').slice(0,7))<0) return; o.desp[d.categoria]=(o.desp[d.categoria]||0)+(+d.valor||0); o.despT+=+d.valor||0; });
+  D().despesas.forEach(function(d){ if(ms.indexOf((d.data||'').slice(0,7))<0) return; var pk=SG.pacoteDespesa(d); o.desp[pk]=(o.desp[pk]||0)+(+d.valor||0); o.despT+=+d.valor||0; });
   o.liq=o.rec-o.taxa; o.cprod=o.ins+o.emb+o.kit; o.bruto=o.liq-o.cprod; o.res=o.bruto-o.despT; return o;
 }
 function caixaMeses(ms){
   var o={ent:0,comp:0,compI:0,compE:0,desp:{},despT:0,receber:0};
   D().vendas.forEach(function(v){ if(ms.indexOf((v.data||'').slice(0,7))<0) return; var t=SG.totalVenda(v); if(v.pago) o.ent+=t; else o.receber+=t; });
   D().compras.forEach(function(c){ if(ms.indexOf((c.data||'').slice(0,7))<0) return; var i=SG.insumo(c.insumo); o.comp+=+c.valor||0; if(i&&i.tipo==='embalagem') o.compE+=+c.valor||0; else o.compI+=+c.valor||0; });
-  D().despesas.forEach(function(d){ if(ms.indexOf((d.data||'').slice(0,7))<0) return; o.desp[d.categoria]=(o.desp[d.categoria]||0)+(+d.valor||0); o.despT+=+d.valor||0; });
+  D().despesas.forEach(function(d){ if(ms.indexOf((d.data||'').slice(0,7))<0) return; var pk=SG.pacoteDespesa(d); o.desp[pk]=(o.desp[pk]||0)+(+d.valor||0); o.despT+=+d.valor||0; });
   o.sai=o.comp+o.despT; o.saldo=o.ent-o.sai; return o;
 }
 function tabelaPY(linhas, A, Y, rotA){
@@ -622,21 +627,27 @@ VIEWS.dre=function(){
     {n:'(−) Embalagens usadas (pote, lacre, adesivo)', f:function(o){return -o.emb;}},
     {n:'(−) Kit de entrega (pedidos entregues)', f:function(o){return -o.kit;}},
     {n:'= Lucro bruto', f:function(o){return o.bruto;}, tot:1, cor:1},
-    {n:'(−) Despesas', f:function(o){return -o.despT;}},
+    {n:'(−) Despesas (OBZ realizado)', f:function(o){return -o.despT;}},
   ].concat(Object.keys(cats).sort().map(function(k){ return {n:k, f:function(o){return -(o.desp[k]||0);}, sub:1}; }))
    .concat([{n:'= Resultado do período', f:function(o){return o.res;}, tot:1, cor:1}]);
   var h='<div class="hero"><div><div class="hl">Resultado · '+perTxt()+'</div><div class="hv '+(A.res>=0?'cg':'cr')+'">'+SG.brl(A.res)+'</div><div class="tsub">'+A.lotes+' lotes produzidos · '+SG.num(A.kg,1)+' kg · '+A.potes+' potes vendidos</div></div>'
     + '<div class="hd"><div>Receita<b>'+SG.brl(A.rec)+'</b></div><div>Lucro bruto<b class="'+(A.bruto>=0?'cg':'cr')+'">'+SG.brl(A.bruto)+'</b></div><div>Margem líquida<b class="'+corMg(A.rec?A.res/A.rec:null)+'">'+(A.rec?SG.pct(A.res/A.rec,1):'—')+'</b></div><div>Resultado no ano<b class="'+(Y.res>=0?'cg':'cr')+'">'+SG.brl(Y.res)+'</b></div></div></div>';
   h+='<div class="split"><div class="card tsec"><div class="thead-row"><div class="ttit">DRE</div><div class="tsub">YTD = janeiro a '+SG.nomeMes(ym)+' de '+ano+'</div></div><div class="twrap">'+tabelaPY(L,A,Y,rotPer())+'</div>'
     + '<div class="nota">Compra de insumo NÃO entra aqui: só vira custo quando o insumo é usado num lote de produção (valor ao custo da última compra). Meses sem produção lançada mostram custo zero — o diário de produção da planilha começa em setembro.</div></div>';
-  h+='<div class="pilha">'+gcard('gDre','Resultado · Mensal', ano+' · competência', legQ('Resultado do mês'))+gcard('gDreC','Para onde foi a receita', perTxt(), legQ('R$'))+'</div></div>';
+  h+='<div class="pilha">'+gcard('gDre','Resultado · Mensal', ano+' · competência', legQ('Resultado do mês'))+'<div class="card tsec"><div class="thead-row"><div class="ttit">OBZ · orçado × realizado</div><div class="tsub">'+perTxt()+' · orçado = valor mensal × '+ms.length+(ms.length>1?' meses':' mês')+'</div></div><div class="twrap">'+obzTab(A,ms.length)+'</div></div></div></div>';
   $('view').innerHTML=h;
   var an=anoMeses(ym), res=an.map(function(m){ var o=dreMeses([m]); return (o.rec||o.cprod||o.despT)?+o.res.toFixed(2):null; });
   barras('gDre',{labels:an.map(function(m){return SG.MES3[+m.slice(5)-1];}), dados:res, nome:'Resultado', foco:F.per.size?an.map(function(m,i){return F.per.has(m)?i:-1;}).filter(function(i){return i>=0;}):null, cores:function(v,i,t){return v>=0?t.verde:t.vermelho;}});
-  var comp=[['Insumos',A.ins],['Embalagens',A.emb],['Kit de entrega',A.kit],['Taxas',A.taxa]].concat(Object.keys(A.desp).map(function(k){return [k,A.desp[k]];})).concat([['Resultado',A.res]]).filter(function(x){return Math.abs(x[1])>0.004;});
-  barrasH('gDreC',{labels:comp.map(function(x){return x[0];}), dados:comp.map(function(x){return +x[1].toFixed(2);}), cores:function(v,i,t){ return comp[i][0]==='Resultado'?(v>=0?t.verde:t.vermelho):t.neutro; }});
 };
 
+function obzTab(A, n){
+  var orc=SG.obzPorPacote(), pk=SG.PACOTES_OBZ.slice(); Object.keys(A.desp).forEach(function(k){ if(pk.indexOf(k)<0) pk.push(k); });
+  var T={o:0,r:0}, rows=pk.map(function(k){ var o=(orc[k]||0)*n, r=A.desp[k]||0; T.o+=o; T.r+=r; return {k:k,o:o,r:r}; });
+  var dl=function(o,r){ var d=o-r; return '<span class="'+(d>=0?'cg':'cr')+'" title="'+(d>=0?'gastou menos que o orçado':'gastou mais que o orçado')+'">'+(d>=0?'+':'−')+SG.brl(Math.abs(d))+'</span>'; };
+  return '<table class="dre"><thead><tr><th>Pacote</th><th class="num">Orçado</th><th class="num">Realizado</th><th class="num">Δ</th></tr></thead><tbody>'
+    + rows.map(function(x){ return '<tr><td class="conta">'+esc(x.k)+'</td><td class="num">'+SG.brl(x.o)+'</td><td class="num">'+SG.brl(x.r)+'</td><td class="num">'+dl(x.o,x.r)+'</td></tr>'; }).join('')
+    + '<tr class="total"><td>Total</td><td class="num">'+SG.brl(T.o)+'</td><td class="num">'+SG.brl(T.r)+'</td><td class="num">'+dl(T.o,T.r)+'</td></tr></tbody></table>';
+}
 /* CAIXA — o dinheiro na data em que entra e sai */
 VIEWS.caixa=function(){
   var ms=perMeses(), ym=ymV(), ano=ym.slice(0,4), ytd=anoMeses(ym).filter(function(m){return m<=ym;});
@@ -691,7 +702,7 @@ function simCalc(){
 VIEWS.simulador=function(){
   if(!SIM.linhas) SIM.linhas=[simLinhaNova()];
   sub('Adicione produtos (tamanho, canal, preço e potes por mês) e veja o DRE do mês · na ficha do produto dá para gravar o preço na tabela');
-  var S=simCalc(), T=S.T, meta=+D().config.metaLucroMes||0, mgL=T.rec?T.lucro/T.rec:null, mcU=T.potes?T.mc/T.potes:0, indFixo=SG.indiretosMes();
+  var S=simCalc(), T=S.T, meta=+D().config.metaLucroMes||0, indFixo=SG.indiretosMes(), obzP=SG.obzPorPacote(); T.lucro=T.mc-indFixo; var mgL=T.rec?T.lucro/T.rec:null, mcU=T.potes?T.mc/T.potes:0;
   var pe = mcU>0 ? Math.ceil(indFixo/mcU) : null, potesMeta = mcU>0 ? Math.ceil((meta+indFixo)/mcU) : null;
   var h='<div class="hero"><div><div class="hl">Lucro de um mês com estas vendas</div><div class="hv '+(T.lucro>=0?'cg':'cr')+'">'+SG.brl(T.lucro)+'</div><div class="tsub">'+T.potes+' potes · receita '+SG.brl(T.rec)+'</div></div>'
     + '<div class="hd"><div>Margem líquida<b class="'+corMg(mgL)+'">'+(mgL==null?'—':SG.pct(mgL,1))+'</b></div><div>Margem de contribuição<b>'+(T.rec?SG.pct(T.mc/T.rec,1):'—')+'</b></div><div>Meta de lucro<b class="'+(T.lucro>=meta?'cg':'cr')+'">'+(meta?SG.pct(T.lucro/meta,0):'—')+' de '+SG.brl0(meta)+'</b></div><div>Preço médio do pote<b>'+(T.potes?SG.brl(T.rec/T.potes):'—')+'</b></div></div></div>';
@@ -712,22 +723,23 @@ VIEWS.simulador=function(){
     ['(−) Taxas de canal (iFood, maquininha)', -T.taxa],
     ['(−) Impostos sobre venda', -T.imp],
     ['= Receita líquida', T.liq, 1],
+    ['VBZ · custos variáveis (acompanham cada pote)', null, 'sec'],
     ['(−) Ingredientes (gelato + cobertura)', -T.ingr],
     ['(−) Embalagem (pote, lacre, adesivo)', -T.emb],
     ['(−) Kit entrega (saco térmico, sacola)', -T.kit],
     ['= Margem de contribuição', T.mc, 1],
-    ['(−) Custos indiretos (rateio por kg)', -T.ind],
-    ['= Lucro', T.lucro, 1, 1],
-  ];
+    ['OBZ · custos fixos do mês (orçamento em Parâmetros)', null, 'sec'],
+  ].concat(SG.PACOTES_OBZ.map(function(pc){ return ['(−) '+pc, -(obzP[pc]||0)]; }))
+   .concat([['= Lucro', T.lucro, 1, 1]]);
   var tabD='<table class="dre"><thead><tr><th>DRE do mês simulado</th><th class="num">'+'Total ('+T.potes+' potes)'+'</th><th class="num">% da receita</th><th class="num sep-l">Por pote</th></tr></thead><tbody>'
-    + D_.map(function(r){ var v=r[1]; return '<tr'+(r[2]?' class="total" style="position:static"':'')+'><td class="conta">'+r[0]+'</td><td class="num">'+(r[3]?'<span class="'+(v>=0?'cg':'cr')+'">'+SG.brl(v)+'</span>':SG.brl(v))+'</td><td class="num">'+(r[3]?'<span class="'+corMg(T.rec?v/T.rec:null)+'">'+pc(v)+'</span>':pc(Math.abs(v)))+'</td><td class="num sep-l">'+pp(v)+'</td></tr>'; }).join('')
+    + D_.map(function(r){ var v=r[1]; if(r[2]==='sec') return '<tr><td colspan="4" style="padding:12px 12px 4px;font-size:9.5px;font-weight:800;color:var(--acc2);text-transform:uppercase;letter-spacing:.8px;background:none">'+r[0]+'</td></tr>'; return '<tr'+(r[2]?' class="total" style="position:static"':'')+'><td class="conta">'+r[0]+'</td><td class="num">'+(r[3]?'<span class="'+(v>=0?'cg':'cr')+'">'+SG.brl(v)+'</span>':SG.brl(v))+'</td><td class="num">'+(r[3]?'<span class="'+corMg(T.rec?v/T.rec:null)+'">'+pc(v)+'</span>':pc(Math.abs(v)))+'</td><td class="num sep-l">'+pp(v)+'</td></tr>'; }).join('')
     + '</tbody></table>';
   var avisos=[]; S.L.forEach(function(r){ r.avisos.forEach(function(a){ if(avisos.indexOf(a)<0) avisos.push(a); }); });
   h+='<div class="split" style="grid-template-columns:minmax(0,1fr) minmax(0,1fr)"><div class="card tsec"><div class="thead-row"><div class="ttit">Produtos simulados</div><div class="tsub">clique na linha para mudar preço e quantidade</div><div class="dir">'+(SIM.linhas.length?'<button class="btn sm" onclick="simLimpa()" title="Tira todas as linhas de uma vez">Limpar</button>':'')+'<button class="btn sm" onclick="simCarregaMes()" title="Usa os potes vendidos no mês, com o preço médio praticado">Carregar vendas de '+SG.nomeMes(SG.mesAtual())+'</button>'+btNovo('Adicionar produto','abrirSimLinha(null)')+'</div></div><div class="twrap">'+tabL+'</div>'
     + (avisos.length?'<div class="av2" style="margin-top:8px">'+avisos.map(esc).join(' · ')+'</div>':'')+'</div>'
     + '<div class="card tsec"><div class="thead-row"><div class="ttit">DRE do mês simulado</div><div class="tsub">um mês vendendo as quantidades da esquerda ·</div><div class="tsub">margem colorida pela meta de '+SG.pct(D().config.margemAlvo,0)+'</div></div><div class="twrap" style="flex:0 0 auto">'+tabD+'</div>'
-    + '<div class="mk" style="margin-top:12px"><div><small>Ponto de equilíbrio</small><b>'+(indFixo?(pe?pe+' potes':'—'):'sem custo fixo')+'</b></div><div><small>Potes para a meta</small><b>'+(potesMeta?potesMeta:'—')+'</b></div><div><small>Lucro por pote (média)</small><b class="'+(T.lucro>=0?'cg':'cr')+'">'+pp(T.lucro)+'</b></div></div>'
-    + '<div class="nota">Custos indiretos entram pelo rateio por kg de Parâmetros ('+SG.brl(SG.indiretosMes())+'/mês ÷ '+SG.num(D().config.kgMesRateio,1)+' kg). Mão de obra fica fora. Ponto de equilíbrio e potes para a meta tratam os indiretos como custo fixo do mês e mantêm o mesmo mix.</div></div></div>';
+    + '<div class="mk" style="margin-top:12px"><div title="OBZ do mês ÷ margem de contribuição por pote"><small>Ponto de equilíbrio</small><b>'+(indFixo?(pe?pe+' potes':'—'):'sem OBZ lançado')+'</b></div><div><small>Potes para a meta</small><b>'+(potesMeta?potesMeta:'—')+'</b></div><div><small>Lucro por pote (depois do OBZ)</small><b class="'+(T.lucro>=0?'cg':'cr')+'">'+pp(T.lucro)+'</b></div></div>'
+    + '<div class="nota">OBZ = orçamento de custos fixos do mês por pacote ('+SG.brl(indFixo)+'/mês, em Parâmetros). Ele não entra no custo do pote: sai do lucro do mês. Ponto de equilíbrio = OBZ ÷ margem de contribuição por pote. Mão de obra entra se vocês lançarem Pró-labore/Ajudante no pacote Pessoal.</div></div></div>';
   $('view').innerHTML=h;
 };
 function simLimpa(){ if(!confirm('Tirar todos os produtos da simulação?')) return; SIM.linhas=[]; render(); }
@@ -1038,13 +1050,13 @@ VIEWS.despesas=function(){
 };
 function abrirDespesa(id){
   var d=id?D().despesas.filter(function(x){return x.id===id;})[0]:null;
-  var b='<div class="frow"><div class="fld"><label>Data</label><input class="inp" type="date" id="deData" value="'+(d?d.data:SG.hoje())+'"></div><div class="fld"><label>Categoria</label><select class="inp" id="deCat">'+CATS_DESP.map(function(c){return '<option'+(d&&d.categoria===c?' selected':'')+'>'+c+'</option>';}).join('')+'</select></div></div>'
+  var b='<div class="frow"><div class="fld"><label>Data</label><input class="inp" type="date" id="deData" value="'+(d?d.data:SG.hoje())+'"></div><div class="fld"><label>Conta OBZ</label><select class="inp" id="deCat">'+(function(SEL){ return SG.PACOTES_OBZ.map(function(pc){ var l=SG.contasOBZ().filter(function(c){return c.pacote===pc;}); return l.length?'<optgroup label="'+pc+'">'+l.map(function(c){return '<option value="'+c.id+'"'+(c.id===SEL?' selected':'')+'>'+esc(c.nome)+'</option>';}).join('')+'</optgroup>':''; }).join(''); })(d&&d.conta?d.conta:'anuncios')+'</select></div></div>'
     + '<div class="fld"><label>Descrição</label><input class="inp" id="deDesc" value="'+esc(d?d.desc:'')+'" placeholder="Ex.: Impulsionamento Instagram"></div>'
     + '<div class="frow"><div class="fld"><label>Valor (R$)</label><input class="inp num" id="deVal" value="'+(d?nv(d.valor):'')+'"></div><div></div></div><div class="erro" id="deErro"></div>';
   abrirModal(d?'Despesa · '+d.desc:'Nova despesa', b, footPad("salvaDespesa("+(d?"'"+d.id+"'":'null')+")", d?"apagaReg('despesas','"+d.id+"')":null));
 }
 function salvaDespesa(id){ var v=numIn($('deVal').value); if(!v){ $('deErro').textContent='Informe o valor.'; return; }
-  var o={id:id||SG.novoId('d'), data:$('deData').value||SG.hoje(), categoria:$('deCat').value, desc:$('deDesc').value||$('deCat').value, valor:v, ts:Date.now(), por:eu().id};
+  var ct=SG.contaOBZ($('deCat').value), o={id:id||SG.novoId('d'), data:$('deData').value||SG.hoje(), conta:ct.id, categoria:ct.nome, desc:$('deDesc').value||ct.nome, valor:v, ts:Date.now(), por:eu().id};
   if(id) D().despesas=D().despesas.map(function(x){return x.id===id?Object.assign({},x,o):x;}); else D().despesas.push(o);
   SG.salvar(true); fecharModal(); toast('Despesa salva'); }
 
@@ -1264,10 +1276,10 @@ VIEWS.parametros=function(){
   var c=D().config;
   sub('Valores que entram em todos os cálculos de custo, preço e meta · clique na linha para editar');
   function bloco(tit, subt, tab, bt){ return '<div class="card tsec" style="flex:1 1 auto"><div class="thead-row"><div class="ttit">'+tit+'</div><div class="tsub">'+subt+'</div><div class="dir">'+(bt||'')+'</div></div><div class="twrap">'+tab+'</div></div>'; }
-  var metas=[{k:'margemAlvo',n:'Margem desejada',v:SG.pct(c.margemAlvo,0),d:'sobre o preço de venda'},{k:'imposto',n:'Imposto sobre venda',v:SG.pct(c.imposto,1),d:'MEI ou CPF = 0'},{k:'metaLucroMes',n:'Meta de lucro do mês',v:SG.brl(c.metaLucroMes),d:'usada no Resumo e no Simulador'},{k:'diasVendaMes',n:'Dias de venda por mês',v:c.diasVendaMes,d:'para potes por dia'},{k:'kgMesRateio',n:'Kg produzidos por mês',v:SG.num(c.kgMesRateio,1)+' kg',d:'base do rateio dos indiretos'}];
+  var metas=[{k:'margemAlvo',n:'Margem desejada',v:SG.pct(c.margemAlvo,0),d:'sobre o preço de venda'},{k:'imposto',n:'Imposto sobre venda',v:SG.pct(c.imposto,1),d:'MEI ou CPF = 0'},{k:'metaLucroMes',n:'Meta de lucro do mês',v:SG.brl(c.metaLucroMes),d:'usada no Resumo e no Simulador'},{k:'diasVendaMes',n:'Dias de venda por mês',v:c.diasVendaMes,d:'para potes por dia'}];
   var h='<div class="split" style="grid-template-columns:minmax(0,1fr) minmax(0,1fr)"><div class="pilha">'
     + bloco('Preço e metas','margem, imposto e metas', tabela('tPm',[{t:'Parâmetro',f:function(x){return esc(x.n);},cls:'conta'},{t:'Valor',f:function(x){return '<b style="color:var(--txt)">'+x.v+'</b>';},cls:'num'},{t:'Para que serve',f:function(x){return esc(x.d);}}], metas, null, function(x){ return "abrirParam('"+x.k+"')"; }))
-    + bloco('Custos indiretos (por mês)','total '+SG.brl(SG.indiretosMes())+' · '+SG.brl(SG.indiretoKg())+' por kg · mão de obra fica fora', tabela('tInd',[{t:'Custo',f:function(x){return esc(x.nome);},cls:'conta'},{t:'Valor por mês',f:function(x){return SG.brl(x.valor);},cls:'num'}], c.indiretos, null, function(x){ return "abrirIndireto('"+x.id+"')"; }), btNovo('Novo custo','abrirIndireto(null)'))
+    + bloco('Orçamento OBZ · custos fixos do mês','total '+SG.brl(SG.indiretosMes())+'/mês · '+SG.PACOTES_OBZ.map(function(pc){return pc+' '+SG.brl0(SG.obzPorPacote()[pc]||0);}).join(' · '), tabela('tObz',[{t:'Pacote',f:function(x){return esc(x.pacote);},s:function(x){return SG.PACOTES_OBZ.indexOf(x.pacote)+x.nome;}},{t:'Conta',f:function(x){return esc(x.nome);},cls:'conta'},{t:'Orçado por mês',f:function(x){return x.valor?'<b style="color:var(--txt)">'+SG.brl(x.valor)+'</b>':'<span class="muted">R$ 0,00</span>';},v:function(x){return x.valor;},cls:'num'}], SG.contasOBZ().slice().sort(function(a,b){return (SG.PACOTES_OBZ.indexOf(a.pacote)-SG.PACOTES_OBZ.indexOf(b.pacote))||a.nome.localeCompare(b.nome);}), ['Total','',SG.brl(SG.indiretosMes())], function(x){ return "abrirConta('"+x.id+"')"; }), btNovo('Nova conta','abrirConta(null)'))
     + '</div><div class="pilha">'
     + bloco('Canais de venda','taxa sobre o preço e kit de entrega', tabela('tCan',[{t:'Canal',f:function(x){return esc(x.nome);},cls:'conta'},{t:'Taxa',f:function(x){return SG.pct(x.taxa,1);},cls:'num'},{t:'Kit entrega',f:function(x){return x.kitEntrega?'<span class="st vd">sim</span>':'<span class="st cz">não</span>';}}], D().canais, null, function(x){ return "abrirCanal('"+x.id+"')"; }))
     + bloco('Tamanhos de pote','gramas de gelato e pote usado · inativo = só simulação', tabela('tTam',[{t:'Tamanho',f:function(t){return t.nome+' · '+t.ml+' ml';},cls:'conta'},{t:'Gelato',f:function(t){return SG.num(t.g,0)+' g';},cls:'num'},{t:'Pote',f:function(t){var i=SG.insumo(t.pote);return esc(i?i.nome:'—');}},{t:'Situação',f:function(t){return t.ativo?'<span class="st vd">ativo</span>':'<span class="st cz">só simulação</span>';}}], D().tamanhos, null, function(t){ return "abrirTamanho('"+t.id+"')"; }))
@@ -1281,12 +1293,14 @@ var GR_P={kgMesRateio:1};
 function abrirParam(k){ var v=D().config[k];
   abrirModal(NOME_P[k], '<div class="fld"><label>'+NOME_P[k]+'</label><input class="inp num" id="pmV" value="'+(PCT_P[k]?nv(v*100,1):GR_P[k]?nv(v*1000,0):nv(v))+'"></div>',
     '<button class="btn" onclick="fecharModal()">Cancelar</button><button class="btn pri" onclick="var n=numIn($(\'pmV\').value);if(n==null)return;SG.D.config.'+k+'='+(PCT_P[k]?'n/100':GR_P[k]?'n/1000':'n')+';SG.salvar(true);fecharModal();toast(\'Salvo\')">Salvar</button>'); }
-function abrirIndireto(id){ var x=id?D().config.indiretos.filter(function(i){return i.id===id;})[0]:null;
-  abrirModal(x?'Custo indireto · '+x.nome:'Novo custo indireto', '<div class="frow"><div class="fld"><label>Nome</label><input class="inp" id="idN" value="'+esc(x?x.nome:'')+'"></div><div class="fld"><label>Valor por mês (R$)</label><input class="inp num" id="idV" value="'+(x?nv(x.valor):'')+'"></div></div>',
-    footPad("salvaIndireto("+(x?"'"+x.id+"'":'null')+")", x?"apagaIndireto('"+x.id+"')":null)); }
-function salvaIndireto(id){ var n=($('idN').value||'').trim(), v=numIn($('idV').value)||0; if(!n) return; var l=D().config.indiretos;
-  if(id) Object.assign(l.filter(function(i){return i.id===id;})[0],{nome:n,valor:v}); else l.push({id:SG.novoId('ind'),nome:n,valor:v}); SG.salvar(true); fecharModal(); toast('Salvo'); }
-function apagaIndireto(id){ if(!confirm('Excluir este custo?')) return; D().config.indiretos=D().config.indiretos.filter(function(i){return i.id!==id;}); SG.salvar(true); fecharModal(); }
+function abrirConta(id){ var x=id?SG.contaOBZ(id):null, usos=id?D().despesas.filter(function(d){return d.conta===id;}).length:0;
+  abrirModal(x?'Conta OBZ · '+x.nome:'Nova conta OBZ', '<div class="frow"><div class="fld"><label>Pacote</label><select class="inp" id="ozP">'+SG.PACOTES_OBZ.map(function(p){return '<option'+(x&&x.pacote===p?' selected':'')+'>'+p+'</option>';}).join('')+'</select></div><div class="fld"><label>Conta</label><input class="inp" id="ozN" value="'+esc(x?x.nome:'')+'" placeholder="Ex.: Aluguel"></div></div>'
+    + '<div class="frow"><div class="fld"><label>Orçado por mês (R$)</label><input class="inp num" id="ozV" value="'+(x?nv(x.valor):'')+'"></div><div></div></div>'+(usos?'<div class="nota">'+usos+' despesas lançadas nesta conta.</div>':''),
+    footPad("salvaConta("+(x?"'"+x.id+"'":'null')+")", x&&!usos?"apagaConta('"+x.id+"')":null)); }
+function salvaConta(id){ var n=($('ozN').value||'').trim(), v=numIn($('ozV').value)||0, p=$('ozP').value; if(!n) return; var l=SG.contasOBZ();
+  if(id){ Object.assign(SG.contaOBZ(id),{nome:n,valor:v,pacote:p}); D().despesas.forEach(function(d){ if(d.conta===id) d.categoria=n; }); } else l.push({id:SG.novoId('oz'),pacote:p,nome:n,valor:v});
+  SG.salvar(true); fecharModal(); toast('Salvo'); }
+function apagaConta(id){ if(!confirm('Excluir esta conta do OBZ?')) return; D().config.obz=SG.contasOBZ().filter(function(c){return c.id!==id;}); SG.salvar(true); fecharModal(); }
 function abrirCanal(id){ var x=SG.canal(id); window.CK2={kit:x.kitEntrega};
   abrirModal('Canal · '+x.nome, '<div class="frow"><div class="fld"><label>Taxa sobre o preço (%)</label><input class="inp num" id="caT" value="'+nv(x.taxa*100,1)+'"></div><div class="fld"><label>Leva saco térmico + sacola?</label>'+segH('caK',[['1','Sim'],['0','Não']],x.kitEntrega?'1':'0','caKit')+'</div></div>',
     '<button class="btn" onclick="fecharModal()">Cancelar</button><button class="btn pri" onclick="var c=SG.canal(\''+id+'\');c.taxa=(numIn($(\'caT\').value)||0)/100;c.kitEntrega=window.CK2.kit;SG.salvar(true);fecharModal();toast(\'Salvo\')">Salvar</button>'); }
