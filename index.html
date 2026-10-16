@@ -13,7 +13,7 @@
 <link rel="icon" href="img/icone-192.png">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.SG_BUILD='20261016184059';</script>
+<script>window.SG_BUILD='20261016185152';</script>
 <script src="shared/versao.js"></script>
 <script src="shared/config.js"></script>
 <script src="shared/seed.js"></script>
@@ -559,14 +559,14 @@ TELAS.contagem = function(a){
   } else {
     var cats={}; D().insumos.forEach(function(i){ (cats[i.cat]=cats[i.cat]||[]).push(i); });
     Object.keys(cats).forEach(function(c){ h += '<div class="sec" style="margin-top:12px">'+esc(c)+'</div>'; cats[c].forEach(function(i){ var s=e.insumos[i.id];
-      h += '<div class="lado" style="grid-template-columns:1fr 110px;align-items:center"><div style="font-size:12.5px">'+esc(i.nome)+'<div style="font-size:10px;color:var(--txt3)">'+(i.un==='un'?'unidades':'em kg (ex.: 0,5 = 500 g)')+'</div></div><div class="campo" style="margin:0 0 8px"><input data-k="'+i.id+'" inputmode="decimal" placeholder="'+(s!=null?String(+s.toFixed(3)).replace('.',','):'')+'"></div></div>'; }); });
+      h += '<div class="lado" style="grid-template-columns:1fr 110px;align-items:center"><div style="font-size:12.5px">'+esc(i.nome)+'<div style="font-size:10px;color:var(--txt3)">'+(i.un==='un'?'unidades':'em gramas')+'</div></div><div class="campo" style="margin:0 0 8px"><input data-k="'+i.id+'" data-f="'+(i.un==='un'?1:1000)+'" inputmode="decimal" placeholder="'+(s!=null?String(Math.round(s*(i.un==='un'?1:1000))):'')+'"></div></div>'; }); });
   }
   h += '<button class="btn" onclick="salvaContagem(\''+modo+'\')">'+ic('ok')+'Salvar contagem</button>';
   return h;
 };
 function salvaContagem(modo){
   var c={id:SG.novoId('ct'), data:SG.hoje(), ts:Date.now(), por:usuario().id, insumos:{}, potes:{}}, n=0;
-  document.querySelectorAll('#corpo input[data-k]').forEach(function(inp){ var v=numIn(inp.value); if(v==null) return; n++; if(modo==='potes') c.potes[inp.dataset.k]=v; else c.insumos[inp.dataset.k]=v; });
+  document.querySelectorAll('#corpo input[data-k]').forEach(function(inp){ var v=numIn(inp.value); if(v==null) return; n++; if(modo==='potes') c.potes[inp.dataset.k]=v; else c.insumos[inp.dataset.k]=v/(+inp.dataset.f||1); });
   if(!n){ toast('Nada preenchido'); return; }
   D().contagens.push(c); SG.salvar(true); volta(); toast(n+' itens contados');
 }
@@ -576,7 +576,7 @@ TELAS.producaoNova = function(){
   var rs=D().receitas.filter(function(r){return r.tipo!=='base';});
   var h = cab('pote','Registrar produção','Lote feito hoje: baixa os insumos e soma os potes');
   h += '<div class="campo"><label>Sabor / receita</label><select id="prRec" onchange="prCalc()">'+opts(rs,'chocolate')+'</select></div>';
-  h += '<div class="lado"><div class="campo"><label>Quantidade de mistura (kg)</label><input id="prKg" inputmode="decimal" value="1" oninput="prCalc()"></div><div class="campo"><label>Data</label><input id="prData" type="date" value="'+SG.hoje()+'"></div></div>';
+  h += '<div class="lado"><div class="campo"><label>Mistura (gramas)</label><input id="prKg" inputmode="decimal" value="1000" oninput="prCalc()"></div><div class="campo"><label>Data</label><input id="prData" type="date" value="'+SG.hoje()+'"></div></div>';
   h += '<div class="campo"><label>Vai para o estoque como</label><select id="prProd" onchange="prCalc()"></select></div>';
   h += '<div class="sec">Potes envasados</div><div class="lado" style="grid-template-columns:repeat('+SG.tamanhosAtivos().length+',1fr)">'+SG.tamanhosAtivos().map(function(t){ return '<div class="campo"><label>'+t.nome+' '+t.ml+' ml</label><input data-t="'+t.id+'" inputmode="numeric" placeholder="0" oninput="prCalc()"></div>'; }).join('')+'</div>';
   h += '<div id="prOut"></div><button class="btn" onclick="salvaProducao()">'+ic('ok')+'Salvar produção</button>';
@@ -584,7 +584,7 @@ TELAS.producaoNova = function(){
 };
 TELAS.producaoNova_depois = function(){ prProds(); prCalc(); };
 function prProds(){ var r=$('prRec').value; var ps=D().produtos.filter(function(p){return p.receita===r;}); $('prProd').innerHTML=opts(ps, ps[0]&&ps[0].id, ps.length?null:'— só a receita (cobertura/base) —'); }
-function prColeta(){ var potes={}; document.querySelectorAll('#corpo input[data-t]').forEach(function(i){ var v=numIn(i.value); if(v) potes[i.dataset.t]=v; }); return {receita:$('prRec').value, produto:$('prProd').value||null, kg:numIn($('prKg').value)||0, potes:potes, data:$('prData').value||SG.hoje()}; }
+function prColeta(){ var potes={}; document.querySelectorAll('#corpo input[data-t]').forEach(function(i){ var v=numIn(i.value); if(v) potes[i.dataset.t]=v; }); return {receita:$('prRec').value, produto:$('prProd').value||null, kg:(numIn($('prKg').value)||0)/1000, potes:potes, data:$('prData').value||SG.hoje()}; }
 function prCalc(){
   if(document.activeElement && document.activeElement.id==='prRec') prProds();
   var p=prColeta(), ck=SG.custoReceitaKg(p.receita)*p.kg, cons=SG.consumoProducao(p);
@@ -593,27 +593,27 @@ function prCalc(){
   h+='<div class="sec">Vai sair do estoque</div><div class="card" style="padding:8px 14px">'+Object.keys(cons).map(function(k){ var i=SG.insumo(k); return '<div style="display:flex;justify-content:space-between;padding:5px 0;font-size:12px;border-bottom:1px solid var(--brd)"><span>'+esc(i?i.nome:k)+'</span><b>'+SG.qtdFmt(cons[k],i&&i.un)+'</b></div>'; }).join('')+'</div>';
   $('prOut').innerHTML=h;
 }
-function salvaProducao(){ var p=prColeta(); if(!p.kg){ toast('Informe os kg da mistura'); return; } p.id=SG.novoId('p'); p.ts=Date.now(); p.por=usuario().id; p.historico=false; D().producoes.push(p); SG.salvar(true); volta(); toast('Produção registrada'); }
+function salvaProducao(){ var p=prColeta(); if(!p.kg){ toast('Informe os gramas da mistura'); return; } p.id=SG.novoId('p'); p.ts=Date.now(); p.por=usuario().id; p.historico=false; D().producoes.push(p); SG.salvar(true); volta(); toast('Produção registrada'); }
 
 /* COMPRAS */
 TELAS.compraNova = function(){
   var ins=D().insumos.slice().sort(function(a,b){return a.nome.localeCompare(b.nome);});
   var h = cab('carrinho','Registrar compra','Atualiza o custo do insumo e o estoque');
   h += '<div class="campo"><label>Insumo</label><select id="coIns" onchange="coCalc()">'+opts(ins,'leite-integral')+'</select></div>';
-  h += '<div class="lado"><div class="campo"><label id="coQl">Quantidade (kg)</label><input id="coQtd" inputmode="decimal" placeholder="ex.: 2" oninput="coCalc()"></div><div class="campo"><label>Valor pago (R$)</label><input id="coVal" inputmode="decimal" placeholder="ex.: 35,90" oninput="coCalc()"></div></div>';
+  h += '<div class="lado"><div class="campo"><label id="coQl">Quantidade (gramas)</label><input id="coQtd" inputmode="decimal" placeholder="ex.: 2000" oninput="coCalc()"></div><div class="campo"><label>Valor pago (R$)</label><input id="coVal" inputmode="decimal" placeholder="ex.: 35,90" oninput="coCalc()"></div></div>';
   h += '<div class="campo"><label>Data</label><input id="coData" type="date" value="'+SG.hoje()+'"></div><div id="coOut"></div>';
   h += '<button class="btn" onclick="salvaCompra()">'+ic('ok')+'Salvar compra</button>';
   return h;
 };
 TELAS.compraNova_depois = function(){ coCalc(); };
 function coCalc(){
-  var i=SG.insumo($('coIns').value), q=numIn($('coQtd').value), v=numIn($('coVal').value), at=SG.custoInsumo(i.id).valor;
-  $('coQl').textContent = i.un==='un'?'Quantidade (unidades)':'Quantidade (kg)';
+  var i=SG.insumo($('coIns').value), q=(numIn($('coQtd').value)||0)/(i.un==='un'?1:1000), v=numIn($('coVal').value), at=SG.custoInsumo(i.id).valor;
+  $('coQl').textContent = i.un==='un'?'Quantidade (unidades)':'Quantidade (gramas)';
   var h='<div class="res"><div class="n"><span>Custo atual</span><b>'+SG.brl(at)+'</b><small>por '+(i.un==='un'?'unidade':'kg')+'</small></div>';
   if(q&&v){ var nv=v/q, d=at?nv/at-1:0; h+='<div class="n"><span>Novo custo</span><b class="'+(d>0.005?'neg':d<-0.005?'pos':'')+'">'+SG.brl(nv)+'</b><small>'+(at?(d>=0?'+':'')+SG.pct(d,1)+' vs atual':'')+'</small></div>'; }
   $('coOut').innerHTML=h+'</div>';
 }
-function salvaCompra(){ var q=numIn($('coQtd').value), v=numIn($('coVal').value); if(!q||!v){ toast('Preencha quantidade e valor'); return; }
+function salvaCompra(){ var q=(numIn($('coQtd').value)||0)/(SG.insumo($('coIns').value).un==='un'?1:1000), v=numIn($('coVal').value); if(!q||!v){ toast('Preencha quantidade e valor'); return; }
   D().compras.push({id:SG.novoId('c'), data:$('coData').value||SG.hoje(), insumo:$('coIns').value, qtd:q, valor:v, ts:Date.now(), por:usuario().id, historico:false}); SG.salvar(true); volta(); toast('Compra registrada'); }
 
 /* DESPESA */

@@ -10,7 +10,7 @@
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.SG_BUILD='20261016184059';</script>
+<script>window.SG_BUILD='20261016185152';</script>
 <script src="../shared/versao.js"></script>
 <script src="../shared/config.js"></script>
 <script src="../shared/seed.js"></script>
@@ -499,6 +499,7 @@ function gcard(id, tit, subt, leg){ return '<div class="card gcard"><div class="
 function legQ(t){ return '<span style="color:var(--txt2)"><i class="sq"></i>'+t+'</span>'; }
 function legL(t){ return '<span style="color:var(--txt2)"><i></i>'+t+'</span>'; }
 function kpi(l,v,m,nome){ return '<div class="kpi"><div class="kl">'+l+'</div><div class="kv'+(nome?' kvn':'')+'">'+v+'</div><div class="km">'+(m||'')+'</div></div>'; }
+function fU(i){ return i&&i.un==='un'?1:1000; }   /* tela em gramas (ingrediente) ou unidades; o dado fica em kg/un */
 function corMg(m){ var a=+D().config.margemAlvo; return m==null||!isFinite(m)?'':m>=a-0.005?'cg':m>0?'amb':'cr'; }
 
 var VIEWS={};
@@ -918,7 +919,7 @@ function abrirProducao(id){
   var p=id?D().producoes.filter(function(x){return x.id===id;})[0]:null;
   PR=p?JSON.parse(JSON.stringify(p)):{id:null,data:SG.hoje(),receita:'chocolate',produto:'chocolate-crumble',kg:1,potes:{}};
   var rs=D().receitas.filter(function(r){return r.tipo!=='base';});
-  var dados='<div class="frow"><div class="fld"><label>Data</label><input class="inp" type="date" id="prData" value="'+PR.data+'"></div><div class="fld"><label>Mistura (kg)</label><input class="inp num" id="prKg" value="'+nv(PR.kg,3)+'" oninput="PR.kg=numIn(this.value)||0;prCalc()"></div></div>'
+  var dados='<div class="frow"><div class="fld"><label>Data</label><input class="inp" type="date" id="prData" value="'+PR.data+'"></div><div class="fld"><label>Mistura (gramas)</label><input class="inp num" id="prKg" value="'+nv(PR.kg*1000,0)+'" placeholder="ex.: 1000" oninput="PR.kg=(numIn(this.value)||0)/1000;prCalc()"></div></div>'
     + '<div class="fld"><label>Receita <span class="ctx">· lista as fichas técnicas; sabor sem ficha (ex.: Danoninho) não aparece — <a href="#" style="color:var(--acc2)" onclick="event.preventDefault();abrirReceita(null)">criar ficha técnica</a></span></label><select class="inp" id="prRec" onchange="PR.receita=this.value;PR.produto=undefined;PR._soReceita=false;prProds();prCalc()">'
       + [['sabor','Sabores'],['cobertura','Coberturas e caldas']].map(function(g){ var l=rs.filter(function(r){return r.tipo===g[0];}); return l.length?'<optgroup label="'+g[1]+'">'+l.map(function(r){return '<option value="'+r.id+'"'+(r.id===PR.receita?' selected':'')+'>'+esc(r.nome)+'</option>';}).join('')+'</optgroup>':''; }).join('')+'</select></div>'
     + '<div class="fld"><label>Vai para o estoque como</label><select class="inp" id="prProd" onchange="PR.produto=this.value||null;PR._soReceita=!PR.produto;prAviso()"></select><div class="tsub" id="prAv" style="color:var(--ambar);margin-top:4px"></div></div>'
@@ -945,7 +946,7 @@ function prCalc(){
   $('prMk').innerHTML='<div><small>Custo da mistura</small><b>'+SG.brl(ck*PR.kg)+'</b></div><div><small>Custo por kg</small><b>'+SG.brl(ck)+'</b></div><div><small>Potes</small><b>'+np+(PR.kg?' · '+SG.pct(gp/1000/PR.kg,0):'')+'</b></div>';
   $('prCons').innerHTML=Object.keys(cons).map(function(k){ var i=SG.insumo(k); return '<div class="lin"><div class="nm"><b>'+esc(i?i.nome:k)+'</b></div><div class="v">'+SG.qtdFmt(cons[k],i&&i.un)+'</div></div>'; }).join('')||'<div class="muted">—</div>';
 }
-function salvaProducao(){ PR.data=$('prData').value||SG.hoje(); if(!PR.kg){ $('prErro').textContent='Informe os kg da mistura.'; return; }
+function salvaProducao(){ PR.data=$('prData').value||SG.hoje(); if(!PR.kg){ $('prErro').textContent='Informe os gramas da mistura.'; return; }
   var pp=PR.produto&&SG.produto(PR.produto); if(pp&&!pp.receita) pp.receita=PR.receita;   /* produto sem ficha passa a usar esta receita */
   delete PR._soReceita; PR.ts=Date.now(); PR.por=eu().id; PR.historico=false;
   if(PR.id) D().producoes=D().producoes.map(function(x){return x.id===PR.id?PR:x;}); else { PR.id=SG.novoId('p'); D().producoes.push(PR); }
@@ -970,16 +971,16 @@ VIEWS.compras=function(){
 function abrirCompra(id){
   var c=id?D().compras.filter(function(x){return x.id===id;})[0]:null, ins=D().insumos.slice().sort(function(a,b){return a.nome.localeCompare(b.nome);});
   var b='<div class="frow"><div class="fld"><label>Data</label><input class="inp" type="date" id="coData" value="'+(c?c.data:SG.hoje())+'"></div><div class="fld"><label>Insumo</label><select class="inp" id="coIns" onchange="coCalc()">'+ins.map(function(i){return '<option value="'+i.id+'"'+(c&&i.id===c.insumo?' selected':'')+'>'+esc(i.nome)+'</option>';}).join('')+'</select></div></div>'
-    + '<div class="frow"><div class="fld"><label id="coQl">Quantidade</label><input class="inp num" id="coQtd" value="'+(c?nv(c.qtd,3):'')+'" oninput="coCalc()"></div><div class="fld"><label>Valor pago (R$)</label><input class="inp num" id="coVal" value="'+(c?nv(c.valor):'')+'" oninput="coCalc()"></div></div>'
+    + '<div class="frow"><div class="fld"><label id="coQl">Quantidade</label><input class="inp num" id="coQtd" value="'+(c?nv(c.qtd*fU(SG.insumo(c.insumo)),0):'')+'" oninput="coCalc()"></div><div class="fld"><label>Valor pago (R$)</label><input class="inp num" id="coVal" value="'+(c?nv(c.valor):'')+'" oninput="coCalc()"></div></div>'
     + '<div class="mk" id="coMk"></div><div class="erro" id="coErro"></div>';
   abrirModal(c?'Compra · '+(SG.insumo(c.insumo)||{}).nome:'Nova compra', b, footPad("salvaCompra("+(c?"'"+c.id+"'":'null')+")", c?"apagaReg('compras','"+c.id+"')":null));
   coCalc(c);
 }
-function coCalc(c){ var i=SG.insumo($('coIns').value), q=numIn($('coQtd').value), v=numIn($('coVal').value), u=SG.ultimaCompra(i.id), at=SG.custoInsumo(i.id).valor;
-  $('coQl').textContent=i.un==='un'?'Quantidade (unidades)':'Quantidade (kg)';
+function coCalc(c){ var i=SG.insumo($('coIns').value), q=(numIn($('coQtd').value)||0)/fU(SG.insumo($('coIns').value)), v=numIn($('coVal').value), u=SG.ultimaCompra(i.id), at=SG.custoInsumo(i.id).valor;
+  $('coQl').textContent=i.un==='un'?'Quantidade (unidades)':'Quantidade (gramas)';
   var nv2=q&&v?v/q:null, d=nv2&&at?nv2/at-1:null;
   $('coMk').innerHTML='<div><small>Custo atual</small><b>'+SG.brl(at)+'</b></div><div><small>Esta compra</small><b class="'+(d==null?'':d>0.005?'cr':d<-0.005?'cg':'')+'">'+(nv2?SG.brl(nv2):'—')+'</b></div><div><small>Variação</small><b>'+(d==null?'—':(d>=0?'+':'')+SG.pct(d,1))+'</b></div>'; }
-function salvaCompra(id){ var q=numIn($('coQtd').value), v=numIn($('coVal').value); if(!q||!v){ $('coErro').textContent='Preencha quantidade e valor.'; return; }
+function salvaCompra(id){ var q=(numIn($('coQtd').value)||0)/fU(SG.insumo($('coIns').value)), v=numIn($('coVal').value); if(!q||!v){ $('coErro').textContent='Preencha quantidade e valor.'; return; }
   var o={id:id||SG.novoId('c'), data:$('coData').value||SG.hoje(), insumo:$('coIns').value, qtd:q, valor:v, ts:Date.now(), por:eu().id, historico:false};
   if(id) D().compras=D().compras.map(function(x){return x.id===id?Object.assign({},x,o,{historico:x.historico}):x;}); else D().compras.push(o);
   SG.salvar(true); fecharModal(); toast('Compra salva'); }
@@ -1041,19 +1042,19 @@ function abrirAjuste(tipo, id){
     abrirModal('Contagem · '+p.nome, '<div class="tsub" style="margin-bottom:12px">Informe quantos potes há AGORA. Em branco = não mexe.</div><div class="frow f4">'+SG.tamanhosAtivos().map(function(t){ var s=e.potes[id+'|'+t.id]; return '<div class="fld"><label>'+t.nome+' · '+t.ml+' ml <span class="ctx">· hoje '+(s==null?'—':s)+'</span></label><input class="inp num" data-k="'+id+'|'+t.id+'" placeholder="'+(s==null?'':s)+'"></div>'; }).join('')+'</div>',
       '<button class="btn" onclick="fecharModal()">Cancelar</button><button class="btn pri" onclick="salvaContagem()">Salvar contagem</button>'); }
   else { var i=SG.insumo(id), s=e.insumos[id];
-    abrirModal('Estoque · '+i.nome, '<div class="frow"><div class="fld"><label>Quantidade AGORA ('+(i.un==='un'?'unidades':'kg')+') <span class="ctx">· hoje '+SG.qtdFmt(s,i.un)+'</span></label><input class="inp num" data-k="'+id+'" data-ins="1" placeholder="'+(s==null?'':nv(s,3))+'"></div><div class="fld"><label>Mínimo ('+(i.un==='un'?'un':'kg')+') <span class="ctx">· avisa quando ficar abaixo</span></label><input class="inp num" id="ajMin" value="'+nv(i.min,3)+'"></div></div>',
-      '<button class="btn" onclick="fecharModal()">Cancelar</button><button class="btn pri" onclick="SG.insumo(\''+id+'\').min=numIn($(\'ajMin\').value)||0;salvaContagem()">Salvar</button>'); }
+    abrirModal('Estoque · '+i.nome, '<div class="frow"><div class="fld"><label>Quantidade AGORA ('+(i.un==='un'?'unidades':'gramas')+') <span class="ctx">· hoje '+SG.qtdFmt(s,i.un)+'</span></label><input class="inp num" data-k="'+id+'" data-ins="1" data-f="'+fU(i)+'" placeholder="'+(s==null?'':nv(s*fU(i),0))+'"></div><div class="fld"><label>Estoque mínimo ('+(i.un==='un'?'unidades':'gramas')+') <span class="ctx">· avisa quando ficar abaixo</span></label><input class="inp num" id="ajMin" value="'+nv(i.min*fU(i),0)+'"></div></div>',
+      '<button class="btn" onclick="fecharModal()">Cancelar</button><button class="btn pri" onclick="SG.insumo(\''+id+'\').min=(numIn($(\'ajMin\').value)||0)/'+fU(i)+';salvaContagem()">Salvar</button>'); }
 }
 function abrirContagem(){
   var e=SG.estoque(), ts=SG.tamanhosAtivos();
   var pot=SG.produtosAtivos().map(function(p){ return '<div class="sec2">'+esc(p.nome)+'</div><div class="frow f4">'+ts.map(function(t){ var s=e.potes[p.id+'|'+t.id]; return '<div class="fld" style="margin-bottom:4px"><label>'+t.nome+'</label><input class="inp num sm" data-k="'+p.id+'|'+t.id+'" placeholder="'+(s==null?'':s)+'"></div>'; }).join('')+'</div>'; }).join('');
-  var ins=D().insumos.slice().sort(function(a,b){return (a.cat+a.nome).localeCompare(b.cat+b.nome);}).map(function(i){ var s=e.insumos[i.id]; return '<div class="lin"><div class="nm"><b>'+esc(i.nome)+'</b><small>'+esc(i.cat)+' · '+(i.un==='un'?'unidades':'kg')+'</small></div><input class="inp num sm" style="width:90px" data-k="'+i.id+'" data-ins="1" placeholder="'+(s==null?'':nv(s,3))+'"></div>'; }).join('');
-  abrirModal('Nova contagem de estoque', '<div class="wz-2col">'+col('Potes prontos','quantos potes há agora · em branco = não mexe',pot)+col('Insumos e embalagens','em kg (0,5 = 500 g) ou unidades · em branco = não mexe',ins)+'</div>',
+  var ins=D().insumos.slice().sort(function(a,b){return (a.cat+a.nome).localeCompare(b.cat+b.nome);}).map(function(i){ var s=e.insumos[i.id]; return '<div class="lin"><div class="nm"><b>'+esc(i.nome)+'</b><small>'+esc(i.cat)+' · '+(i.un==='un'?'unidades':'gramas')+'</small></div><input class="inp num sm" style="width:90px" data-k="'+i.id+'" data-ins="1" data-f="'+fU(i)+'" placeholder="'+(s==null?'':nv(s*fU(i),0))+'"></div>'; }).join('');
+  abrirModal('Nova contagem de estoque', '<div class="wz-2col">'+col('Potes prontos','quantos potes há agora · em branco = não mexe',pot)+col('Insumos e embalagens','ingredientes em gramas, embalagens em unidades · em branco = não mexe',ins)+'</div>',
     '<span class="esq">A contagem substitui o saldo dos itens preenchidos</span><button class="btn" onclick="fecharModal()">Cancelar</button><button class="btn pri" onclick="salvaContagem()">Salvar contagem</button>', true);
 }
 function salvaContagem(){
   var c={id:SG.novoId('ct'), data:SG.hoje(), ts:Date.now(), por:eu().id, insumos:{}, potes:{}}, n=0;
-  document.querySelectorAll('#m-body input[data-k]').forEach(function(i){ var v=numIn(i.value); if(v==null) return; n++; if(i.dataset.ins) c.insumos[i.dataset.k]=v; else c.potes[i.dataset.k]=v; });
+  document.querySelectorAll('#m-body input[data-k]').forEach(function(i){ var v=numIn(i.value); if(v==null) return; n++; if(i.dataset.ins) c.insumos[i.dataset.k]=v/(+i.dataset.f||1); else c.potes[i.dataset.k]=v; });
   if(n) D().contagens.push(c); SG.salvar(true); fecharModal(); toast(n?n+' itens contados':'Salvo');
 }
 
@@ -1079,7 +1080,7 @@ function abrirReceita(id){
   RF=r?JSON.parse(JSON.stringify(r)):{id:null,nome:'',tipo:'sabor',rendKg:1,itens:[],obs:''};
   var dados='<div class="fld"><label>Nome</label><input class="inp" id="rfNome" value="'+esc(RF.nome)+'" placeholder="Ex.: Pistache"></div>'
     + '<div class="fld"><label>Tipo</label>'+segH('rfTipo',[['sabor','Sabor'],['cobertura','Cobertura / calda'],['base','Base']],RF.tipo,'rfTipoSet')+'</div>'
-    + '<div class="frow"><div class="fld"><label>Rende (kg) <span class="ctx">· se perde peso no preparo</span></label><input class="inp num" id="rfRend" value="'+nv(RF.rendKg,3)+'" oninput="RF.rendKg=numIn(this.value)||1;rfCalc()"></div><div></div></div>'
+    + '<div class="frow"><div class="fld"><label>Rende (gramas) <span class="ctx">· se perde peso no preparo</span></label><input class="inp num" id="rfRend" value="'+nv(RF.rendKg*1000,0)+'" oninput="RF.rendKg=(numIn(this.value)||1000)/1000;rfCalc()"></div><div></div></div>'
     + '<div class="fld"><label>Observações</label><textarea class="inp" id="rfObs">'+esc(RF.obs||'')+'</textarea></div><div class="mk" id="rfMk"></div><div class="erro" id="rfErro"></div>';
   var opIns=D().insumos.filter(function(i){return i.tipo==='ingrediente';}).slice().sort(function(a,b){return a.nome.localeCompare(b.nome);}), opRec=D().receitas.filter(function(x){return x.id!==id;});
   var pe='<select class="inp" id="rfAdd" style="flex:1;min-width:180px"><optgroup label="Insumos">'+opIns.map(function(i){return '<option value="i:'+i.id+'">'+esc(i.nome)+'</option>';}).join('')+'</optgroup><optgroup label="Sub-receitas">'+opRec.map(function(x){return '<option value="r:'+x.id+'">'+esc(x.nome)+'</option>';}).join('')+'</optgroup></select><input class="inp num" id="rfG" placeholder="gramas" style="width:90px"><button class="btn pri sm" onclick="rfAdd()">'+ic('mais')+'Adicionar</button>';
@@ -1124,8 +1125,8 @@ function abrirInsumo(id){
   var i=id?SG.insumo(id):null, cats={}; D().insumos.forEach(function(x){cats[x.cat]=1;});
   var IF={tipo:i?i.tipo:'ingrediente'}; window.IF=IF;
   var dados='<div class="fld"><label>Nome</label><input class="inp" id="inNome" value="'+esc(i?i.nome:'')+'"></div>'
-    + '<div class="frow"><div class="fld"><label>Tipo</label>'+segH('inTipo',[['ingrediente','Ingrediente (kg)'],['embalagem','Embalagem (un)']],IF.tipo,'inTipoSet')+'</div><div class="fld"><label>Categoria</label><input class="inp" id="inCat" list="dlCat" value="'+esc(i?i.cat:'')+'"><datalist id="dlCat">'+Object.keys(cats).map(function(c){return '<option value="'+esc(c)+'">';}).join('')+'</datalist></div></div>'
-    + '<div class="frow"><div class="fld"><label>Custo manual (R$ por kg/un) <span class="ctx">· vale se não houver compra</span></label><input class="inp num" id="inCusto" value="'+(i?nv(i.custoManual):'')+'"></div><div class="fld"><label>Estoque mínimo <span class="ctx">· avisa abaixo disso</span></label><input class="inp num" id="inMin" value="'+(i?nv(i.min,3):'')+'"></div></div>'
+    + '<div class="frow"><div class="fld"><label>Tipo</label>'+segH('inTipo',[['ingrediente','Ingrediente (g)'],['embalagem','Embalagem (un)']],IF.tipo,'inTipoSet')+'</div><div class="fld"><label>Categoria</label><input class="inp" id="inCat" list="dlCat" value="'+esc(i?i.cat:'')+'"><datalist id="dlCat">'+Object.keys(cats).map(function(c){return '<option value="'+esc(c)+'">';}).join('')+'</datalist></div></div>'
+    + '<div class="frow"><div class="fld"><label>Custo manual (R$ por kg · embalagem: por un) <span class="ctx">· vale se não houver compra</span></label><input class="inp num" id="inCusto" value="'+(i?nv(i.custoManual):'')+'"></div><div class="fld"><label>Estoque mínimo (gramas · embalagem: un) <span class="ctx">· avisa abaixo disso</span></label><input class="inp num" id="inMin" value="'+(i&&i.min?nv(i.min*fU(i),0):'')+'" placeholder="ex.: 500"></div></div>'
     + (i?'<div class="mk"><div><small>Custo em uso</small><b>'+SG.brl(SG.custoInsumo(i.id).valor)+'</b></div><div><small>Origem</small><b>'+({compra:'Última compra',manual:'Custo manual',estimado:'Estimado'})[SG.custoInsumo(i.id).origem]+'</b></div><div><small>Estoque</small><b>'+SG.qtdFmt(SG.estoque().insumos[i.id],i.un)+'</b></div></div>':'')+'<div class="erro" id="inErro"></div>';
   var hist=i?D().compras.filter(function(c){return c.insumo===i.id;}).sort(function(a,b){return a.data<b.data?1:-1;}).map(function(c){ return '<div class="lin"><div class="nm"><b>'+SG.dataBR(c.data)+'</b><small>'+SG.qtdFmt(c.qtd,i.un)+' por '+SG.brl(c.valor)+'</small></div><div class="v">'+SG.brl(c.valor/c.qtd)+'/'+(i.un==='un'?'un':'kg')+'</div></div>'; }).join(''):'';
   var rec=i?D().receitas.filter(function(r){return r.itens.some(function(x){return x.insumo===i.id;});}).map(function(r){ var g=r.itens.filter(function(x){return x.insumo===i.id;})[0].g; return '<div class="lin"><div class="nm"><b>'+esc(r.nome)+'</b></div><div class="v">'+SG.num(g,1)+' g/kg</div></div>'; }).join(''):'';
@@ -1134,7 +1135,7 @@ function abrirInsumo(id){
 }
 function inTipoSet(t){ window.IF.tipo=t; }
 function salvaInsumo(id){ var n=($('inNome').value||'').trim(); if(!n){ $('inErro').textContent='Informe o nome.'; return; }
-  var o={nome:n, tipo:window.IF.tipo, un:window.IF.tipo==='embalagem'?'un':'kg', cat:($('inCat').value||'Outros').trim(), custoManual:numIn($('inCusto').value)||0, min:numIn($('inMin').value)||0, estimado:false};
+  var o={nome:n, tipo:window.IF.tipo, un:window.IF.tipo==='embalagem'?'un':'kg', cat:($('inCat').value||'Outros').trim(), custoManual:numIn($('inCusto').value)||0, min:(numIn($('inMin').value)||0)/(window.IF.tipo==='embalagem'?1:1000), estimado:false};
   if(id) Object.assign(SG.insumo(id),o); else D().insumos.push(Object.assign({id:SG.novoId('i')},o));
   SG.salvar(true); fecharModal(); toast('Insumo salvo'); }
 function apagaInsumo(id){ var us=D().receitas.filter(function(r){return r.itens.some(function(x){return x.insumo===id;});}); if(us.length){ alert('Usado em: '+us.map(function(r){return r.nome;}).join(', ')+'. Tire das receitas antes.'); return; } apagaReg('insumos',id,'Excluir este insumo?'); }
@@ -1237,10 +1238,11 @@ VIEWS.parametros=function(){
   $('view').innerHTML=h;
 };
 var PCT_P={margemAlvo:1,imposto:1};
-var NOME_P={margemAlvo:'Margem desejada (%)',imposto:'Imposto sobre venda (%)',metaLucroMes:'Meta de lucro do mês (R$)',diasVendaMes:'Dias de venda por mês',kgMesRateio:'Kg produzidos por mês'};
+var NOME_P={margemAlvo:'Margem desejada (%)',imposto:'Imposto sobre venda (%)',metaLucroMes:'Meta de lucro do mês (R$)',diasVendaMes:'Dias de venda por mês',kgMesRateio:'Gramas produzidas por mês (rateio)'};
+var GR_P={kgMesRateio:1};
 function abrirParam(k){ var v=D().config[k];
-  abrirModal(NOME_P[k], '<div class="fld"><label>'+NOME_P[k]+'</label><input class="inp num" id="pmV" value="'+(PCT_P[k]?nv(v*100,1):nv(v))+'"></div>',
-    '<button class="btn" onclick="fecharModal()">Cancelar</button><button class="btn pri" onclick="var n=numIn($(\'pmV\').value);if(n==null)return;SG.D.config.'+k+'='+(PCT_P[k]?'n/100':'n')+';SG.salvar(true);fecharModal();toast(\'Salvo\')">Salvar</button>'); }
+  abrirModal(NOME_P[k], '<div class="fld"><label>'+NOME_P[k]+'</label><input class="inp num" id="pmV" value="'+(PCT_P[k]?nv(v*100,1):GR_P[k]?nv(v*1000,0):nv(v))+'"></div>',
+    '<button class="btn" onclick="fecharModal()">Cancelar</button><button class="btn pri" onclick="var n=numIn($(\'pmV\').value);if(n==null)return;SG.D.config.'+k+'='+(PCT_P[k]?'n/100':GR_P[k]?'n/1000':'n')+';SG.salvar(true);fecharModal();toast(\'Salvo\')">Salvar</button>'); }
 function abrirIndireto(id){ var x=id?D().config.indiretos.filter(function(i){return i.id===id;})[0]:null;
   abrirModal(x?'Custo indireto · '+x.nome:'Novo custo indireto', '<div class="frow"><div class="fld"><label>Nome</label><input class="inp" id="idN" value="'+esc(x?x.nome:'')+'"></div><div class="fld"><label>Valor por mês (R$)</label><input class="inp num" id="idV" value="'+(x?nv(x.valor):'')+'"></div></div>',
     footPad("salvaIndireto("+(x?"'"+x.id+"'":'null')+")", x?"apagaIndireto('"+x.id+"')":null)); }
