@@ -10,7 +10,7 @@
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.SG_BUILD='20261016185319';</script>
+<script>window.SG_BUILD='20261016185654';</script>
 <script src="../shared/versao.js"></script>
 <script src="../shared/config.js"></script>
 <script src="../shared/seed.js"></script>
@@ -335,7 +335,7 @@ function eu(){ if(SGR.ativo&&SGR.perfil) return SGR.perfil; var id=null; try{id=
 /* ════════ navegação ════════ */
 var MENU=[
   ['Visões',[['resumo','Resumo Gerencial','resumo'],['vendasA','Vendas','vendas'],['dre','DRE','fin'],['caixa','Caixa','caixa'],['simulador','Simulador de preço (DRE)','sim'],['cenarios','Simular todos os sabores','grade']]],
-  ['Gestão à Vista',[['lancamentos','Lançamentos','lista'],['pedidos','Pedidos','vendas'],['producao','Produção','prod'],['compras','Compras','compra'],['despesas','Despesas','recibo'],['estoque','Estoque','estoque'],['fichas','Fichas técnicas','ficha'],['insumos','Insumos','insumo'],['produtos','Produtos e preços','tag'],['clientes','Clientes','clientes'],['parametros','Parâmetros','config']]],
+  ['Gestão à Vista',[['lancamentos','Lançamentos','lista'],['pedidos','Pedidos','vendas'],['producao','Produção','prod'],['saidas','Compras e despesas','compra'],['estoque','Estoque','estoque'],['fichas','Fichas técnicas','ficha'],['insumos','Insumos','insumo'],['produtos','Produtos e preços','tag'],['clientes','Clientes','clientes'],['parametros','Parâmetros','config']]],
 ];
 var TIT={}; MENU.forEach(function(s){ s[1].forEach(function(m){ TIT[m[0]]=m[1]; }); });
 var V={view:'resumo', ym:SG.mesAtual(), fPed:'todos', fCan:'', q:{}, dim:'sabor', est:'potes'};
@@ -367,7 +367,7 @@ function filtros(){}   /* os filtros moram na barra do topo (barraFiltros), por 
 
 /* ════════ filtros multisseleção — padrão "casca nova" 6.1 ════════
    Set vazio = Todos. Desmarcar com tudo marcado = "todos menos este". "só" = só esta opção. */
-var F={per:new Set([SG.mesAtual()]), can:new Set(), sab:new Set(), tam:new Set(), cli:new Set(), sit:new Set(), tip:new Set(), catI:new Set(), catD:new Set(), tipR:new Set(), tipC:new Set(), tipI:new Set()};
+var F={tipS:new Set(), catS:new Set(), per:new Set([SG.mesAtual()]), can:new Set(), sab:new Set(), tam:new Set(), cli:new Set(), sit:new Set(), tip:new Set(), catI:new Set(), catD:new Set(), tipR:new Set(), tipC:new Set(), tipI:new Set()};
 var SIT_L={pago:'Pago', receber:'A receber', entregue:'Entregue', entregar:'A entregar'};
 var FDEF={
   per:{n:'Período', ic:'cal', itens:function(){ return SG.mesesComDados().slice().reverse(); }, lbl:function(m){ return SG.nomeMes(m)+' '+m.slice(0,4); }},
@@ -381,11 +381,13 @@ var FDEF={
   catD:{n:'Categoria', ic:'tag', itens:function(){ var o={}; CATS_DESP.forEach(function(c){o[c]=1;}); D().despesas.forEach(function(d){o[d.categoria]=1;}); return Object.keys(o).sort(); }, lbl:function(x){return x;}},
   tipR:{n:'Tipo', ic:'ficha', itens:function(){ return Object.keys(TIPOS_R); }, lbl:function(k){ return TIPOS_R[k]; }},
   tipC:{n:'Tipo de cliente', ic:'clientes', itens:function(){ return ['consumidor','revenda']; }, lbl:function(k){ return k==='revenda'?'Revenda':'Consumidor'; }},
+  tipS:{n:'Tipo', ic:'lista', itens:function(){ return Object.keys(TIPO_S); }, lbl:function(k){ return TIPO_S[k]; }},
+  catS:{n:'Categoria', ic:'tag', itens:function(){ var o={}; todasSaidas().forEach(function(x){o[x.cat]=1;}); return Object.keys(o).sort(); }, lbl:function(x){return x;}},
   tipI:{n:'Tipo', ic:'insumo', itens:function(){ return ['ingrediente','embalagem']; }, lbl:function(k){ return k==='embalagem'?'Embalagem':'Ingrediente'; }},
 };
 var FVIS={
   resumo:['per','can','sab','tam','cli'], vendasA:['per','can','sab','tam','cli'], dre:['per'], caixa:['per'], simulador:[], cenarios:['tam','can'],
-  lancamentos:['per','tip','can','cli','sit'], pedidos:['per','can','cli','sab','tam','sit'], producao:['per','sab'], compras:['per','tipI','catI'], despesas:['per','catD'],
+  lancamentos:['per','tip','can','cli','sit'], pedidos:['per','can','cli','sab','tam','sit'], producao:['per','sab'], compras:['per','tipI','catI'], despesas:['per','catD'], saidas:['per','tipS','catS'],
   estoque:['sab','tam','tipI','catI'], fichas:['tipR'], insumos:['tipI','catI'], produtos:['can','sab'], clientes:['tipC'], parametros:[]
 };
 function barraFiltros(){
@@ -952,6 +954,40 @@ function salvaProducao(){ PR.data=$('prData').value||SG.hoje(); if(!PR.kg){ $('p
   delete PR._soReceita; PR.ts=Date.now(); PR.por=eu().id; PR.historico=false;
   if(PR.id) D().producoes=D().producoes.map(function(x){return x.id===PR.id?PR:x;}); else { PR.id=SG.novoId('p'); D().producoes.push(PR); }
   SG.salvar(true); fecharModal(); toast('Produção salva'); }
+
+/* SAÍDAS — compras de insumo/embalagem e despesas numa tela só.
+   Por dentro continuam diferentes: compra vai para o estoque (vira custo no DRE só quando usada
+   na produção); despesa vai direto para o DRE do mês. No caixa, as duas são saída. */
+var TIPO_S={ingrediente:'Ingrediente', embalagem:'Embalagem', despesa:'Despesa'};
+function todasSaidas(){
+  var l=[];
+  D().compras.forEach(function(c){ var i=SG.insumo(c.insumo); l.push({o:'compra', id:c.id, data:c.data, tipo:i&&i.tipo==='embalagem'?'embalagem':'ingrediente', desc:i?i.nome:c.desc, cat:i?i.cat:'—', qtd:i?SG.qtdFmt(c.qtd,i.un):'', unit:c.qtd?SG.brl(c.valor/c.qtd)+'/'+(i&&i.un==='un'?'un':'kg'):'', valor:+c.valor||0, hist:c.historico}); });
+  D().despesas.forEach(function(d){ l.push({o:'despesa', id:d.id, data:d.data, tipo:'despesa', desc:d.desc, cat:d.categoria, qtd:'', unit:'', valor:+d.valor||0, hist:d.historico}); });
+  return l;
+}
+VIEWS.saidas=function(){
+  sub('Compras de insumos e embalagens + despesas · compra entra no estoque (custo no DRE quando usada) · despesa vai direto ao DRE');
+  var ls=todasSaidas().filter(function(x){ return ymOk(x.data)&&fOk('tipS',x.tipo)&&fOk('catS',x.cat)&&qOk('sai',[x.desc,x.cat]); });
+  var tc=0, td=0; ls.forEach(function(x){ if(x.o==='compra') tc+=x.valor; else td+=x.valor; });
+  if(!ORD.tSai) ORD.tSai={i:0,d:-1};
+  $('view').innerHTML=cadastro(ls.length+' saídas · compras '+SG.brl(tc)+' · despesas '+SG.brl(td)+' · total '+SG.brl(tc+td)+' · clique para ver e editar', busca('sai','Insumo, descrição ou categoria…'), btNovo('Nova saída','novaSaida()'),
+    tabela('tSai',[
+      {t:'Data',f:function(x){return SG.dataBR(x.data);},s:function(x){return x.data;}},
+      {t:'Tipo',f:function(x){return x.o==='despesa'?'<span class="st am">Despesa</span>':'<span class="st az">'+TIPO_S[x.tipo]+'</span>';},s:function(x){return x.tipo;}},
+      {t:'Descrição',f:function(x){return '<span class="cl">'+esc(x.desc)+'</span>';},s:function(x){return x.desc;},cls:'conta'},
+      {t:'Categoria',f:function(x){return esc(x.cat);},s:function(x){return x.cat;}},
+      {t:'Quantidade',f:function(x){return x.qtd||'—';},cls:'num'},
+      {t:'Preço',f:function(x){return x.unit||'—';},cls:'num'},
+      {t:'Valor',f:function(x){return '<b style="color:var(--txt)">'+SG.brl(x.valor)+'</b>';},v:function(x){return x.valor;},cls:'num'},
+      {t:'Origem',f:function(x){return x.hist?'<span class="mut">planilha</span>':'app';}},
+    ], ls, ['Total','','','','','',SG.brl(tc+td),''], function(x){ return x.o==='compra'?"abrirCompra('"+x.id+"')":"abrirDespesa('"+x.id+"')"; }));
+};
+function novaSaida(){
+  var op=[['compra','Compra de insumo ou embalagem','entra no estoque e atualiza o custo do insumo','abrirCompra(null)'],['despesa','Despesa','marketing, aluguel, conta, taxa — vai direto ao DRE','abrirDespesa(null)']];
+  abrirModal('Nova saída','<div class="tsub" style="margin-bottom:12px">O que foi pago?</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">'
+    + op.map(function(o){ return '<button class="btn" style="justify-content:flex-start;padding:16px;text-align:left;white-space:normal;gap:12px" onclick="'+o[3]+'"><span style="width:36px;height:36px;border-radius:9px;background:var(--hover);display:flex;align-items:center;justify-content:center;color:var(--acc2);flex:0 0 auto">'+ic(o[0]==='compra'?'compra':'recibo')+'</span><span><b style="display:block;color:var(--txt);font-size:13px">'+o[1]+'</b><small style="font-weight:600;color:var(--txt3)">'+o[2]+'</small></span></button>'; }).join('')+'</div>',
+    '<button class="btn" onclick="fecharModal()">Cancelar</button>');
+}
 
 /* COMPRAS */
 VIEWS.compras=function(){

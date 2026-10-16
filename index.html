@@ -13,7 +13,7 @@
 <link rel="icon" href="img/icone-192.png">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.SG_BUILD='20261016185319';</script>
+<script>window.SG_BUILD='20261016185654';</script>
 <script src="shared/versao.js"></script>
 <script src="shared/config.js"></script>
 <script src="shared/seed.js"></script>
@@ -633,9 +633,8 @@ function salvaDespesa(){ var v=numIn($('deVal').value); if(!v){ toast('Informe o
 TELAS.mais = function(){
   var h = '<div class="saldo" style="margin-top:20px"><div class="rot">Gestão</div></div>';
   h += li({ic:'moeda', cor:'ac', t:'Caixa do mês', s:'Entradas, saídas e saldo', on:"abre('caixa')"});
-  h += li({ic:'carrinho', t:'Compras', s:'Histórico e nova compra', on:"abre('compras')"});
+  h += li({ic:'carrinho', t:'Compras e despesas', s:'Insumos, embalagens, marketing, contas', on:"abre('saidas')"});
   h += li({ic:'pote', t:'Produção', s:'Lotes produzidos', on:"abre('producoes')"});
-  h += li({ic:'recibo', t:'Despesas', s:'Marketing, contas, taxas', on:"abre('despesas')"});
   h += li({ic:'pessoas', t:'Clientes', s:D().clientes.length+' cadastrados', on:"abre('clientes')"});
   h += li({ic:'frasco', t:'Fichas técnicas', s:'Custo por kg de cada receita', on:"abre('fichas')"});
   h += li({ic:'conta', t:'Tabela de preços', s:'Preço por sabor, tamanho e canal', on:"abre('tabela')"});
@@ -654,6 +653,15 @@ TELAS.caixa = function(a){
   h += '<div class="sec">Lançamentos<span class="cont">'+ex.length+'</span></div>';
   h += ex.map(function(l){ return li({ic:l.tipo==='entrada'?'sacola':l.orig==='compra'?'carrinho':'recibo', cor:l.tipo==='entrada'?(l.pendente?'am':'vd'):'', t:esc(l.desc), s:SG.dataBR(l.data)+' · '+esc(l.det), v:'<span class="'+(l.tipo==='entrada'?(l.pendente?'amb':'pos'):'neg')+'">'+(l.tipo==='entrada'?'+':'−')+SG.brl(l.valor)+'</span>'}); }).join('') || '<div class="vazio">Sem lançamentos.</div>';
   return h;
+};
+TELAS.saidas = function(){
+  var l=[];
+  D().compras.forEach(function(c){ var i=SG.insumo(c.insumo); l.push({d:c.data, ic:i&&i.tipo==='embalagem'?'caixa':'carrinho', t:i?i.nome:c.desc, s:(i&&i.tipo==='embalagem'?'Embalagem':'Ingrediente')+' · '+SG.qtdFmt(c.qtd,i&&i.un), v:+c.valor}); });
+  D().despesas.forEach(function(x){ l.push({d:x.data, ic:'recibo', t:x.desc, s:'Despesa · '+x.categoria, v:+x.valor}); });
+  l.sort(function(a,b){ return a.d<b.d?1:-1; });
+  return cab('carrinho','Compras e despesas', l.length+' saídas · compra vai para o estoque, despesa direto ao resultado')
+    + '<div class="duo2" style="margin-bottom:16px"><button class="btn" onclick="abre(\'compraNova\',{form:1})">'+ic('mais1')+'Compra</button><button class="btn sec2" onclick="abre(\'despesaNova\',{form:1})">'+ic('mais1')+'Despesa</button></div>'
+    + (l.map(function(x){ return li({ic:x.ic, t:esc(x.t), s:SG.dataBR(x.d)+' · '+esc(x.s), v:SG.brl(x.v)}); }).join('') || '<div class="vazio">Nenhuma saída.</div>');
 };
 TELAS.compras = function(){
   var l=D().compras.slice().sort(function(a,b){return a.data<b.data?1:-1;});
