@@ -10,14 +10,14 @@
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.SG_BUILD='20261016201229';</script>
-<script src="../shared/versao.js?v=20261016201229"></script>
-<script src="../shared/config.js?v=20261016201229"></script>
-<script src="../shared/seed.js?v=20261016201229"></script>
-<script src="../shared/core.js?v=20261016201229"></script>
+<script>window.SG_BUILD='20261016202040';</script>
+<script src="../shared/versao.js?v=20261016202040"></script>
+<script src="../shared/config.js?v=20261016202040"></script>
+<script src="../shared/seed.js?v=20261016202040"></script>
+<script src="../shared/core.js?v=20261016202040"></script>
 <script src="../assets/excel-export.js"></script>
 <script src="../assets/pdf-export.js"></script>
-<script src="../shared/remote.js?v=20261016201229"></script>
+<script src="../shared/remote.js?v=20261016202040"></script>
 <style>
 /* ============================================================
    SURREAL — Painel de gestão (PC). OneSpot · 16/10/2026
@@ -452,7 +452,7 @@ function tabela(id, cols, linhas, tot, onRow){
     + (tot?'<tr class="total">'+tot.map(function(t,i){return '<td class="'+(cols[i].cls||'')+'">'+t+'</td>';}).join('')+'</tr>':'')
     + '</tbody></table>';
 }
-function ordena(id,i){ var o=ORD[id]; ORD[id]= o&&o.i===i ? {i:i,d:-o.d} : {i:i,d:-1}; render(); }
+function ordena(id,i){ var o=ORD[id]; ORD[id]= o&&o.i===i ? {i:i,d:-o.d} : {i:i,d:-1}; if(id==='tHist'){ abrirHistContagem(); return; } render(); }
 function busca(k, ph){ return '<div class="busca">'+ic('lupa')+'<input value="'+esc(V.q[k]||'')+'" placeholder="'+ph+'" oninput="V.q[\''+k+'\']=this.value;clearTimeout(window._qb);window._qb=setTimeout(function(){render();var i=document.querySelector(\'.busca input\');if(i){i.focus();i.setSelectionRange(i.value.length,i.value.length);}},250)"></div>'; }
 function qOk(k, txts){ var q=(V.q[k]||'').toLowerCase(); return !q||txts.some(function(t){ return String(t||'').toLowerCase().indexOf(q)>=0; }); }
 /* card de cadastro: subtítulo + busca + botão Novo + tabela que vai até o fim da tela */
@@ -1077,7 +1077,7 @@ VIEWS.estoque=function(){
   var e=SG.estoque(), ts=SG.tamanhosAtivos();
   sub(V.est==='insumos'?'Insumos andam sozinhos: tudo o que foi comprado − tudo o que foi usado nas produções · a contagem só serve para acertar':'Potes prontos: produção − pedidos entregues · a contagem acerta o que há no freezer');
   var dims='<div class="dims"><button class="dimb'+(V.est==='potes'?' on':'')+'" onclick="V.est=\'potes\';render()">Potes prontos</button><button class="dimb'+(V.est==='insumos'?' on':'')+'" onclick="V.est=\'insumos\';render()">Insumos</button></div>';
-  var bt='<button class="btn pri sm" onclick="abrirContagem()">'+ic('mais')+'Nova contagem</button>';
+  var bt='<button class="btn sm" onclick="abrirHistContagem()">Histórico de contagens</button><button class="btn pri sm" onclick="abrirContagem()">'+ic('mais')+'Nova contagem</button>';
   var h=e.iniciado?'':'<div class="av2">O histórico da planilha não diz quanto há hoje no estoque. Faça uma contagem uma vez: a partir dela o saldo anda sozinho.</div>';
   if(V.est==='potes'){
     var ts=ts.filter(function(t){return fOk('tam',t.id);}); var ls=SG.produtosAtivos().filter(function(p){return fOk('sab',p.id)&&qOk('est',[p.nome]);}).map(function(p){ var o={p:p,t:0}; ts.forEach(function(t){ o[t.id]=e.potes[p.id+'|'+t.id]; o.t+=o[t.id]||0; }); return o; });
@@ -1106,6 +1106,23 @@ function abrirAjuste(tipo, id){
   else { var i=SG.insumo(id), s=e.insumos[id];
     abrirModal('Estoque · '+i.nome, '<div class="frow"><div class="fld"><label>Quantidade agora ('+(i.un==='un'?'un':'g')+')</label><input class="inp num" data-k="'+id+'" data-ins="1" data-f="'+fU(i)+'" placeholder="'+(s==null?'':nv(s*fU(i),0))+'"><div class="fdica">hoje: '+SG.qtdFmt(s,i.un)+'</div></div><div class="fld"><label>Estoque mínimo ('+(i.un==='un'?'un':'g')+')</label><input class="inp num" id="ajMin" value="'+nv(i.min*fU(i),0)+'"></div></div>',
       '<button class="btn" onclick="fecharModal()">Cancelar</button><button class="btn pri" onclick="SG.insumo(\''+id+'\').min=(numIn($(\'ajMin\').value)||0)/'+fU(i)+';salvaContagem()">Salvar</button>'); }
+}
+/* histórico de contagens: item, contado, o que o sistema esperava, diferença e quem contou */
+function nomeUsr(id){ if(!id) return '—'; if(SGR.ativo&&SGR.nome) return SGR.nome(id)||'—'; var u=D().config.usuarios.filter(function(x){return x.id===id;})[0]; return u?u.nome:'—'; }
+function abrirHistContagem(){
+  var hs=SG.estoque().historico.slice().reverse();
+  var item=function(h){ if(h.tipo==='ins'){ var i=SG.insumo(h.k); return i?i.nome:h.k; } var pt=h.k.split('|'), p=SG.produto(pt[0]); return (p?p.nome:pt[0])+' · '+pt[1]; };
+  var un=function(h){ return h.tipo==='ins'?((SG.insumo(h.k)||{}).un||'kg'):'pote'; };
+  var q=function(h,v){ return v==null?'—':h.tipo==='ins'?SG.qtdFmt(v,un(h)):v+' potes'; };
+  var tab=tabela('tHist',[
+    {t:'Data',f:function(h){return SG.dataBR(h.c.data);},s:function(h){return h.c.data+String(h.c.ts||0).padStart(15,'0');}},
+    {t:'Item',f:function(h){return esc(item(h));},s:item,cls:'conta'},
+    {t:'Contado',f:function(h){return '<b style="color:var(--txt)">'+q(h,h.depois)+'</b>';},v:function(h){return h.depois;},cls:'num'},
+    {t:'Sistema esperava',f:function(h){return q(h,h.antes);},v:function(h){return h.antes==null?-1e9:h.antes;},cls:'num'},
+    {t:'Diferença',f:function(h){ if(h.antes==null) return '<span class="mut">1ª contagem</span>'; var d=h.depois-h.antes; if(Math.abs(d)<1e-6) return '<span class="cg">bateu</span>'; return '<span class="'+(d<0?'cr':'amb')+'" title="'+(d<0?'tinha menos do que o sistema esperava (perda, consumo não lançado)':'tinha mais do que o esperado (compra ou produção não lançada?)')+'">'+(d>0?'+':'−')+q(h,Math.abs(d))+'</span>'; },v:function(h){return h.antes==null?0:h.depois-h.antes;},cls:'num'},
+    {t:'Quem contou',f:function(h){return esc(nomeUsr(h.c.por));},s:function(h){return nomeUsr(h.c.por);}},
+  ], hs);
+  abrirModal('Histórico de contagens', '<div class="tsub" style="margin-bottom:10px;flex:0 0 auto">'+hs.length+' acertos · diferença = contado − o que o sistema esperava naquele momento · vermelho = tinha menos (perda ou uso não lançado) · âmbar = tinha mais</div><div class="twrap">'+tab+'</div>', '<button class="btn pri" onclick="fecharModal()">Fechar</button>', true);
 }
 function abrirContagem(){
   var e=SG.estoque(), ts=SG.tamanhosAtivos();

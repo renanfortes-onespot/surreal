@@ -305,13 +305,14 @@
     return mv.sort(function (a, b) { return a.data < b.data ? -1 : a.data > b.data ? 1 : a.ts - b.ts; });
   }
   function estoque() {
-    var ins = {}, potes = {}, contado = { ins: {}, pote: {} };
+    var ins = {}, potes = {}, contado = { ins: {}, pote: {} }, hist = [];
     function add(o, k, q) { o[k] = (o[k] || 0) + q; }
     movimentos().forEach(function (m) {
       var c = m.c;
       if (m.tipo === 'contagem') {
-        Object.keys(c.insumos || {}).forEach(function (k) { ins[k] = +c.insumos[k]; contado.ins[k] = c.data; });
-        Object.keys(c.potes || {}).forEach(function (k) { potes[k] = +c.potes[k]; contado.pote[k] = c.data; });
+        /* guarda o que o sistema esperava antes do acerto: a diferença mostra perdas/erros */
+        Object.keys(c.insumos || {}).forEach(function (k) { hist.push({ c: c, tipo: 'ins', k: k, antes: ins[k] == null ? null : ins[k], depois: +c.insumos[k] }); ins[k] = +c.insumos[k]; contado.ins[k] = c.data; });
+        Object.keys(c.potes || {}).forEach(function (k) { hist.push({ c: c, tipo: 'pote', k: k, antes: potes[k] == null ? null : potes[k], depois: +c.potes[k] }); potes[k] = +c.potes[k]; contado.pote[k] = c.data; });
       } else if (m.tipo === 'compra') add(ins, c.insumo, +c.qtd || 0);
       else if (m.tipo === 'producao') {
         var cons = consumoProducao(c); Object.keys(cons).forEach(function (k) { add(ins, k, -cons[k]); });
@@ -325,7 +326,7 @@
         if (c.pote) add(potes, c.pote, +c.qtd || 0);
       }
     });
-    return { insumos: ins, potes: potes, contado: contado, iniciado: true, potesIniciado: Object.keys(contado.pote).length > 0 || D.producoes.some(function (p) { return !p.historico; }) };
+    return { insumos: ins, potes: potes, contado: contado, historico: hist, iniciado: true, potesIniciado: Object.keys(contado.pote).length > 0 || D.producoes.some(function (p) { return !p.historico; }) };
   }
   function estoqueBaixo() {
     var e = estoque(), l = [];

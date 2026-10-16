@@ -19,7 +19,7 @@
   var COLS = ['insumos', 'receitas', 'produtos', 'tamanhos', 'canais', 'compras', 'producoes', 'vendas', 'despesas', 'clientes', 'contagens', 'ajustes'];
   var ORDENADAS = { insumos: 1, receitas: 1, produtos: 1, tamanhos: 1, canais: 1 };
 
-  var sb = null, perfil = null, snap = {}, ultimo = null, enviando = false, pendente = false, tmPush = null, tmPull = null;
+  var nomes = {}, sb = null, perfil = null, snap = {}, ultimo = null, enviando = false, pendente = false, tmPush = null, tmPull = null;
   var cbStatus = function () {}, estado = 'ok';
 
   function status(s, msg) { estado = s; try { cbStatus(s, msg); } catch (e) {} }
@@ -152,7 +152,9 @@
     return sb.from('sg_usuarios').select('id,email,nome,ativo').eq('id', user.id).maybeSingle().then(function (r) {
       if (r.error) throw r.error;
       if (!r.data || !r.data.ativo) { var e = new Error('SEM_ACESSO'); e.code = 'SEM_ACESSO'; throw e; }
-      perfil = r.data; return perfil;
+      perfil = r.data;
+      /* nomes de quem usa (para mostrar "quem lançou/contou") */
+      return sb.from('sg_usuarios').select('id,nome').then(function (u) { (u.data || []).forEach(function (x) { nomes[x.id] = x.nome; }); return perfil; });
     });
   }
   function abrir(user, cb) {
@@ -210,6 +212,6 @@
   window.SGR = {
     ativo: ATIVO, iniciar: iniciar, entrar: entrar, sair: sair, trocarSenha: trocarSenha,
     sincronizar: function () { push(); return pull(); },
-    get perfil() { return perfil; }, get estado() { return estado; },
+    get perfil() { return perfil; }, nome: function (id) { return nomes[id] || null; }, get estado() { return estado; },
   };
 })();
