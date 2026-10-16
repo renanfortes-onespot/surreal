@@ -10,6 +10,8 @@
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script>window.SG_BUILD='20261016175503';</script>
+<script src="../shared/versao.js"></script>
 <script src="../shared/config.js"></script>
 <script src="../shared/seed.js"></script>
 <script src="../shared/core.js"></script>
@@ -1076,6 +1078,7 @@ function trocaSenha(){ var n=prompt('Nova senha (mínimo 6 caracteres):'); if(!n
 var CB={ login:mostraLogin, pronto:function(){ $('login').classList.remove('on'); render(); },
   status:function(s){ var d=$('sdot'); if(d) d.className='sdot'+(s==='sync'?' s':s==='off'?' off':''); } };
 window.addEventListener('resize', function(){ clearTimeout(window._rz); window._rz=setTimeout(function(){ if(!$('modal').classList.contains('on')) render(); },200); });
+if ('serviceWorker' in navigator && location.protocol==='https:') navigator.serviceWorker.register('../sw.js',{scope:'../',updateViaCache:'none'}).catch(function(){});
 aplicaTema();
 if(!SGR.ativo) render(); else { $('login').classList.add('on'); $('lgForm').style.display='none'; $('lgCarr').style.display=''; SGR.iniciar(CB); }
 </script>
