@@ -10,12 +10,14 @@
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.SG_BUILD='20261016195853';</script>
-<script src="../shared/versao.js?v=20261016195853"></script>
-<script src="../shared/config.js?v=20261016195853"></script>
-<script src="../shared/seed.js?v=20261016195853"></script>
-<script src="../shared/core.js?v=20261016195853"></script>
-<script src="../shared/remote.js?v=20261016195853"></script>
+<script>window.SG_BUILD='20261016200107';</script>
+<script src="../shared/versao.js?v=20261016200107"></script>
+<script src="../shared/config.js?v=20261016200107"></script>
+<script src="../shared/seed.js?v=20261016200107"></script>
+<script src="../shared/core.js?v=20261016200107"></script>
+<script src="../assets/excel-export.js"></script>
+<script src="../assets/pdf-export.js"></script>
+<script src="../shared/remote.js?v=20261016200107"></script>
 <style>
 /* ============================================================
    SURREAL — Painel de gestão (PC). OneSpot · 16/10/2026
@@ -351,18 +353,19 @@ function side(){
     + MENU.map(function(s){ return '<div class="s-sec">'+s[0]+'</div>'+s[1].map(function(m){
       var n = m[0]==='pedidos'&&abertos?'<span class="n al" title="pedidos em aberto">'+abertos+'</span>':m[0]==='estoque'&&baixo?'<span class="n al" title="insumos abaixo do mínimo">'+baixo+'</span>':'';
       return '<button class="s-item'+(V.view===m[0]?' on':'')+'" onclick="vai(\''+m[0]+'\')">'+ic(m[2])+m[1]+n+'</button>'; }).join(''); }).join('')
-    + '<div class="s-sec">Atalhos</div><button class="s-item" onclick="baixarApp()">'+ic('baixar')+'Baixar app no celular</button><a class="s-item" href="../">'+ic('celular')+'Abrir app do celular</a>'
+    + '<div class="s-sec">Atalhos</div><div id="pdf-slot"></div><button class="s-item" onclick="baixarApp()">'+ic('baixar')+'Baixar app no celular</button><a class="s-item" href="../">'+ic('celular')+'Abrir app do celular</a>'
     + '<div class="s-pe"><div class="s-user"><div class="av">'+esc(ini)+'</div><div style="min-width:0"><b>'+esc(u.nome)+'</b>'
     + (SGR.ativo?'<i><span class="sdot '+(SGR.estado==='sync'?'s':SGR.estado==='off'?'off':'')+'" id="sdot"></span>'+(SGR.estado==='off'?'sem conexão':'sincronizado')+'</i>'
         :'<i><select onchange="try{localStorage.setItem(\'sg_usuario\',this.value)}catch(e){};render()">'+D().config.usuarios.map(function(x){return '<option value="'+x.id+'"'+(x.id===u.id?' selected':'')+'>'+esc(x.nome)+'</option>';}).join('')+'</select></i>')
     + '</div>'+(SGR.ativo?'<div class="acts"><button title="Trocar senha" onclick="trocaSenha()">'+ic('chave')+'</button><button title="Sair" onclick="SGR.sair()">'+ic('sair')+'</button></div>':'')+'</div>'
     + '<div class="s-por">por <b>OneSpot</b></div></div>';
 }
+function religaPdf(){ var w=window._pdfWrap, sl=$('pdf-slot'); if(w&&sl&&w.parentNode!==sl) sl.appendChild(w); }
 function vai(v){ V.view=v; try{localStorage.setItem('sg_view',v);}catch(e){} render(); $('view').scrollTop=0; }
 var graficos=[];
 function render(){
   graficos.forEach(function(g){g.destroy();}); graficos=[];
-  side(); $('tit').textContent=TIT[V.view]||'';
+  side(); religaPdf(); $('tit').textContent=TIT[V.view]||'';
   if(!render.manterF||render._v!==V.view) barraFiltros(); render._v=V.view;
   (VIEWS[V.view]||VIEWS.resumo)();
 }
@@ -721,7 +724,8 @@ VIEWS.simulador=function(){
     {t:'Potes',f:function(r){return r.q;},v:function(r){return r.q;},cls:'num'},
     {t:'Lucro/pote',f:function(r){return '<span class="'+(r.lucroPote>=0?'cg':'cr')+'">'+SG.brl(r.lucroPote)+'</span>';},v:function(r){return r.lucroPote;},cls:'num'},
     {t:'Margem',f:function(r){return '<span class="'+corMg(r.margem)+'">'+SG.pct(r.margem,1)+'</span>';},v:function(r){return r.margem;},cls:'num'},
-  ], S.L.map(function(r,i){ r.i=i; return r; }), null, function(r){ return 'abrirSimLinha('+r.i+')'; });
+  ], S.L.map(function(r,i){ r.i=i; return r; }), S.L.length?(function(){ var q=T.potes, lp=S.L.reduce(function(s,r){return s+r.lucroPote*r.q;},0);
+      return ['Total · '+S.L.length+(S.L.length>1?' produtos':' produto'),'','',q?SG.brl(T.rec/q):'—',q,q?'<span class="'+(lp>=0?'cg':'cr')+'">'+SG.brl(lp/q)+'</span>':'—',T.rec?'<span class="'+corMg(T.mc/T.rec)+'">'+SG.pct(T.mc/T.rec,1)+'</span>':'—']; })():null, function(r){ return 'abrirSimLinha('+r.i+')'; });
   // DRE
   var pp=function(v){ return T.potes?SG.brl(v/T.potes):'—'; }, pc=function(v){ return T.rec?SG.pct(v/T.rec,1):'—'; };
   var D_=[
@@ -803,7 +807,11 @@ VIEWS.cenarios=function(){
     {t:'Lucro/pote',f:function(l){return l.pr!=null?'<span class="'+(l.b.lucro>=0?'cg':'cr')+'">'+SG.brl(l.b.lucro)+'</span>':'—';},v:function(l){return l.pr!=null?l.b.lucro:-99;},cls:'num'},
     {t:'Margem simulada',f:function(l){return l.pr!=null?fm(l.b.margem):'—';},v:function(l){return l.pr!=null?l.b.margem:-9;},cls:'num'},
     {t:'Preço p/ meta',f:function(l){return SG.brl(l.meta);},v:function(l){return l.meta||0;},cls:'num'},
-  ],ls)+'</div></div>';
+  ],ls,(function(){ /* totalizador: média simples dos sabores (preço/margem só de quem tem preço) */
+    var md=function(a){ a=a.filter(function(x){return x!=null&&isFinite(x);}); return a.length?a.reduce(function(s,x){return s+x;},0)/a.length:null; };
+    var cT=ls.filter(function(l){return l.a.tabela!=null;}), cP=ls.filter(function(l){return l.pr!=null;}), lu=md(cP.map(function(l){return l.b.lucro;}));
+    return ['Média · '+ls.length+' sabores', SG.brl(md(ls.map(function(l){return l.a.custo.total;}))), cT.length?SG.brl(md(cT.map(function(l){return l.a.tabela;}))):'—', cT.length?fm(md(cT.map(function(l){return l.a.margem;}))):'—',
+      SG.brl(md(ls.map(function(l){return l.b.custo.total;}))), cP.length?SG.brl(md(cP.map(function(l){return l.pr;}))):'—', lu!=null?'<span class="'+(lu>=0?'cg':'cr')+'">'+SG.brl(lu)+'</span>':'—', cP.length?fm(md(cP.map(function(l){return l.b.margem;}))):'—', SG.brl(md(ls.map(function(l){return l.meta;})))]; })())+'</div></div>';
   $('view').innerHTML=h;
 };
 
@@ -1338,6 +1346,15 @@ var CB={ login:mostraLogin, pronto:function(){ $('login').classList.remove('on')
 window.addEventListener('resize', function(){ clearTimeout(window._rz); window._rz=setTimeout(function(){ if(!$('modal').classList.contains('on')) render(); },200); });
 if ('serviceWorker' in navigator && location.protocol==='https:') navigator.serviceWorker.register('../sw.js',{scope:'../',updateViaCache:'none'}).catch(function(){});
 aplicaTema();
+function ligaPdf(){ if(window._pdfWrap||!window.initPdfExport) return;
+  initPdfExport({ btnContainer:'#pdf-slot', btnClass:'s-item', btnAoFim:true,
+    title:'Surreal · gelato artesanal', subtitle:function(){ return $('tsub').textContent; }, fileBase:'surreal',
+    main:function(){ return $('view'); }, marca:'Surreal · OneSpot', cor:'#2563EB',
+    views:function(){ return ['resumo','vendasA','dre','caixa','simulador','cenarios','lancamentos','estoque'].map(function(k){ return {label:TIT[k], ativar:function(){ vai(k); }}; }); },
+    viewAtual:function(){ return V.view; }, irPara:function(k){ vai(k); },
+    isLight:function(){ return document.body.classList.contains('claro'); }, setTheme:function(t){ if((t==='light')!==document.body.classList.contains('claro')) alternaTema(); } });
+  window._pdfWrap=document.querySelector('#pdf-slot .pdf-wrap'); }
+var _render0=render; render=function(){ _render0.apply(this,arguments); ligaPdf(); religaPdf(); };
 if(!SGR.ativo) render(); else { $('login').classList.add('on'); $('lgForm').style.display='none'; $('lgCarr').style.display=''; SGR.iniciar(CB); }
 </script>
 </body>
