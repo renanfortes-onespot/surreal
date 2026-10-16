@@ -10,12 +10,12 @@
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.SG_BUILD='20261016192034';</script>
-<script src="../shared/versao.js?v=20261016192034"></script>
-<script src="../shared/config.js?v=20261016192034"></script>
-<script src="../shared/seed.js?v=20261016192034"></script>
-<script src="../shared/core.js?v=20261016192034"></script>
-<script src="../shared/remote.js?v=20261016192034"></script>
+<script>window.SG_BUILD='20261016193310';</script>
+<script src="../shared/versao.js?v=20261016193310"></script>
+<script src="../shared/config.js?v=20261016193310"></script>
+<script src="../shared/seed.js?v=20261016193310"></script>
+<script src="../shared/core.js?v=20261016193310"></script>
+<script src="../shared/remote.js?v=20261016193310"></script>
 <style>
 /* ============================================================
    SURREAL — Painel de gestão (PC). OneSpot · 16/10/2026
@@ -189,19 +189,23 @@ body.claro table.dre tbody tr:nth-child(even) td{background:rgba(15,23,42,.025);
 .btn.sm{padding:4px 9px;font-size:10.5px;}
 .btn svg{width:13px;height:13px;}
 .fld{display:flex;flex-direction:column;gap:5px;margin-bottom:12px;min-width:0;}
-.fld label{font-size:9.5px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.8px;}
+.fld label{font-size:9.5px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.fdica{font-size:10px;color:var(--txt3);line-height:1.35;margin-top:-1px;}
 .fld label .ctx{text-transform:none;letter-spacing:0;font-weight:500;}
-.frow{display:grid;grid-template-columns:1fr 1fr;gap:10px;align-items:end;}   /* caixas sempre alinhadas, mesmo com rótulo de 2 linhas */
+.frow{display:grid;grid-template-columns:1fr 1fr;gap:10px;align-items:start;}
 .frow.f3{grid-template-columns:repeat(3,1fr);} .frow.f4{grid-template-columns:repeat(4,1fr);}
-.inp{background:var(--inp);border:1px solid var(--card-brd);border-radius:8px;padding:8px 10px;font-size:12.5px;color:var(--txt);outline:0;width:100%;}
+.inp{background:var(--inp);border:1px solid var(--card-brd);border-radius:8px;padding:0 10px;height:36px;font-size:12.5px;color:var(--txt);outline:0;width:100%;}
+textarea.inp{height:auto;padding:8px 10px;}
+.inp.sm{height:28px;}
 .inp:focus{border-color:var(--acc2);}
 body.claro .inp{border-color:rgba(15,23,42,.2);}
 .inp.num{text-align:right;font-variant-numeric:tabular-nums;}
 .inp.sm{padding:4px 7px;font-size:11.5px;}
 select.inp option{background:var(--pop);color:var(--txt);}
 textarea.inp{min-height:64px;resize:vertical;}
-.seg{display:inline-flex;align-self:flex-start;gap:2px;padding:3px;border:1px solid var(--card-brd);border-radius:9px;background:var(--inp);}
-.seg button{border:0;background:transparent;border-radius:6px;padding:6px 14px;font-size:12px;font-weight:700;color:var(--txt2);cursor:pointer;}
+.frow .seg{display:flex;width:100%;} .frow .seg button{flex:1;padding:0 6px;}
+.seg{display:inline-flex;align-self:flex-start;gap:2px;padding:3px;border:1px solid var(--card-brd);border-radius:8px;background:var(--inp);height:36px;max-width:100%;}
+.seg button{border:0;background:transparent;border-radius:6px;padding:0 12px;font-size:12px;font-weight:700;color:var(--txt2);cursor:pointer;white-space:nowrap;}
 .seg button.on{background:var(--acc);color:#fff;}
 .erro{color:var(--vermelho);font-size:11px;font-weight:600;min-height:14px;margin-top:4px;}
 .ctx{color:var(--txt3);font-weight:500;}
@@ -871,10 +875,10 @@ function abrirPedido(id){
   PF=v?JSON.parse(JSON.stringify(v)):{id:null,data:SG.hoje(),cliente:null,canal:'direto',itens:[],pago:true,entregue:true,desconto:0,obs:''};
   var cls=D().clientes.slice().sort(function(a,b){return a.nome.localeCompare(b.nome);});
   var c=PF.cliente&&SG.cliente(PF.cliente);
-  var dados='<div class="frow"><div class="fld"><label>Data</label><input class="inp" type="date" id="pfData" value="'+PF.data+'"></div><div class="fld"><label>Cliente <span class="ctx">· novo nome vira cadastro</span></label><input class="inp" id="pfCli" list="dlCli" value="'+esc(c?c.nome:'')+'" placeholder="Nome do cliente"><datalist id="dlCli">'+cls.map(function(x){return '<option value="'+esc(x.nome)+'">';}).join('')+'</datalist></div></div>'
+  var dados='<div class="frow"><div class="fld"><label>Data</label><input class="inp" type="date" id="pfData" value="'+PF.data+'"></div><div class="fld"><label>Cliente</label><input class="inp" id="pfCli" list="dlCli" value="'+esc(c?c.nome:'')+'" placeholder="Nome do cliente"><datalist id="dlCli">'+cls.map(function(x){return '<option value="'+esc(x.nome)+'">';}).join('')+'</datalist></div></div>'
     + '<div class="fld"><label>Canal</label>'+segH('pfCan',D().canais.map(function(x){return [x.id,x.nome.replace(' (mercadinhos)','')+(x.taxa?' · '+SG.pct(x.taxa,0):'')];}),PF.canal,'pfCanal')+'</div>'
-    + '<div class="frow"><div class="fld"><label>Pagamento</label>'+segH('pfPag',[['1','Pago'],['0','A receber']],PF.pago?'1':'0','pfPago')+'</div><div class="fld"><label>Entrega <span class="ctx">· entregue baixa os potes do estoque</span></label>'+segH('pfEnt',[['1','Entregue'],['0','A entregar']],PF.entregue?'1':'0','pfEntregue')+'</div></div>'
-    + '<div class="frow"><div class="fld"><label>Desconto no pedido (R$)</label><input class="inp num" id="pfDesc" value="'+nv(PF.desconto||0)+'" oninput="PF.desconto=numIn(this.value)||0;pfTotal()"></div><div></div></div>'
+    + '<div class="frow"><div class="fld"><label>Pagamento</label>'+segH('pfPag',[['1','Pago'],['0','A receber']],PF.pago?'1':'0','pfPago')+'</div><div class="fld"><label>Entrega</label>'+segH('pfEnt',[['1','Entregue'],['0','A entregar']],PF.entregue?'1':'0','pfEntregue')+'</div></div>'
+    + '<div class="frow"><div class="fld"><label>Desconto (R$)</label><input class="inp num" id="pfDesc" value="'+nv(PF.desconto||0)+'" oninput="PF.desconto=numIn(this.value)||0;pfTotal()"></div><div></div></div>'
     + '<div class="fld"><label>Observação</label><textarea class="inp" id="pfObs" placeholder="Ex.: entregar sábado de manhã">'+esc(PF.obs||'')+'</textarea></div>'
     + '<div class="mk" id="pfMk"></div><div class="erro" id="pfErro"></div>';
   var itens='<div class="sec2" style="padding-top:0">No pedido</div><div id="pfItens"></div><div class="sec2">Adicionar sabor</div><div class="busca" style="margin-bottom:6px">'+ic('lupa')+'<input id="pfQ" placeholder="Buscar sabor" oninput="pfProds()" style="width:100%"></div><div id="pfProds"></div>';
@@ -935,8 +939,8 @@ function abrirProducao(id){
   PR=p?JSON.parse(JSON.stringify(p)):{id:null,data:SG.hoje(),receita:'chocolate',produto:'chocolate-crumble',kg:1,potes:{}};
   var rs=D().receitas.filter(function(r){return r.tipo!=='base';});
   var dados='<div class="frow"><div class="fld"><label>Data</label><input class="inp" type="date" id="prData" value="'+PR.data+'"></div><div class="fld"><label>Mistura (gramas)</label><input class="inp num" id="prKg" value="'+nv(PR.kg*1000,0)+'" placeholder="ex.: 1000" oninput="PR.kg=(numIn(this.value)||0)/1000;prCalc()"></div></div>'
-    + '<div class="fld"><label>Receita <span class="ctx">· lista as fichas técnicas; sabor sem ficha (ex.: Danoninho) não aparece — <a href="#" style="color:var(--acc2)" onclick="event.preventDefault();abrirReceita(null)">criar ficha técnica</a></span></label><select class="inp" id="prRec" onchange="PR.receita=this.value;PR.produto=undefined;PR._soReceita=false;prProds();prCalc()">'
-      + [['sabor','Sabores'],['cobertura','Coberturas e caldas']].map(function(g){ var l=rs.filter(function(r){return r.tipo===g[0];}); return l.length?'<optgroup label="'+g[1]+'">'+l.map(function(r){return '<option value="'+r.id+'"'+(r.id===PR.receita?' selected':'')+'>'+esc(r.nome)+'</option>';}).join('')+'</optgroup>':''; }).join('')+'</select></div>'
+    + '<div class="fld"><label>Receita</label><select class="inp" id="prRec" onchange="PR.receita=this.value;PR.produto=undefined;PR._soReceita=false;prProds();prCalc()">'
+      + [['sabor','Sabores'],['cobertura','Coberturas e caldas']].map(function(g){ var l=rs.filter(function(r){return r.tipo===g[0];}); return l.length?'<optgroup label="'+g[1]+'">'+l.map(function(r){return '<option value="'+r.id+'"'+(r.id===PR.receita?' selected':'')+'>'+esc(r.nome)+'</option>';}).join('')+'</optgroup>':''; }).join('')+'</select><div class="fdica">sabor sem ficha técnica não aparece · <a href="#" style="color:var(--acc2)" onclick="event.preventDefault();abrirReceita(null)">criar ficha técnica</a></div></div>'
     + '<div class="fld"><label>Vai para o estoque como</label><select class="inp" id="prProd" onchange="PR.produto=this.value||null;PR._soReceita=!PR.produto;prAviso()"></select><div class="tsub" id="prAv" style="color:var(--ambar);margin-top:4px"></div></div>'
     + '<div class="fld"><label>Potes envasados</label><div class="frow f4">'+SG.tamanhosAtivos().map(function(t){return '<div class="fld" style="margin:0"><label>'+t.nome+' · '+t.ml+' ml</label><input class="inp num" data-t="'+t.id+'" value="'+(PR.potes[t.id]||'')+'" placeholder="0" oninput="prPotes()"></div>';}).join('')+'</div></div>'
     + '<div class="mk" id="prMk"></div><div class="erro" id="prErro"></div>';
@@ -1089,10 +1093,10 @@ VIEWS.estoque=function(){
 function abrirAjuste(tipo, id){
   var e=SG.estoque();
   if(tipo==='pote'){ var p=SG.produto(id);
-    abrirModal('Contagem · '+p.nome, '<div class="tsub" style="margin-bottom:12px">Informe quantos potes há AGORA. Em branco = não mexe.</div><div class="frow f4">'+SG.tamanhosAtivos().map(function(t){ var s=e.potes[id+'|'+t.id]; return '<div class="fld"><label>'+t.nome+' · '+t.ml+' ml <span class="ctx">· hoje '+(s==null?'—':s)+'</span></label><input class="inp num" data-k="'+id+'|'+t.id+'" placeholder="'+(s==null?'':s)+'"></div>'; }).join('')+'</div>',
+    abrirModal('Contagem · '+p.nome, '<div class="tsub" style="margin-bottom:12px">Informe quantos potes há AGORA. Em branco = não mexe.</div><div class="frow f4">'+SG.tamanhosAtivos().map(function(t){ var s=e.potes[id+'|'+t.id]; return '<div class="fld"><label>'+t.nome+' · '+t.ml+' ml</label><input class="inp num" data-k="'+id+'|'+t.id+'" placeholder="'+(s==null?'':s)+'"></div>'; }).join('')+'</div>',
       '<button class="btn" onclick="fecharModal()">Cancelar</button><button class="btn pri" onclick="salvaContagem()">Salvar contagem</button>'); }
   else { var i=SG.insumo(id), s=e.insumos[id];
-    abrirModal('Estoque · '+i.nome, '<div class="frow"><div class="fld"><label>Quantidade AGORA ('+(i.un==='un'?'unidades':'gramas')+') <span class="ctx">· hoje '+SG.qtdFmt(s,i.un)+'</span></label><input class="inp num" data-k="'+id+'" data-ins="1" data-f="'+fU(i)+'" placeholder="'+(s==null?'':nv(s*fU(i),0))+'"></div><div class="fld"><label>Estoque mínimo ('+(i.un==='un'?'unidades':'gramas')+') </label><input class="inp num" id="ajMin" value="'+nv(i.min*fU(i),0)+'"></div></div>',
+    abrirModal('Estoque · '+i.nome, '<div class="frow"><div class="fld"><label>Quantidade agora ('+(i.un==='un'?'un':'g')+')</label><input class="inp num" data-k="'+id+'" data-ins="1" data-f="'+fU(i)+'" placeholder="'+(s==null?'':nv(s*fU(i),0))+'"><div class="fdica">hoje: '+SG.qtdFmt(s,i.un)+'</div></div><div class="fld"><label>Estoque mínimo ('+(i.un==='un'?'un':'g')+')</label><input class="inp num" id="ajMin" value="'+nv(i.min*fU(i),0)+'"></div></div>',
       '<button class="btn" onclick="fecharModal()">Cancelar</button><button class="btn pri" onclick="SG.insumo(\''+id+'\').min=(numIn($(\'ajMin\').value)||0)/'+fU(i)+';salvaContagem()">Salvar</button>'); }
 }
 function abrirContagem(){
@@ -1130,7 +1134,7 @@ function abrirReceita(id){
   RF=r?JSON.parse(JSON.stringify(r)):{id:null,nome:'',tipo:'sabor',rendKg:1,itens:[],obs:''};
   var dados='<div class="fld"><label>Nome</label><input class="inp" id="rfNome" value="'+esc(RF.nome)+'" placeholder="Ex.: Pistache"></div>'
     + '<div class="fld"><label>Tipo</label>'+segH('rfTipo',[['sabor','Sabor'],['cobertura','Cobertura / calda'],['base','Base']],RF.tipo,'rfTipoSet')+'</div>'
-    + '<div class="frow"><div class="fld"><label>Rende (gramas) <span class="ctx">· se perde peso no preparo</span></label><input class="inp num" id="rfRend" value="'+nv(RF.rendKg*1000,0)+'" oninput="RF.rendKg=(numIn(this.value)||1000)/1000;rfCalc()"></div><div></div></div>'
+    + '<div class="frow"><div class="fld"><label>Rende (g)</label><input class="inp num" id="rfRend" value="'+nv(RF.rendKg*1000,0)+'" oninput="RF.rendKg=(numIn(this.value)||1000)/1000;rfCalc()"><div class="fdica">menos que o peso dos ingredientes se perde no preparo</div></div><div></div></div>'
     + '<div class="fld"><label>Observações</label><textarea class="inp" id="rfObs">'+esc(RF.obs||'')+'</textarea></div><div class="mk" id="rfMk"></div><div class="erro" id="rfErro"></div>';
   var opIns=D().insumos.filter(function(i){return i.tipo==='ingrediente';}).slice().sort(function(a,b){return a.nome.localeCompare(b.nome);}), opRec=D().receitas.filter(function(x){return x.id!==id;});
   var pe='<select class="inp" id="rfAdd" style="flex:1;min-width:180px"><optgroup label="Insumos">'+opIns.map(function(i){return '<option value="i:'+i.id+'">'+esc(i.nome)+'</option>';}).join('')+'</optgroup><optgroup label="Sub-receitas">'+opRec.map(function(x){return '<option value="r:'+x.id+'">'+esc(x.nome)+'</option>';}).join('')+'</optgroup></select><input class="inp num" id="rfG" placeholder="gramas" style="width:90px"><button class="btn pri sm" onclick="rfAdd()">'+ic('mais')+'Adicionar</button>';
@@ -1175,8 +1179,8 @@ function abrirInsumo(id){
   var i=id?SG.insumo(id):null, cats={}; D().insumos.forEach(function(x){cats[x.cat]=1;});
   var IF={tipo:i?i.tipo:'ingrediente'}; window.IF=IF;
   var dados='<div class="fld"><label>Nome</label><input class="inp" id="inNome" value="'+esc(i?i.nome:'')+'"></div>'
-    + '<div class="frow"><div class="fld"><label>Tipo</label>'+segH('inTipo',[['ingrediente','Ingrediente (g)'],['embalagem','Embalagem (un)']],IF.tipo,'inTipoSet')+'</div><div class="fld"><label>Categoria</label><input class="inp" id="inCat" list="dlCat" value="'+esc(i?i.cat:'')+'"><datalist id="dlCat">'+Object.keys(cats).map(function(c){return '<option value="'+esc(c)+'">';}).join('')+'</datalist></div></div>'
-    + '<div class="frow"><div class="fld"><label>Custo manual (R$ por kg · embalagem: por un) <span class="ctx">· vale se não houver compra</span></label><input class="inp num" id="inCusto" value="'+(i?nv(i.custoManual):'')+'"></div><div class="fld"><label>Estoque mínimo (gramas · embalagem: un) <span class="ctx">· avisa abaixo disso</span></label><input class="inp num" id="inMin" value="'+(i&&i.min?nv(i.min*fU(i),0):'')+'" placeholder="ex.: 500"></div></div>'
+    + '<div class="frow"><div class="fld"><label>Tipo</label>'+segH('inTipo',[['ingrediente','Ingrediente'],['embalagem','Embalagem']],IF.tipo,'inTipoSet')+'</div><div class="fld"><label>Categoria</label><input class="inp" id="inCat" list="dlCat" value="'+esc(i?i.cat:'')+'"><datalist id="dlCat">'+Object.keys(cats).map(function(c){return '<option value="'+esc(c)+'">';}).join('')+'</datalist></div></div>'
+    + '<div class="frow"><div class="fld"><label>Custo manual (R$)</label><input class="inp num" id="inCusto" value="'+(i?nv(i.custoManual):'')+'"><div class="fdica">por kg (embalagem: por unidade) · vale sem compra</div></div><div class="fld"><label>Estoque mínimo</label><input class="inp num" id="inMin" value="'+(i&&i.min?nv(i.min*fU(i),0):'')+'" placeholder="ex.: 500"><div class="fdica">em gramas (embalagem: unidades)</div></div></div>'
     + (i?'<div class="mk"><div><small>Custo em uso</small><b>'+SG.brl(SG.custoInsumo(i.id).valor)+'</b></div><div><small>Origem</small><b>'+({compra:'Última compra',manual:'Custo manual',estimado:'Estimado'})[SG.custoInsumo(i.id).origem]+'</b></div><div><small>Estoque</small><b>'+SG.qtdFmt(SG.estoque().insumos[i.id],i.un)+'</b></div></div>':'')+'<div class="erro" id="inErro"></div>';
   var hist=i?D().compras.filter(function(c){return c.insumo===i.id;}).sort(function(a,b){return a.data<b.data?1:-1;}).map(function(c){ return '<div class="lin"><div class="nm"><b>'+SG.dataBR(c.data)+'</b><small>'+SG.qtdFmt(c.qtd,i.un)+' por '+SG.brl(c.valor)+'</small></div><div class="v">'+SG.brl(c.valor/c.qtd)+'/'+(i.un==='un'?'un':'kg')+'</div></div>'; }).join(''):'';
   var rec=i?D().receitas.filter(function(r){return r.itens.some(function(x){return x.insumo===i.id;});}).map(function(r){ var g=r.itens.filter(function(x){return x.insumo===i.id;})[0].g; return '<div class="lin"><div class="nm"><b>'+esc(r.nome)+'</b></div><div class="v">'+SG.num(g,1)+' g/kg</div></div>'; }).join(''):'';
@@ -1209,7 +1213,7 @@ function abrirProduto(id){
   var rs=D().receitas.filter(function(r){return r.tipo==='sabor';}), cs=D().receitas.filter(function(r){return r.tipo==='cobertura';});
   var dados='<div class="fld"><label>Nome no cardápio</label><input class="inp" id="ppNome" value="'+esc(PP.nome)+'" placeholder="Ex.: Pistache com Calda de Chocolate"></div>'
     + '<div class="fld"><label>Receita base</label><select class="inp" id="ppRec" onchange="PP.receita=this.value||null;ppPrecos()"><option value="">— sem ficha técnica —</option>'+rs.map(function(r){return '<option value="'+r.id+'"'+(r.id===PP.receita?' selected':'')+'>'+esc(r.nome)+'</option>';}).join('')+'</select></div>'
-    + '<div class="frow"><div class="fld"><label>Cobertura / calda</label><select class="inp" id="ppCob" onchange="PP.cobertura=this.value||null;ppPrecos()"><option value="">— nenhuma —</option>'+cs.map(function(r){return '<option value="'+r.id+'"'+(r.id===PP.cobertura?' selected':'')+'>'+esc(r.nome)+'</option>';}).join('')+'</select></div><div class="fld"><label>% do pote que é cobertura</label><input class="inp num" id="ppPct" value="'+nv(PP.pctCob*100,0)+'" oninput="PP.pctCob=(numIn(this.value)||0)/100;ppPrecos()"></div></div>'
+    + '<div class="frow"><div class="fld"><label>Cobertura / calda</label><select class="inp" id="ppCob" onchange="PP.cobertura=this.value||null;ppPrecos()"><option value="">— nenhuma —</option>'+cs.map(function(r){return '<option value="'+r.id+'"'+(r.id===PP.cobertura?' selected':'')+'>'+esc(r.nome)+'</option>';}).join('')+'</select></div><div class="fld"><label>Cobertura no pote (%)</label><input class="inp num" id="ppPct" value="'+nv(PP.pctCob*100,0)+'" oninput="PP.pctCob=(numIn(this.value)||0)/100;ppPrecos()"></div></div>'
     + '<div class="fld"><label>Situação</label>'+segH('ppAt',[['1','No cardápio'],['0','Inativo']],PP.ativo?'1':'0','ppAtivo')+'</div><div class="erro" id="ppErro"></div>';
   abrirModal(p?'Produto · '+p.nome:'Novo produto', '<div class="wz-2col">'+col('Produto','o que é vendido',dados)+col('Preços','por canal e tamanho · embaixo do preço, margem real e custo','<div id="ppPre"></div>')+'</div>',
     footPad('salvaProduto()', p?"apagaProduto('"+p.id+"')":null), true);
@@ -1302,12 +1306,12 @@ function salvaConta(id){ var n=($('ozN').value||'').trim(), v=numIn($('ozV').val
   SG.salvar(true); fecharModal(); toast('Salvo'); }
 function apagaConta(id){ if(!confirm('Excluir esta conta do OBZ?')) return; D().config.obz=SG.contasOBZ().filter(function(c){return c.id!==id;}); SG.salvar(true); fecharModal(); }
 function abrirCanal(id){ var x=SG.canal(id); window.CK2={kit:x.kitEntrega};
-  abrirModal('Canal · '+x.nome, '<div class="frow"><div class="fld"><label>Taxa sobre o preço (%)</label><input class="inp num" id="caT" value="'+nv(x.taxa*100,1)+'"></div><div class="fld"><label>Leva saco térmico + sacola?</label>'+segH('caK',[['1','Sim'],['0','Não']],x.kitEntrega?'1':'0','caKit')+'</div></div>',
+  abrirModal('Canal · '+x.nome, '<div class="frow"><div class="fld"><label>Taxa (%)</label><input class="inp num" id="caT" value="'+nv(x.taxa*100,1)+'"></div><div class="fld"><label>Kit de entrega</label>'+segH('caK',[['1','Sim'],['0','Não']],x.kitEntrega?'1':'0','caKit')+'</div></div>',
     '<button class="btn" onclick="fecharModal()">Cancelar</button><button class="btn pri" onclick="var c=SG.canal(\''+id+'\');c.taxa=(numIn($(\'caT\').value)||0)/100;c.kitEntrega=window.CK2.kit;SG.salvar(true);fecharModal();toast(\'Salvo\')">Salvar</button>'); }
 function caKit(v){ window.CK2.kit=v==='1'; }
 function abrirTamanho(id){ var t=SG.tamanho(id); window.TK2={at:t.ativo};
-  abrirModal('Tamanho '+t.nome+' · '+t.ml+' ml', '<div class="frow"><div class="fld"><label>Gramas de gelato no pote</label><input class="inp num" id="tmG" value="'+nv(t.g,0)+'"></div><div class="fld"><label>Pote usado</label><select class="inp" id="tmP">'+D().insumos.filter(function(x){return x.tipo==='embalagem';}).map(function(x){return '<option value="'+x.id+'"'+(x.id===t.pote?' selected':'')+'>'+esc(x.nome)+'</option>';}).join('')+'</select></div></div>'
-    + '<div class="fld"><label>Situação</label>'+segH('tmA',[['1','Ativo (vende)'],['0','Só simulação']],t.ativo?'1':'0','tmAt')+'</div>',
+  abrirModal('Tamanho '+t.nome+' · '+t.ml+' ml', '<div class="frow"><div class="fld"><label>Gelato no pote (g)</label><input class="inp num" id="tmG" value="'+nv(t.g,0)+'"></div><div class="fld"><label>Pote usado</label><select class="inp" id="tmP">'+D().insumos.filter(function(x){return x.tipo==='embalagem';}).map(function(x){return '<option value="'+x.id+'"'+(x.id===t.pote?' selected':'')+'>'+esc(x.nome)+'</option>';}).join('')+'</select></div></div>'
+    + '<div class="fld"><label>Situação</label>'+segH('tmA',[['1','Ativo'],['0','Só simulação']],t.ativo?'1':'0','tmAt')+'</div>',
     '<button class="btn" onclick="fecharModal()">Cancelar</button><button class="btn pri" onclick="var t=SG.tamanho(\''+id+'\');t.g=numIn($(\'tmG\').value)||t.g;t.pote=$(\'tmP\').value;t.ativo=window.TK2.at;SG.salvar(true);fecharModal();toast(\'Salvo\')">Salvar</button>'); }
 function tmAt(v){ window.TK2.at=v==='1'; }
 function backup(){ var a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([JSON.stringify(D(),null,1)],{type:'application/json'})); a.download='surreal-backup-'+SG.hoje()+'.json'; a.click(); }
