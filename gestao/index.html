@@ -10,14 +10,14 @@
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.SG_BUILD='20261016200107';</script>
-<script src="../shared/versao.js?v=20261016200107"></script>
-<script src="../shared/config.js?v=20261016200107"></script>
-<script src="../shared/seed.js?v=20261016200107"></script>
-<script src="../shared/core.js?v=20261016200107"></script>
+<script>window.SG_BUILD='20261016201229';</script>
+<script src="../shared/versao.js?v=20261016201229"></script>
+<script src="../shared/config.js?v=20261016201229"></script>
+<script src="../shared/seed.js?v=20261016201229"></script>
+<script src="../shared/core.js?v=20261016201229"></script>
 <script src="../assets/excel-export.js"></script>
 <script src="../assets/pdf-export.js"></script>
-<script src="../shared/remote.js?v=20261016200107"></script>
+<script src="../shared/remote.js?v=20261016201229"></script>
 <style>
 /* ============================================================
    SURREAL — Painel de gestão (PC). OneSpot · 16/10/2026
@@ -818,19 +818,17 @@ VIEWS.cenarios=function(){
 /* ════════════════════ GESTÃO À VISTA ════════════════════ */
 
 /* LANÇAMENTOS — tudo o que foi lançado, numa lista só; "+ Novo lançamento" escolhe o tipo */
-var TIPOS_L={pedido:['Pedido','vendas'], producao:['Produção','prod'], compra:['Compra','compra'], despesa:['Despesa','recibo'], contagem:['Contagem de estoque','estoque']};
+var TIPOS_L={pedido:['Venda (pedido)','vendas'], compra:['Compra','compra'], despesa:['Despesa','recibo']};
 function todosLanc(){
   var l=[];
   D().vendas.forEach(function(v){ var st=[]; if(!v.pago) st.push('a receber'); if(!v.entregue) st.push('a entregar'); l.push({tipo:'pedido', id:v.id, data:v.data, desc:SG.nomeCliente(v), det:resumoItens(v)+' · '+nCanal(v.canal), valor:SG.totalVenda(v), sinal:1, st:st.join(' · '), hist:v.historico, ts:v.ts||0}); });
-  D().producoes.forEach(function(p){ var r=SG.receita(p.receita); l.push({tipo:'producao', id:p.id, data:p.data, desc:r?r.nome:p.receita, det:SG.qtdFmt(+p.kg,'kg')+(Object.keys(p.potes||{}).length?' → '+Object.keys(p.potes).map(function(k){return p.potes[k]+' '+k;}).join(' + '):''), valor:SG.custoReceitaKg(p.receita)*p.kg, sinal:0, hist:p.historico, ts:p.ts||0}); });
   D().compras.forEach(function(c){ var i=SG.insumo(c.insumo); l.push({tipo:'compra', id:c.id, data:c.data, desc:i?i.nome:c.desc, det:SG.qtdFmt(c.qtd,i&&i.un)+' · '+SG.brl(c.valor/c.qtd)+'/'+(i&&i.un==='un'?'un':'kg'), valor:+c.valor, sinal:-1, hist:c.historico, ts:c.ts||0}); });
   D().despesas.forEach(function(d){ l.push({tipo:'despesa', id:d.id, data:d.data, desc:d.desc, det:d.categoria, valor:+d.valor, sinal:-1, hist:d.historico, ts:d.ts||0}); });
-  D().contagens.forEach(function(c){ var n=Object.keys(c.insumos||{}).length+Object.keys(c.potes||{}).length; l.push({tipo:'contagem', id:c.id, data:c.data, desc:'Contagem de estoque', det:n+(n>1?' itens contados':' item contado'), valor:null, sinal:0, ts:c.ts||0}); });
   return l;
 }
 VIEWS.lancamentos=function(){
   var ft='';
-  sub('Tudo o que foi lançado: pedidos, produção, compras, despesas e contagens');
+  sub('Extrato do dinheiro: vendas (pedidos), compras e despesas · produção fica em Produção e contagens no Estoque');
   var soPed=F.can.size||F.cli.size||F.sit.size, ls=todosLanc().filter(function(x){ return ymOk(x.data)&&fOk('tip',x.tipo)&&(!soPed||(x.tipo==='pedido'&&vOk(D().vendas.filter(function(v){return v.id===x.id;})[0])))&&qOk('lan',[x.desc,x.det,TIPOS_L[x.tipo][0]]); });
   var ent=0, sai=0; ls.forEach(function(x){ if(x.sinal>0) ent+=x.valor; if(x.sinal<0) sai+=x.valor; });
   if(!ORD.tLan) ORD.tLan={i:0,d:-1};
@@ -847,7 +845,7 @@ VIEWS.lancamentos=function(){
 };
 function abreLanc(t,id){ if(t==='pedido') abrirPedido(id); else if(t==='producao') abrirProducao(id); else if(t==='compra') abrirCompra(id); else if(t==='despesa') abrirDespesa(id); else verContagem(id); }
 function novoLanc(){
-  var op=[['pedido','Pedido','venda para um cliente','abrirPedido(null)'],['producao','Produção','lote de gelato feito','abrirProducao(null)'],['compra','Compra','insumo ou embalagem comprado','abrirCompra(null)'],['despesa','Despesa','marketing, conta, taxa…','abrirDespesa(null)'],['contagem','Contagem de estoque','o que tem no freezer e no armário','abrirContagem()']];
+  var op=[['pedido','Venda (pedido)','venda para um cliente','abrirPedido(null)'],['compra','Compra','insumo ou embalagem comprado','abrirCompra(null)'],['despesa','Despesa','marketing, conta, taxa…','abrirDespesa(null)']];
   abrirModal('Novo lançamento','<div class="tsub" style="margin-bottom:12px">O que você quer lançar?</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">'
     + op.map(function(o){ return '<button class="btn" style="justify-content:flex-start;padding:14px 16px;text-align:left;white-space:normal;gap:12px" onclick="'+o[3]+'"><span style="width:34px;height:34px;border-radius:9px;background:var(--hover);display:flex;align-items:center;justify-content:center;color:var(--acc2);flex:0 0 auto">'+ic(TIPOS_L[o[0]][1])+'</span><span><b style="display:block;color:var(--txt);font-size:13px">'+o[1]+'</b><small style="font-weight:600;color:var(--txt3)">'+o[2]+'</small></span></button>'; }).join('')+'</div>',
     '<button class="btn" onclick="fecharModal()">Cancelar</button>');
