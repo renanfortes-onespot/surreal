@@ -13,12 +13,12 @@
 <link rel="icon" href="img/icone-192.png">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.SG_BUILD='20261016203107';</script>
-<script src="shared/versao.js?v=20261016203107"></script>
-<script src="shared/config.js?v=20261016203107"></script>
-<script src="shared/seed.js?v=20261016203107"></script>
-<script src="shared/core.js?v=20261016203107"></script>
-<script src="shared/remote.js?v=20261016203107"></script>
+<script>window.SG_BUILD='20261016203456';</script>
+<script src="shared/versao.js?v=20261016203456"></script>
+<script src="shared/config.js?v=20261016203456"></script>
+<script src="shared/seed.js?v=20261016203456"></script>
+<script src="shared/core.js?v=20261016203456"></script>
+<script src="shared/remote.js?v=20261016203456"></script>
 <style>
 /* ============================================================
    SURREAL · gelato artesanal — app (PWA)
@@ -204,10 +204,13 @@ body.claro .sim-hero{box-shadow:0 14px 34px rgba(18,26,46,.08);}
 .res .n small{display:block;font-size:10px;color:var(--txt3);margin-top:2px;}
 .aviso2{display:flex;gap:9px;align-items:flex-start;font-size:11.5px;line-height:1.45;color:var(--ambar);background:rgba(245,166,35,.09);border:1px solid rgba(245,166,35,.25);border-radius:10px;padding:10px 12px;margin-bottom:12px;}
 .aviso2 svg{width:16px;height:16px;flex:0 0 auto;margin-top:1px;}
-table.mini{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:16px;}
-table.mini th{font-size:10px;color:var(--txt3);font-weight:500;text-align:right;padding:6px 4px;border-bottom:1px solid var(--brd);}
+table.mini{width:100%;border-collapse:collapse;font-size:11px;margin-bottom:16px;}
+table.mini th{font-size:9px;color:var(--txt3);font-weight:500;text-align:right;padding:5px 3px;border-bottom:1px solid var(--brd);}
 table.mini th:first-child,table.mini td:first-child{text-align:left;}
-table.mini td{padding:9px 4px;border-bottom:1px solid var(--brd);text-align:right;font-variant-numeric:tabular-nums;}
+table.mini td{padding:8px 3px;white-space:nowrap;border-bottom:1px solid var(--brd);text-align:right;font-variant-numeric:tabular-nums;}
+table.mini td:first-child{white-space:normal;}
+table.mini .tag{font-size:8.5px;padding:1px 5px;}
+table.mini tr.tot td{font-weight:700;color:var(--txt);border-bottom:0;border-top:1px solid var(--brd2,var(--brd));}
 table.mini tr.on td{color:var(--acc2);font-weight:600;}
 body.claro table.mini tr.on td{color:var(--acc);}
 
@@ -696,7 +699,7 @@ TELAS.ficha = function(a){
   var r=SG.receita(a.id), comp=SG.composicao(r.id), tot=comp.reduce(function(s,c){return s+c.custo;},0);
   var h=cab('frasco',esc(r.nome), SG.brl(SG.custoReceitaKg(r.id))+' por kg · '+SG.num(SG.pesoReceita(r.id),0)+' g de ingredientes');
   if(r.obs) h+='<div class="vazio">'+esc(r.obs)+'</div>';
-  h+='<table class="mini"><tr><th>Ingrediente</th><th>g/kg</th><th>R$/kg</th><th>Custo</th><th>%</th></tr>'+comp.map(function(c){ return '<tr><td>'+esc(c.nome)+(c.origem==='manual'?' <span class="tag">planilha</span>':c.origem==='estimado'?' <span class="tag am">estimado</span>':'')+'</td><td>'+SG.num(c.g,1)+'</td><td>'+SG.brl(c.custoKg)+'</td><td>'+SG.brl(c.custo)+'</td><td>'+SG.pct(tot?c.custo/tot:0,0)+'</td></tr>'; }).join('')+'</table>';
+  h+='<table class="mini"><tr><th>Ingrediente</th><th>g/kg</th><th>R$/kg</th><th>Custo</th><th>%</th></tr>'+comp.map(function(c){ return '<tr><td>'+esc(c.nome)+(c.origem==='manual'?' <span class="tag">planilha</span>':c.origem==='estimado'?' <span class="tag am">estimado</span>':'')+'</td><td>'+SG.num(c.g,1)+'</td><td>'+SG.brl(c.custoKg)+'</td><td>'+SG.brl(c.custo)+'</td><td>'+SG.pct(tot?c.custo/tot:0,0)+'</td></tr>'; }).join('')+'<tr class="tot"><td>Total</td><td>'+SG.num(comp.reduce(function(x,c){return x+c.g;},0),1)+'</td><td></td><td>'+SG.brl(tot)+'</td><td>100%</td></tr></table>';
   h+='<div class="vazio">Para editar a receita, use o painel completo no computador.</div>';
   return h;
 };
