@@ -13,12 +13,12 @@
 <link rel="icon" href="img/icone-192.png">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.SG_BUILD='20261018151015';</script>
-<script src="shared/versao.js?v=20261018151015"></script>
-<script src="shared/config.js?v=20261018151015"></script>
-<script src="shared/seed.js?v=20261018151015"></script>
-<script src="shared/core.js?v=20261018151015"></script>
-<script src="shared/remote.js?v=20261018151015"></script>
+<script>window.SG_BUILD='20261018151619';</script>
+<script src="shared/versao.js?v=20261018151619"></script>
+<script src="shared/config.js?v=20261018151619"></script>
+<script src="shared/seed.js?v=20261018151619"></script>
+<script src="shared/core.js?v=20261018151619"></script>
+<script src="shared/remote.js?v=20261018151619"></script>
 <style>
 /* ============================================================
    SURREAL · gelato artesanal — app (PWA)
@@ -425,7 +425,7 @@ function perYM(a){ perIni(a); return a.per==='todos'?null:a.ym; }
 function perNome(a){ perIni(a); return a.per==='todos'?'todo o período':SG.nomeMes(a.ym)+' de '+a.ym.slice(0,4); }
 function perSel(a){
   perIni(a); var ms=SG.mesesComDados(), i=ms.indexOf(a.ym);
-  var h='<div class="perbar"><div class="seg">'+[['mes','Mês'],['todos','Todos']].map(function(o){ return '<button class="'+(o[0]===a.per?'on':'')+'" onclick="atual().per=\''+o[0]+'\';render()">'+o[1]+'</button>'; }).join('')+'</div>';
+  var h='<div class="perbar"><div class="seg">'+(a.pdef==='todos'?[['todos','Todos'],['mes','Mês']]:[['mes','Mês'],['todos','Todos']]).map(function(o){ return '<button class="'+(o[0]===a.per?'on':'')+'" onclick="atual().per=\''+o[0]+'\';render()">'+o[1]+'</button>'; }).join('')+'</div>';
   h+= a.per==='mes' ? '<div class="mesnav"><button onclick="perMes(-1)"'+(i<=0?' disabled':'')+' aria-label="Mês anterior">'+ic('volta')+'</button><button class="lbl" onclick="perLista()">'+SG.nomeMes(a.ym,true)+' ▾</button><button onclick="perMes(1)"'+(i>=ms.length-1?' disabled':'')+' aria-label="Próximo mês">'+ic('seta')+'</button></div>'
      : '<div class="mesnav"><span>desde '+SG.nomeMes(ms[0],true)+'</span></div>';
   return h+'</div>';
@@ -755,12 +755,14 @@ function eiMin(){ var a=atual(), i=SG.insumo(a.k), v=numIn($('eiMin').value); i.
 
 /* CAIXA (aba) — dinheiro que entrou e saiu, e quanto tem em conta */
 TELAS.caixa = function(a){
-  var ym=perYM(a), c=SG.caixa(ym), ex=SG.extrato(ym), sc=SG.saldoConta(), ms=SG.mesesComDados(), n=a.n||60, soc=c.retiradas||c.aportes||c.acertos;
+  if(!a.pdef){ a.per='todos'; a.pdef='todos'; }
+  var ym=perYM(a), c=SG.caixa(ym), ex=SG.extrato(ym), sc=SG.saldoConta(), ms=SG.mesesComDados(), n=a.n||60;
   var h='<div class="saldo"><div class="rot">Dinheiro em conta hoje</div><div class="val'+(sc<0?' neg':'')+'">'+SG.brl(sc)+'</div><div class="aviso">Tudo o que entrou − tudo o que saiu desde '+SG.nomeMes(ms[0],true)+' · <a onclick="abre(\'conferir\',{form:1})" style="color:var(--acc2);font-weight:600;cursor:pointer">conferir com o banco</a></div></div>';
   h+=perSel(a);
-  h+='<div class="res"><div class="n"><span>Entrou</span><b class="pos">'+SG.brl(c.entradas)+'</b><small>pedidos pagos'+(c.receber?' · a receber '+SG.brl0(c.receber):'')+'</small></div><div class="n"><span>Saiu</span><b class="neg">'+SG.brl(c.saidas)+'</b><small>compras '+SG.brl0(c.compras)+' · despesas '+SG.brl0(c.despesas)+'</small></div></div>';
-  if(soc) h+='<div class="res" style="margin-top:-6px"><div class="n"><span>Retiradas dos sócios</span><b class="neg">'+SG.brl(c.retiradas)+'</b><small>fora do DRE</small></div><div class="n"><span>Aportes e acertos</span><b class="'+(c.aportes+c.acertos>=0?'pos':'neg')+'">'+SG.brl(c.aportes+c.acertos)+'</b><small>fora do DRE</small></div></div>';
-  h+='<div class="card"><div class="rot">Saldo '+(a.per==='todos'?'de todo o período':'de '+SG.nomeMes(a.ym))+'</div><div class="big '+(c.saldo>=0?'pos':'neg')+'">'+SG.brl(c.saldo)+'</div><div class="nota2">entrou − saiu'+(soc?' − retiradas + aportes e acertos':'')+'</div></div>';
+  /* caixa é acumulado: entrou − saiu = o dinheiro em conta (retirada sai, aporte entra) */
+  var ent=c.entradas+c.aportes+Math.max(0,c.acertos), sai=c.saidas+c.retiradas+Math.max(0,-c.acertos);
+  h+='<div class="res"><div class="n"><span>Entrou</span><b class="pos">'+SG.brl0(ent)+'</b><small>pedidos pagos'+(c.aportes?' · aportes '+SG.brl0(c.aportes):'')+(c.receber?' · a receber '+SG.brl0(c.receber):'')+'</small></div>'
+    + '<div class="n"><span>Saiu</span><b class="neg">'+SG.brl0(sai)+'</b><small>compras '+SG.brl0(c.compras)+' · despesas '+SG.brl0(c.despesas)+(c.retiradas?' · retiradas '+SG.brl0(c.retiradas):'')+'</small></div></div>';
   h+='<div class="tri"><button class="btn sec2" onclick="abre(\'compraNova\',{form:1})">+ Compra</button><button class="btn sec2" onclick="abre(\'despesaNova\',{form:1})">+ Despesa</button><button class="btn sec2" onclick="abre(\'socioForm\',{form:1})">+ Retirada</button></div>';
   h+='<div class="sec">Lançamentos<span class="cont">'+ex.length+'</span></div>';
   h+= (ex.slice(0,n).map(liExtrato).join('') || vazio('Sem lançamentos neste período.')) + (ex.length>n?'<button class="btn sec2" onclick="atual().n='+(n+60)+';render()">Ver mais</button>':'');
