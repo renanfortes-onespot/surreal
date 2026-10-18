@@ -10,14 +10,14 @@
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.SG_BUILD='20261018160826';</script>
-<script src="../shared/versao.js?v=20261018160826"></script>
-<script src="../shared/config.js?v=20261018160826"></script>
-<script src="../shared/seed.js?v=20261018160826"></script>
-<script src="../shared/core.js?v=20261018160826"></script>
+<script>window.SG_BUILD='20261018161419';</script>
+<script src="../shared/versao.js?v=20261018161419"></script>
+<script src="../shared/config.js?v=20261018161419"></script>
+<script src="../shared/seed.js?v=20261018161419"></script>
+<script src="../shared/core.js?v=20261018161419"></script>
 <script src="../assets/excel-export.js"></script>
 <script src="../assets/pdf-export.js"></script>
-<script src="../shared/remote.js?v=20261018160826"></script>
+<script src="../shared/remote.js?v=20261018161419"></script>
 <style>
 /* ============================================================
    SURREAL — Painel de gestão (PC). OneSpot · 16/10/2026
@@ -117,6 +117,7 @@ body.claro .ms-panel{box-shadow:0 18px 44px rgba(15,23,42,.20),0 3px 10px rgba(1
 .hl{font-size:9.5px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.9px;}
 .hv{font-size:clamp(30px,4.8vh,46px);font-weight:800;line-height:1;margin:6px 0 4px;letter-spacing:-1px;}
 .hd{display:flex;gap:22px;margin-left:auto;flex-wrap:wrap;align-items:flex-end;}
+table.dre tr.clk{cursor:pointer;} table.dre tr.clk:hover td{background:var(--hover);}
 /* hero empilhado: indicadores logo abaixo do valor grande, alinhados à esquerda */
 .hero.col{flex-direction:column;align-items:flex-start;gap:10px;}
 .hero.col .hd{margin-left:0;gap:28px;}
@@ -455,7 +456,7 @@ function tabela(id, cols, linhas, tot, onRow){
     + (tot?'<tr class="total">'+tot.map(function(t,i){return '<td class="'+(cols[i].cls||'')+'">'+t+'</td>';}).join('')+'</tr>':'')
     + '</tbody></table>';
 }
-function ordena(id,i){ var o=ORD[id]; ORD[id]= o&&o.i===i ? {i:i,d:-o.d} : {i:i,d:-1}; if(id==='tHist'){ abrirHistContagem(); return; } render(); }
+function ordena(id,i){ var o=ORD[id]; ORD[id]= o&&o.i===i ? {i:i,d:-o.d} : {i:i,d:-1}; if(id==='tHist'){ abrirHistContagem(); return; } if(id==='tDreD'&&DREDET){ dreDetPC(DREDET[0],DREDET[1]); return; } render(); }
 function busca(k, ph){ return '<div class="busca">'+ic('lupa')+'<input value="'+esc(V.q[k]||'')+'" placeholder="'+ph+'" oninput="V.q[\''+k+'\']=this.value;clearTimeout(window._qb);window._qb=setTimeout(function(){render();var i=document.querySelector(\'.busca input\');if(i){i.focus();i.setSelectionRange(i.value.length,i.value.length);}},250)"></div>'; }
 function qOk(k, txts){ var q=(V.q[k]||'').toLowerCase(); return !q||txts.some(function(t){ return String(t||'').toLowerCase().indexOf(q)>=0; }); }
 /* card de cadastro: subtítulo + busca + botão Novo + tabela que vai até o fim da tela */
@@ -605,8 +606,31 @@ function tabelaPY(linhas, A, Y, rotA){
     + linhas.map(function(l){ var a=l.f(A), y=l.f(Y), ra=l.base?l.base(A):A.rec, ry=l.base?l.base(Y):Y.rec;
       var fm=function(v){ return v==null?'—':l.cor?'<span class="'+(v>=0?'cg':'cr')+'">'+SG.brl(v)+'</span>':SG.brl(v); };
       var pc=function(v,r){ return v==null||!r?'—':l.cor?'<span class="'+corMg(v/r)+'">'+SG.pct(v/r,1)+'</span>':SG.pct(Math.abs(v)/r,1); };
-      return '<tr'+(l.tot?' class="total" style="position:static"':'')+'><td class="conta"'+(l.sub?' style="padding-left:28px;font-weight:500;color:var(--txt2)"':'')+'>'+l.n+'</td><td class="num">'+fm(a)+'</td><td class="num">'+(l.semPct?'':pc(a,ra))+'</td><td class="num sep-l">'+fm(y)+'</td><td class="num">'+(l.semPct?'':pc(y,ry))+'</td></tr>'; }).join('')
+      var clk=l.det?' onclick="dreDetPC(\''+l.det+'\''+(l.pk?',\''+esc(l.pk).replace(/'/g,'')+'\'':'')+')" title="Clique para ver o detalhe"':'';
+      return '<tr'+(l.tot?' class="total'+(l.det?' clk':'')+'" style="position:static"':(l.det?' class="clk"':''))+clk+'><td class="conta"'+(l.sub?' style="padding-left:28px;font-weight:500;color:var(--txt2)"':'')+'>'+l.n+(l.det?' <span class="mut">›</span>':'')+'</td><td class="num">'+fm(a)+'</td><td class="num">'+(l.semPct?'':pc(a,ra))+'</td><td class="num sep-l">'+fm(y)+'</td><td class="num">'+(l.semPct?'':pc(y,ry))+'</td></tr>'; }).join('')
     + '</tbody></table>';
+}
+/* DRE · detalhe da linha (mesmo do app): pedidos, produções ou despesas do período */
+var DREDET=null;
+function dreDetPC(l, pk){
+  DREDET=[l,pk]; var ms=perMeses(), inP=function(d){ return ms.indexOf((d||'').slice(0,7))>=0; }, rows=[];
+  var T={rec:'Receita bruta',taxa:'Taxas de canal e impostos',ins:'Insumos usados na produção',emb:'Embalagens usadas',kit:'Kit de entrega',desp:'Despesas'};
+  var kitU=(D().config.kitEntrega||[]).reduce(function(t,id){ return t+SG.custoInsumo(id).valor; },0);
+  if(l==='rec'||l==='taxa'||l==='kit') D().vendas.filter(function(v){ return inP(v.data); }).forEach(function(v){ var r=SG.resultadoVenda(v), val=l==='rec'?r.receita:l==='taxa'?r.taxa:((v.entregue&&(SG.canal(v.canal)||{}).kitEntrega&&v.itens.some(function(i){return i.tam;}))?kitU:0);
+    if(val) rows.push({d:v.data, desc:SG.nomeCliente(v), det:resumoItens(v)+' · '+nCanal(v.canal), v:val, on:"fecharModal();abrirPedido('"+v.id+"')"}); });
+  else if(l==='ins'||l==='emb') D().producoes.filter(function(p){ return inP(p.data); }).forEach(function(p){ var c=SG.consumoProducao(p), val=0;
+    Object.keys(c).forEach(function(id){ var i=SG.insumo(id), e=i&&i.tipo==='embalagem'; if((l==='emb')===!!e) val+=c[id]*SG.custoInsumo(id).valor; });
+    var r=SG.receita(p.receita); if(val) rows.push({d:p.data, desc:r?r.nome:p.receita, det:SG.num((p.kg||0)*1000,0)+' g de mistura', v:val, on:"fecharModal();abrirProducao('"+p.id+"')"}); });
+  else D().despesas.filter(function(d){ return inP(d.data)&&(!pk||SG.pacoteDespesa(d)===pk); }).forEach(function(d){ rows.push({d:d.data, desc:d.desc, det:d.categoria, v:+d.valor||0, on:"fecharModal();abrirDespesa('"+d.id+"')"}); });
+  var tot=rows.reduce(function(s,x){ return s+x.v; },0);
+  if(!ORD.tDreD) ORD.tDreD={i:0,d:-1};
+  var tab=tabela('tDreD',[
+    {t:'Data',f:function(x){return SG.dataBR(x.d);},s:function(x){return x.d;}},
+    {t:'Descrição',f:function(x){return '<b style="color:var(--txt)">'+esc(x.desc)+'</b>';},s:function(x){return x.desc;},cls:'conta'},
+    {t:'Detalhe',f:function(x){return '<span class="cl">'+esc(x.det)+'</span>';}},
+    {t:'Valor',f:function(x){return SG.brl(x.v);},v:function(x){return x.v;},cls:'num'}
+  ], rows, ['Total', '', '', SG.brl(tot)], function(x){ return x.on; });
+  abrirModal((pk?'Despesas · '+pk:T[l])+' · '+perTxt(), '<div class="tsub" style="margin-bottom:10px;flex:0 0 auto">'+rows.length+' lançamentos · total '+SG.brl(tot)+' · clique para abrir</div><div class="twrap">'+(rows.length?tab:'<div class="nota">Nada neste período.</div>')+'</div>', '<button class="btn pri" onclick="fecharModal()">Fechar</button>', true);
 }
 function rotPer(){ return F.per.size===1?SG.nomeMes(ymV()):'Período'; }
 
@@ -617,15 +641,15 @@ VIEWS.dre=function(){
   sub('Competência: venda na data do pedido · insumo vira custo só quando é usado na produção · '+perTxt());
   var cats={}; [A,Y].forEach(function(o){ Object.keys(o.desp).forEach(function(k){cats[k]=1;}); });
   var L=[
-    {n:'Receita bruta (pedidos)', f:function(o){return o.rec;}, tot:1},
-    {n:'(−) Taxas de canal e impostos', f:function(o){return -o.taxa;}},
+    {n:'Receita bruta (pedidos)', f:function(o){return o.rec;}, tot:1, det:'rec'},
+    {n:'(−) Taxas de canal e impostos', f:function(o){return -o.taxa;}, det:'taxa'},
     {n:'= Receita líquida', f:function(o){return o.liq;}, tot:1},
-    {n:'(−) Insumos usados na produção', f:function(o){return -o.ins;}},
-    {n:'(−) Embalagens usadas (pote, lacre, adesivo)', f:function(o){return -o.emb;}},
-    {n:'(−) Kit de entrega (pedidos entregues)', f:function(o){return -o.kit;}},
+    {n:'(−) Insumos usados na produção', f:function(o){return -o.ins;}, det:'ins'},
+    {n:'(−) Embalagens usadas (pote, lacre, adesivo)', f:function(o){return -o.emb;}, det:'emb'},
+    {n:'(−) Kit de entrega (pedidos entregues)', f:function(o){return -o.kit;}, det:'kit'},
     {n:'= Lucro bruto', f:function(o){return o.bruto;}, tot:1, cor:1},
-    {n:'(−) Despesas (OBZ realizado)', f:function(o){return -o.despT;}},
-  ].concat(Object.keys(cats).sort().map(function(k){ return {n:k, f:function(o){return -(o.desp[k]||0);}, sub:1}; }))
+    {n:'(−) Despesas (OBZ realizado)', f:function(o){return -o.despT;}, det:'desp'},
+  ].concat(Object.keys(cats).sort().map(function(k){ return {n:k, f:function(o){return -(o.desp[k]||0);}, sub:1, det:'desp', pk:k}; }))
    .concat([{n:'= Resultado do período', f:function(o){return o.res;}, tot:1, cor:1}]);
   var h='<div class="hero"><div><div class="hl">Resultado · '+perTxt()+'</div><div class="hv '+(A.res>=0?'cg':'cr')+'">'+SG.brl(A.res)+'</div><div class="tsub">'+A.lotes+' lotes produzidos · '+SG.num(A.kg,1)+' kg · '+A.potes+' potes vendidos</div></div>'
     + '<div class="hd"><div>Receita<b>'+SG.brl(A.rec)+'</b></div><div>Lucro bruto<b class="'+(A.bruto>=0?'cg':'cr')+'">'+SG.brl(A.bruto)+'</b></div><div>Margem líquida<b class="'+corMg(A.rec?A.res/A.rec:null)+'">'+(A.rec?SG.pct(A.res/A.rec,1):'—')+'</b></div><div>Resultado no ano<b class="'+(Y.res>=0?'cg':'cr')+'">'+SG.brl(Y.res)+'</b></div></div></div>';
