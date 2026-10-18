@@ -318,6 +318,28 @@
     });
     return o;
   }
+/* para onde foi o dinheiro do DRE: cada gasto pelo nome (insumo, embalagem, conta, taxa, imposto) */
+  function gastosDRE(ym) {
+    var g = {}, rg = regime(), mei = rg.tipo === 'mei';
+    function add(nome, tipo, v) { if (!(v > 0.004)) return; var o = g[nome] = g[nome] || { nome: nome, tipo: tipo, valor: 0 }; o.valor += v; }
+    function addReceita(rid, kg, ctx) { composicao(rid, ctx).forEach(function (c) { add(c.nome, c.item.receita ? 'Sub-receita' : 'Insumo', c.custo * kg); }); }
+    D.vendas.forEach(function (v) { if (!noPer(v.data, ym)) return; var ctx = { ate: v.data }, c = canal(v.canal);
+      v.itens.forEach(function (it) { if (!it.produto || !it.tam) return; var p = produto(it.produto), t = tamanho(it.tam); if (!p || !t || !p.receita) return;
+        var gr = +t.g || 0, pc = p.cobertura ? (+p.pctCob || 0) : 0;
+        addReceita(p.receita, gr * (1 - pc) / 1000 * it.qtd, ctx); if (p.cobertura) addReceita(p.cobertura, gr * pc / 1000 * it.qtd, ctx);
+        if (t.pote) { var ip = insumo(t.pote); add(ip ? ip.nome : t.pote, 'Embalagem', custoInsumo(t.pote, ctx).valor * it.qtd); }
+        (D.config.embalagemPote || []).forEach(function (id) { var i = insumo(id); add(i ? i.nome : id, 'Embalagem', custoInsumo(id, ctx).valor * it.qtd); }); });
+      var rep = v.itens.every(function (i) { return !i.produto && !i.tam; }), liq = totalVenda(v);
+      if (!rep && c && +c.taxa) add('Taxa ' + c.nome, 'Taxa', liq * c.taxa);
+      if (v.entregue && (c || {}).kitEntrega && v.itens.some(function (i) { return i.tam; })) (D.config.kitEntrega || []).forEach(function (id) { var i = insumo(id); add(i ? i.nome : id, 'Kit entrega', custoInsumo(id, ctx).valor); }); });
+    var o = dre(ym);
+    if (mei) { add('DAS · INSS do MEI', 'Imposto', o.inss); add('DAS · ICMS/ISS', 'Imposto', o.dasV); }
+    if (o.impV) add('Impostos sobre a venda', 'Imposto', o.impV); if (o.ir) add('IR / CSLL', 'Imposto', o.ir);
+    despesasDRE().forEach(function (d) { if (!noPer(d.data, ym) || (mei && d.conta === 'das')) return; add(d.categoria, pacoteDespesa(d), +d.valor || 0); });
+    var l = Object.keys(g).map(function (k) { return g[k]; }).sort(function (a, b) { return b.valor - a.valor; }), tot = l.reduce(function (s, x) { return s + x.valor; }, 0);
+    l.forEach(function (x) { x.pct = tot ? x.valor / tot : 0; });
+    return { itens: l, total: tot };
+  }
   function regime() { return D.config.regime || { tipo: 'mei', inss: 0, icms: 1, iss: 0, aliq: 0, aliqIR: 0 }; }
   function dasMensal() { var r = regime(); return (+r.inss || 0) + (+r.icms || 0) + (+r.iss || 0); }
   /* meses do período em que a gelateria já existia (do 1º mês com movimento até hoje) — DAS automático só neles */
@@ -466,7 +488,7 @@
     indiretosMes: indiretosMes, indiretoKg: indiretoKg, contasOBZ: contasOBZ, contaOBZ: contaOBZ, pacoteDespesa: pacoteDespesa, obzPorPacote: obzPorPacote, PACOTES_OBZ: PACOTES_OBZ, custoPote: custoPote, taxaCanal: taxaCanal,
     precoTabela: precoTabela, definirPreco: definirPreco, precificar: precificar, metaPotes: metaPotes,
     totalVenda: totalVenda, potesVenda: potesVenda, resultadoVenda: resultadoVenda, vendasMes: vendasMes, nomeItem: nomeItem, nomeCliente: nomeCliente,
-    resumo: resumo, mesesComDados: mesesComDados, caixa: caixa, extrato: extrato, saldoConta: saldoConta, dre: dre, dreItens: dreItens, cmvVenda: cmvVenda, DRE_LINHA: DRE_LINHA, regime: regime, dasMensal: dasMensal, NOME_SOCIO: NOME_SOCIO,
+    resumo: resumo, mesesComDados: mesesComDados, caixa: caixa, extrato: extrato, saldoConta: saldoConta, dre: dre, dreItens: dreItens, gastosDRE: gastosDRE, cmvVenda: cmvVenda, DRE_LINHA: DRE_LINHA, regime: regime, dasMensal: dasMensal, NOME_SOCIO: NOME_SOCIO,
     consumoProducao: consumoProducao, estoque: estoque, estoqueBaixo: estoqueBaixo,
     produtosAtivos: produtosAtivos, tamanhosAtivos: tamanhosAtivos, unidade: unidade, qtdFmt: qtdFmt,
   };

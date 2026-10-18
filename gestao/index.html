@@ -10,14 +10,14 @@
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.SG_BUILD='20261018163916';</script>
-<script src="../shared/versao.js?v=20261018163916"></script>
-<script src="../shared/config.js?v=20261018163916"></script>
-<script src="../shared/seed.js?v=20261018163916"></script>
-<script src="../shared/core.js?v=20261018163916"></script>
+<script>window.SG_BUILD='20261018164455';</script>
+<script src="../shared/versao.js?v=20261018164455"></script>
+<script src="../shared/config.js?v=20261018164455"></script>
+<script src="../shared/seed.js?v=20261018164455"></script>
+<script src="../shared/core.js?v=20261018164455"></script>
 <script src="../assets/excel-export.js"></script>
 <script src="../assets/pdf-export.js"></script>
-<script src="../shared/remote.js?v=20261018163916"></script>
+<script src="../shared/remote.js?v=20261018164455"></script>
 <style>
 /* ============================================================
    SURREAL — Painel de gestão (PC). OneSpot · 16/10/2026
@@ -667,12 +667,22 @@ VIEWS.dre=function(){
     + '<div class="hd"><div>Receita<b>'+SG.brl(A.rec)+'</b></div><div>Lucro bruto<b class="'+(A.bruto>=0?'cg':'cr')+'">'+SG.brl(A.bruto)+'</b></div><div>Margem líquida<b class="'+corMg(A.rec?A.res/A.rec:null)+'">'+(A.rec?SG.pct(A.res/A.rec,1):'—')+'</b></div><div>Resultado no ano<b class="'+(Y.res>=0?'cg':'cr')+'">'+SG.brl(Y.res)+'</b></div></div></div>';
   h+='<div class="split"><div class="card tsec"><div class="thead-row"><div class="ttit">DRE</div><div class="tsub">YTD = janeiro a '+SG.nomeMes(ym)+' de '+ano+'</div></div><div class="twrap">'+tabelaPY(L,A,Y,rotPer())+'</div>'
     + '<div class="nota">Custo dos produtos = cada pote vendido pela ficha técnica, com o preço da última compra até a data da venda (pacote ÷ quantidade). O que foi produzido e não vendido fica no estoque.'+(A.semCusto?' <b>'+A.semCusto+' item(ns) sem custo</b> (repasse do iFood sem sabor ou produto sem ficha).':'')+'</div></div>';
-  h+='<div class="pilha">'+gcard('gDre','Resultado · Mensal', ano+' · competência', legQ('Resultado do mês'))+'<div class="card tsec"><div class="thead-row"><div class="ttit">OBZ · orçado × realizado</div><div class="tsub">'+perTxt()+' · orçado = valor mensal × '+ms.length+(ms.length>1?' meses':' mês')+'</div></div><div class="twrap">'+obzTab(A,ms.length)+'</div></div></div></div>';
+  h+='<div class="pilha">'+gcard('gDre','Resultado · Mensal', ano+' · competência', legQ('Resultado do mês'))+'<div class="card tsec" style="flex:1 1 0;min-height:0"><div class="thead-row"><div class="ttit">Top 10 gastos</div><div class="tsub">'+perTxt()+' · % sobre o total de gastos do DRE</div></div><div class="twrap">'+top10Gastos(ms)+'</div></div></div></div>';
   $('view').innerHTML=h;
   var an=anoMeses(ym), res=an.map(function(m){ var o=dreMeses([m]); return (o.rec||o.cprod||o.despT)?+o.res.toFixed(2):null; });
   barras('gDre',{labels:an.map(function(m){return SG.MES3[+m.slice(5)-1];}), dados:res, nome:'Resultado', foco:F.per.size?an.map(function(m,i){return F.per.has(m)?i:-1;}).filter(function(i){return i>=0;}):null, cores:function(v,i,t){return v>=0?t.verde:t.vermelho;}});
 };
 
+/* TOP 10 GASTOS — insumos, embalagens, contas, taxas e impostos do período, com % do total */
+function top10Gastos(ms){
+  var G=SG.gastosDRE(ms), top=G.itens.slice(0,10), resto=G.itens.slice(10), rs=resto.reduce(function(t,x){return t+x.valor;},0), mx=top.length?top[0].valor:0;
+  if(!top.length) return '<div class="nota">Sem gastos neste período.</div>';
+  var bar=function(v){ return '<span style="display:inline-block;vertical-align:middle;width:60px;height:6px;border-radius:3px;background:var(--hover);margin-right:8px;overflow:hidden"><i style="display:block;height:100%;width:'+(mx?v/mx*100:0)+'%;background:var(--acc2)"></i></span>'; };
+  return '<table class="dre"><thead><tr><th>#</th><th>Gasto</th><th>Tipo</th><th class="num">Valor</th><th class="num">% do total</th></tr></thead><tbody>'
+    + top.map(function(x,i){ return '<tr><td class="mut">'+(i+1)+'</td><td class="conta">'+esc(x.nome)+'</td><td><span class="cl">'+esc(x.tipo)+'</span></td><td class="num">'+SG.brl(x.valor)+'</td><td class="num">'+bar(x.valor)+SG.pct(x.pct,1)+'</td></tr>'; }).join('')
+    + (resto.length?'<tr><td></td><td class="conta mut">Outros ('+resto.length+')</td><td></td><td class="num">'+SG.brl(rs)+'</td><td class="num">'+SG.pct(G.total?rs/G.total:0,1)+'</td></tr>':'')
+    + '<tr class="total"><td></td><td>Total de gastos</td><td></td><td class="num">'+SG.brl(G.total)+'</td><td class="num">100%</td></tr></tbody></table>';
+}
 function obzTab(A, n){
   var orc=SG.obzPorPacote(), pk=SG.PACOTES_OBZ.slice(), R=A.despPk||A.desp; Object.keys(R).forEach(function(k){ if(pk.indexOf(k)<0) pk.push(k); });
   var T={o:0,r:0}, rows=pk.map(function(k){ var o=(orc[k]||0)*n, r=R[k]||0; T.o+=o; T.r+=r; return {k:k,o:o,r:r}; });
@@ -1354,14 +1364,22 @@ VIEWS.parametros=function(){
   sub('Valores que entram em todos os cálculos de custo, preço e meta · clique na linha para editar');
   function bloco(tit, subt, tab, bt){ return '<div class="card tsec" style="flex:1 1 auto"><div class="thead-row"><div class="ttit">'+tit+'</div><div class="tsub">'+subt+'</div><div class="dir">'+(bt||'')+'</div></div><div class="twrap">'+tab+'</div></div>'; }
   var metas=[{k:'margemAlvo',n:'Margem desejada',v:SG.pct(c.margemAlvo,0),d:'sobre o preço de venda'},{k:'regime',n:'Regime tributário',v:(function(r){ return r.tipo==='mei'?'MEI · DAS '+SG.brl(SG.dasMensal())+'/mês':r.tipo==='simples'?'Simples · '+SG.pct(c.imposto,2):'Presumido · '+SG.pct(c.imposto,2)+' + IR '+SG.pct(r.aliqIR,2); })(SG.regime()),d:'impostos do DRE e do preço'},{k:'metaLucroMes',n:'Meta de lucro do mês',v:SG.brl(c.metaLucroMes),d:'usada no Resumo e no Simulador'},{k:'diasVendaMes',n:'Dias de venda por mês',v:c.diasVendaMes,d:'para potes por dia'}];
-  var h='<div class="split" style="grid-template-columns:minmax(0,1fr) minmax(0,1fr)"><div class="pilha">'
-    + bloco('Preço e metas','margem, imposto e metas', tabela('tPm',[{t:'Parâmetro',f:function(x){return esc(x.n);},cls:'conta'},{t:'Valor',f:function(x){return '<b style="color:var(--txt)">'+x.v+'</b>';},cls:'num'},{t:'Para que serve',f:function(x){return esc(x.d);}}], metas, null, function(x){ return "abrirParam('"+x.k+"')"; }))
-    + bloco('Orçamento OBZ · custos fixos do mês','total '+SG.brl(SG.indiretosMes())+'/mês · '+SG.PACOTES_OBZ.map(function(pc){return pc+' '+SG.brl0(SG.obzPorPacote()[pc]||0);}).join(' · '), tabela('tObz',[{t:'Pacote',f:function(x){return esc(x.pacote);},s:function(x){return SG.PACOTES_OBZ.indexOf(x.pacote)+x.nome;}},{t:'Conta',f:function(x){return esc(x.nome);},cls:'conta'},{t:'Orçado por mês',f:function(x){return x.valor?'<b style="color:var(--txt)">'+SG.brl(x.valor)+'</b>':'<span class="muted">R$ 0,00</span>';},v:function(x){return x.valor;},cls:'num'}], SG.contasOBZ().slice().sort(function(a,b){return (SG.PACOTES_OBZ.indexOf(a.pacote)-SG.PACOTES_OBZ.indexOf(b.pacote))||a.nome.localeCompare(b.nome);}), ['Total','',SG.brl(SG.indiretosMes())], function(x){ return "abrirConta('"+x.id+"')"; }), btNovo('Nova conta','abrirConta(null)'))
-    + '</div><div class="pilha">'
-    + bloco('Canais de venda','taxa sobre o preço e kit de entrega', tabela('tCan',[{t:'Canal',f:function(x){return esc(x.nome);},cls:'conta'},{t:'Taxa',f:function(x){return SG.pct(x.taxa,1);},cls:'num'},{t:'Kit entrega',f:function(x){return x.kitEntrega?'<span class="st vd">sim</span>':'<span class="st cz">não</span>';}}], D().canais, null, function(x){ return "abrirCanal('"+x.id+"')"; }))
-    + bloco('Tamanhos de pote','gramas de gelato e pote usado · inativo = só simulação', tabela('tTam',[{t:'Tamanho',f:function(t){return t.nome+' · '+t.ml+' ml';},cls:'conta'},{t:'Gelato',f:function(t){return SG.num(t.g,0)+' g';},cls:'num'},{t:'Pote',f:function(t){var i=SG.insumo(t.pote);return esc(i?i.nome:'—');}},{t:'Situação',f:function(t){return t.ativo?'<span class="st vd">ativo</span>':'<span class="st cz">só simulação</span>';}}], D().tamanhos, null, function(t){ return "abrirTamanho('"+t.id+"')"; }))
-    + '<div class="card" style="padding:14px 16px;flex:0 0 auto"><div class="ttit">Dados</div><div class="tsub" style="margin:2px 0 10px">'+(SGR.ativo?'Os dados ficam no servidor e sincronizam entre os aparelhos. O backup é uma cópia extra.':'Modo demonstração: os dados ficam neste navegador.')+'</div>'
-    + '<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" onclick="backup()">'+ic('baixar')+'Baixar backup</button><label class="btn">Restaurar backup<input type="file" accept=".json" style="display:none" onchange="restaura(this.files[0])"></label>'+(SGR.ativo?'':'<button class="btn" onclick="if(confirm(\'Voltar aos dados da planilha?\'))SG.resetar()">Voltar aos dados da planilha</button>')+'</div></div></div></div>';
+  /* uma tabela só, com toggles: Preço e metas · Orçamento OBZ · Canais · Tamanhos · Dados */
+  var T=V.par||'metas', TT=[['metas','Preço e metas'],['obz','Orçamento OBZ'],['can','Canais de venda'],['tam','Tamanhos de pote'],['dados','Dados']];
+  var dims='<div class="dims">'+TT.map(function(o){ return '<button class="dimb'+(o[0]===T?' on':'')+'" onclick="V.par=\''+o[0]+'\';render()">'+o[1]+'</button>'; }).join('')+'</div>';
+  var subt='', bt='', tab='';
+  if(T==='metas'){ subt='margem, regime tributário e metas · clique na linha para editar';
+    tab=tabela('tPm',[{t:'Parâmetro',f:function(x){return esc(x.n);},cls:'conta'},{t:'Valor',f:function(x){return '<b style="color:var(--txt)">'+x.v+'</b>';},cls:'num'},{t:'Para que serve',f:function(x){return esc(x.d);}}], metas, null, function(x){ return "abrirParam('"+x.k+"')"; }); }
+  else if(T==='obz'){ subt='custos fixos do mês · total '+SG.brl(SG.indiretosMes())+'/mês · '+SG.PACOTES_OBZ.map(function(pc){return pc+' '+SG.brl0(SG.obzPorPacote()[pc]||0);}).join(' · ');
+    bt=btNovo('Nova conta','abrirConta(null)');
+    tab=tabela('tObz',[{t:'Pacote',f:function(x){return esc(x.pacote);},s:function(x){return SG.PACOTES_OBZ.indexOf(x.pacote)+x.nome;}},{t:'Conta',f:function(x){return esc(x.nome);},cls:'conta'},{t:'Orçado por mês',f:function(x){return x.valor?'<b style="color:var(--txt)">'+SG.brl(x.valor)+'</b>':'<span class="muted">R$ 0,00</span>';},v:function(x){return x.valor;},cls:'num'}], SG.contasOBZ().slice().sort(function(a,b){return (SG.PACOTES_OBZ.indexOf(a.pacote)-SG.PACOTES_OBZ.indexOf(b.pacote))||a.nome.localeCompare(b.nome);}), ['Total','',SG.brl(SG.indiretosMes())], function(x){ return "abrirConta('"+x.id+"')"; }); }
+  else if(T==='can'){ subt='taxa sobre o preço e kit de entrega · clique para editar';
+    tab=tabela('tCan',[{t:'Canal',f:function(x){return esc(x.nome);},cls:'conta'},{t:'Taxa',f:function(x){return SG.pct(x.taxa,1);},cls:'num'},{t:'Kit entrega',f:function(x){return x.kitEntrega?'<span class="st vd">sim</span>':'<span class="st cz">não</span>';}}], D().canais, null, function(x){ return "abrirCanal('"+x.id+"')"; }); }
+  else if(T==='tam'){ subt='gramas de gelato e pote usado · inativo = só simulação · clique para editar';
+    tab=tabela('tTam',[{t:'Tamanho',f:function(t){return t.nome+' · '+t.ml+' ml';},cls:'conta'},{t:'Gelato',f:function(t){return SG.num(t.g,0)+' g';},cls:'num'},{t:'Pote',f:function(t){var i=SG.insumo(t.pote);return esc(i?i.nome:'—');}},{t:'Situação',f:function(t){return t.ativo?'<span class="st vd">ativo</span>':'<span class="st cz">só simulação</span>';}}], D().tamanhos, null, function(t){ return "abrirTamanho('"+t.id+"')"; }); }
+  else { subt=SGR.ativo?'os dados ficam no servidor e sincronizam entre os aparelhos · o backup é uma cópia extra':'modo demonstração: os dados ficam neste navegador';
+    tab='<div style="display:flex;gap:8px;flex-wrap:wrap;padding:16px"><button class="btn" onclick="backup()">'+ic('baixar')+'Baixar backup</button><label class="btn">Restaurar backup<input type="file" accept=".json" style="display:none" onchange="restaura(this.files[0])"></label>'+(SGR.ativo?'':'<button class="btn" onclick="if(confirm(\'Voltar aos dados da planilha?\'))SG.resetar()">Voltar aos dados da planilha</button>')+'</div>'; }
+  var h='<div class="card tsec" style="flex:1 1 auto"><div class="thead-row"><div class="tsub" style="flex:1">'+subt+'</div>'+dims+(bt?'<div class="dir">'+bt+'</div>':'')+'</div><div class="twrap">'+tab+'</div></div>';
   $('view').innerHTML=h;
 };
 var PCT_P={margemAlvo:1,imposto:1};
