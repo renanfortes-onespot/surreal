@@ -13,12 +13,12 @@
 <link rel="icon" href="img/icone-192.png">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.SG_BUILD='20261018154652';</script>
-<script src="shared/versao.js?v=20261018154652"></script>
-<script src="shared/config.js?v=20261018154652"></script>
-<script src="shared/seed.js?v=20261018154652"></script>
-<script src="shared/core.js?v=20261018154652"></script>
-<script src="shared/remote.js?v=20261018154652"></script>
+<script>window.SG_BUILD='20261018154948';</script>
+<script src="shared/versao.js?v=20261018154948"></script>
+<script src="shared/config.js?v=20261018154948"></script>
+<script src="shared/seed.js?v=20261018154948"></script>
+<script src="shared/core.js?v=20261018154948"></script>
+<script src="shared/remote.js?v=20261018154948"></script>
 <style>
 /* ============================================================
    SURREAL · gelato artesanal — app (PWA)
@@ -391,8 +391,8 @@ function toast(t){ var e=$('toast'); e.textContent=t; e.classList.add('on'); cle
 var ABAS = [['inicio','Início','casa'],['pedidos','Pedidos','sacola'],['caixa','Caixa','moeda'],['dre','DRE','dre'],['estoque','Estoque','caixa'],['mais','Mais','mais']];
 var pilha = [{tela:'inicio'}];
 function navBar(){ var at=pilha[0].tela; $('nav').innerHTML = ABAS.map(function(a){ return '<button class="'+(a[0]===at?'on':'')+'" onclick="aba(\''+a[0]+'\')">'+ic(a[2])+a[1]+'</button>'; }).join(''); }
-function aba(t){ pilha=[{tela:t}]; render(); }
-function abre(t, p){ pilha.push(Object.assign({tela:t}, p||{})); render(); }
+function aba(t){ naoGuarda=false; pilha=[{tela:t}]; render(); }
+function abre(t, p){ naoGuarda=false; pilha.push(Object.assign({tela:t}, p||{})); render(); }
 function volta(){ if(pilha.length>1) pilha.pop(); render(); }
 function atual(){ return pilha[pilha.length-1]; }
 function vbar(){ return '<div class="vbar"><button class="volta" onclick="volta()">'+ic('volta')+'Voltar</button><span><img class="lgT esc" src="img/logo-branco.png" alt="Surreal gelato artesanal"><img class="lgT cla" src="img/logo-navy.png" alt="Surreal gelato artesanal"></span><div class="tema" role="button" aria-label="Alternar tema" onclick="alternaTema()"></div></div>'; }
@@ -421,10 +421,12 @@ window.addEventListener('popstate', function(){
   temGuarda=false;
   var s=document.querySelector('.sheet'); if(s){ s.remove(); guardaVolta(); return; }
   if(pilha.length>1){ pilha.pop(); render(); }
-  else if(atual().tela!=='inicio'){ pilha=[{tela:'inicio'}]; render(); }
+  else if(atual().tela!=='inicio'){ pilha=[{tela:'inicio'}]; naoGuarda=true; render(); }
 });
 /* o app abre na última tela usada (formulários pela metade não voltam) */
-function guardaTela(){ try{ var p=[]; for(var i=0;i<pilha.length;i++){ if(pilha[i].form) break; p.push(pilha[i]); } localStorage.setItem('sg_tela', JSON.stringify({t:Date.now(), p:p})); }catch(e){} }
+/* naoGuarda: o voltar do celular levou ao Início só para sair; ao reabrir, volta para onde estava */
+var appIni=false, naoGuarda=false;
+function guardaTela(){ if(!appIni) return; if(naoGuarda) return; try{ var p=[]; for(var i=0;i<pilha.length;i++){ if(pilha[i].form) break; p.push(pilha[i]); } localStorage.setItem('sg_tela', JSON.stringify({t:Date.now(), p:p})); }catch(e){} }
 function restauraTela(){ try{ var x=JSON.parse(localStorage.getItem('sg_tela')||'null'); if(!x||!x.p||!x.p.length||Date.now()-x.t>24*3600e3) return; if(x.p.every(function(q){ return TELAS[q.tela]; })) pilha=x.p; }catch(e){} }
 document.addEventListener('DOMContentLoaded', function(){ var c=$('corpo'); if(c) c.addEventListener('scroll', function(){ atual().scroll=c.scrollTop; clearTimeout(guardaTela.t); guardaTela.t=setTimeout(guardaTela, 400); }, {passive:true}); });
 document.addEventListener('visibilitychange', function(){ if(document.hidden) guardaTela(); });
@@ -994,7 +996,7 @@ TELAS.tabela = function(a){
 function editaPrecoM(pid,cid,tid){ var x=SG.precificar(pid,tid,cid); var v=prompt(SG.produto(pid).nome+' '+tid+' · '+nCanal(cid)+'\nCusto '+SG.brl(x.custo.total)+' · sugerido '+SG.brl(x.sugerido)+'\n\nPreço (vazio = sem preço):', x.tabela!=null?String(x.tabela).replace('.',','):''); if(v===null) return; SG.definirPreco(pid,cid,tid,numIn(v)); SG.salvar(); toast('Preço atualizado'); }
 
 /* ── início ── */
-function iniciaApp(){ restauraTela(); topo(); render();
+function iniciaApp(){ restauraTela(); appIni=true; topo(); render();
 (function(){ var h=location.hash.slice(1), m={producao:'producaoNova', compra:'compraNova', despesa:'despesaNova'}; if(h==='pedido') novoPedido(); else if(m[h]) abre(m[h],{form:1}); if(h) history.replaceState(null,'',location.pathname); })(); }
 
 /* ── instalar o app (Android/PC: prompt nativo; iPhone: passo a passo) ── */
