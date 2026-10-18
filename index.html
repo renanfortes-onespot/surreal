@@ -13,12 +13,12 @@
 <link rel="icon" href="img/icone-192.png">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.SG_BUILD='20261018152458';</script>
-<script src="shared/versao.js?v=20261018152458"></script>
-<script src="shared/config.js?v=20261018152458"></script>
-<script src="shared/seed.js?v=20261018152458"></script>
-<script src="shared/core.js?v=20261018152458"></script>
-<script src="shared/remote.js?v=20261018152458"></script>
+<script>window.SG_BUILD='20261018154652';</script>
+<script src="shared/versao.js?v=20261018154652"></script>
+<script src="shared/config.js?v=20261018154652"></script>
+<script src="shared/seed.js?v=20261018154652"></script>
+<script src="shared/core.js?v=20261018154652"></script>
+<script src="shared/remote.js?v=20261018154652"></script>
 <style>
 /* ============================================================
    SURREAL · gelato artesanal — app (PWA)
@@ -404,8 +404,25 @@ function render(){
     $('corpo').scrollTop = a.scroll || 0;
     if (TELAS[a.tela+'_depois']) TELAS[a.tela+'_depois'](a);
   } catch (e) { console.error(e); if (pilha.length>1 || a.tela!=='inicio') { pilha=[{tela:'inicio'}]; return render(); } throw e; }
-  navBar(); guardaTela();
+  navBar(); guardaTela(); guardaVolta();
 }
+/* botão "voltar" do celular: volta uma tela dentro do app (e das abas para o Início) em vez de sair.
+   Mantém UMA entrada extra no histórico sempre que não estamos no Início. */
+var temGuarda=false, ignoraPop=false;
+function guardaVolta(){
+  var raiz = pilha.length===1 && pilha[0].tela==='inicio';
+  try{
+    if(!raiz && !temGuarda){ history.pushState({sg:1}, ''); temGuarda=true; }
+    else if(raiz && temGuarda){ ignoraPop=true; temGuarda=false; history.back(); }
+  }catch(e){}
+}
+window.addEventListener('popstate', function(){
+  if(ignoraPop){ ignoraPop=false; return; }
+  temGuarda=false;
+  var s=document.querySelector('.sheet'); if(s){ s.remove(); guardaVolta(); return; }
+  if(pilha.length>1){ pilha.pop(); render(); }
+  else if(atual().tela!=='inicio'){ pilha=[{tela:'inicio'}]; render(); }
+});
 /* o app abre na última tela usada (formulários pela metade não voltam) */
 function guardaTela(){ try{ var p=[]; for(var i=0;i<pilha.length;i++){ if(pilha[i].form) break; p.push(pilha[i]); } localStorage.setItem('sg_tela', JSON.stringify({t:Date.now(), p:p})); }catch(e){} }
 function restauraTela(){ try{ var x=JSON.parse(localStorage.getItem('sg_tela')||'null'); if(!x||!x.p||!x.p.length||Date.now()-x.t>24*3600e3) return; if(x.p.every(function(q){ return TELAS[q.tela]; })) pilha=x.p; }catch(e){} }
