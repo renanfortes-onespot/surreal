@@ -10,14 +10,14 @@
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.SG_BUILD='20261018164455';</script>
-<script src="../shared/versao.js?v=20261018164455"></script>
-<script src="../shared/config.js?v=20261018164455"></script>
-<script src="../shared/seed.js?v=20261018164455"></script>
-<script src="../shared/core.js?v=20261018164455"></script>
+<script>window.SG_BUILD='20261018164724';</script>
+<script src="../shared/versao.js?v=20261018164724"></script>
+<script src="../shared/config.js?v=20261018164724"></script>
+<script src="../shared/seed.js?v=20261018164724"></script>
+<script src="../shared/core.js?v=20261018164724"></script>
 <script src="../assets/excel-export.js"></script>
 <script src="../assets/pdf-export.js"></script>
-<script src="../shared/remote.js?v=20261018164455"></script>
+<script src="../shared/remote.js?v=20261018164724"></script>
 <style>
 /* ============================================================
    SURREAL — Painel de gestão (PC). OneSpot · 16/10/2026
@@ -667,21 +667,23 @@ VIEWS.dre=function(){
     + '<div class="hd"><div>Receita<b>'+SG.brl(A.rec)+'</b></div><div>Lucro bruto<b class="'+(A.bruto>=0?'cg':'cr')+'">'+SG.brl(A.bruto)+'</b></div><div>Margem líquida<b class="'+corMg(A.rec?A.res/A.rec:null)+'">'+(A.rec?SG.pct(A.res/A.rec,1):'—')+'</b></div><div>Resultado no ano<b class="'+(Y.res>=0?'cg':'cr')+'">'+SG.brl(Y.res)+'</b></div></div></div>';
   h+='<div class="split"><div class="card tsec"><div class="thead-row"><div class="ttit">DRE</div><div class="tsub">YTD = janeiro a '+SG.nomeMes(ym)+' de '+ano+'</div></div><div class="twrap">'+tabelaPY(L,A,Y,rotPer())+'</div>'
     + '<div class="nota">Custo dos produtos = cada pote vendido pela ficha técnica, com o preço da última compra até a data da venda (pacote ÷ quantidade). O que foi produzido e não vendido fica no estoque.'+(A.semCusto?' <b>'+A.semCusto+' item(ns) sem custo</b> (repasse do iFood sem sabor ou produto sem ficha).':'')+'</div></div>';
-  h+='<div class="pilha">'+gcard('gDre','Resultado · Mensal', ano+' · competência', legQ('Resultado do mês'))+'<div class="card tsec" style="flex:1 1 0;min-height:0"><div class="thead-row"><div class="ttit">Top 10 gastos</div><div class="tsub">'+perTxt()+' · % sobre o total de gastos do DRE</div></div><div class="twrap">'+top10Gastos(ms)+'</div></div></div></div>';
+  h+='<div class="pilha">'+gcard('gDre','Resultado · Mensal', ano+' · competência', legQ('Resultado do mês'))+'<div class="card tsec" style="flex:1 1 0;min-height:0"><div class="thead-row"><div class="ttit">Top 5 gastos</div><div class="tsub">'+perTxt()+' · % sobre o total de gastos do DRE ('+SG.brl(SG.gastosDRE(ms).total)+')</div></div><div class="twrap">'+top10Gastos(ms)+'</div></div></div></div>';
   $('view').innerHTML=h;
   var an=anoMeses(ym), res=an.map(function(m){ var o=dreMeses([m]); return (o.rec||o.cprod||o.despT)?+o.res.toFixed(2):null; });
   barras('gDre',{labels:an.map(function(m){return SG.MES3[+m.slice(5)-1];}), dados:res, nome:'Resultado', foco:F.per.size?an.map(function(m,i){return F.per.has(m)?i:-1;}).filter(function(i){return i>=0;}):null, cores:function(v,i,t){return v>=0?t.verde:t.vermelho;}});
 };
 
-/* TOP 10 GASTOS — insumos, embalagens, contas, taxas e impostos do período, com % do total */
+/* TOP 5 GASTOS — insumos, embalagens, contas, taxas e impostos do período, com % do total (tabela padrão) */
 function top10Gastos(ms){
-  var G=SG.gastosDRE(ms), top=G.itens.slice(0,10), resto=G.itens.slice(10), rs=resto.reduce(function(t,x){return t+x.valor;},0), mx=top.length?top[0].valor:0;
+  var G=SG.gastosDRE(ms), top=G.itens.slice(0,5), ts=top.reduce(function(t,x){return t+x.valor;},0);
   if(!top.length) return '<div class="nota">Sem gastos neste período.</div>';
-  var bar=function(v){ return '<span style="display:inline-block;vertical-align:middle;width:60px;height:6px;border-radius:3px;background:var(--hover);margin-right:8px;overflow:hidden"><i style="display:block;height:100%;width:'+(mx?v/mx*100:0)+'%;background:var(--acc2)"></i></span>'; };
-  return '<table class="dre"><thead><tr><th>#</th><th>Gasto</th><th>Tipo</th><th class="num">Valor</th><th class="num">% do total</th></tr></thead><tbody>'
-    + top.map(function(x,i){ return '<tr><td class="mut">'+(i+1)+'</td><td class="conta">'+esc(x.nome)+'</td><td><span class="cl">'+esc(x.tipo)+'</span></td><td class="num">'+SG.brl(x.valor)+'</td><td class="num">'+bar(x.valor)+SG.pct(x.pct,1)+'</td></tr>'; }).join('')
-    + (resto.length?'<tr><td></td><td class="conta mut">Outros ('+resto.length+')</td><td></td><td class="num">'+SG.brl(rs)+'</td><td class="num">'+SG.pct(G.total?rs/G.total:0,1)+'</td></tr>':'')
-    + '<tr class="total"><td></td><td>Total de gastos</td><td></td><td class="num">'+SG.brl(G.total)+'</td><td class="num">100%</td></tr></tbody></table>';
+  if(!ORD.tTop) ORD.tTop={i:2,d:-1};
+  return tabela('tTop',[
+    {t:'Gasto',f:function(x){return esc(x.nome);},s:function(x){return x.nome;},cls:'conta'},
+    {t:'Tipo',f:function(x){return '<span class="cl">'+esc(x.tipo)+'</span>';},s:function(x){return x.tipo;}},
+    {t:'Valor',f:function(x){return SG.brl(x.valor);},v:function(x){return x.valor;},cls:'num'},
+    {t:'% do total',f:function(x){return SG.pct(x.pct,1);},v:function(x){return x.pct;},cls:'num'}
+  ], top, ['Top 5', '', SG.brl(ts), SG.pct(G.total?ts/G.total:0,1)]);
 }
 function obzTab(A, n){
   var orc=SG.obzPorPacote(), pk=SG.PACOTES_OBZ.slice(), R=A.despPk||A.desp; Object.keys(R).forEach(function(k){ if(pk.indexOf(k)<0) pk.push(k); });
