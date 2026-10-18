@@ -10,14 +10,14 @@
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.SG_BUILD='20261018170536';</script>
-<script src="../shared/versao.js?v=20261018170536"></script>
-<script src="../shared/config.js?v=20261018170536"></script>
-<script src="../shared/seed.js?v=20261018170536"></script>
-<script src="../shared/core.js?v=20261018170536"></script>
+<script>window.SG_BUILD='20261018171002';</script>
+<script src="../shared/versao.js?v=20261018171002"></script>
+<script src="../shared/config.js?v=20261018171002"></script>
+<script src="../shared/seed.js?v=20261018171002"></script>
+<script src="../shared/core.js?v=20261018171002"></script>
 <script src="../assets/excel-export.js"></script>
 <script src="../assets/pdf-export.js"></script>
-<script src="../shared/remote.js?v=20261018170536"></script>
+<script src="../shared/remote.js?v=20261018171002"></script>
 <style>
 /* ============================================================
    SURREAL — Painel de gestão (PC). OneSpot · 16/10/2026
@@ -823,7 +823,7 @@ function simCarregaMes(){ var ym=SG.mesAtual(), m={};
 function ctxCen(){ var v=Object.assign({},SIM.var); if(SIM.varTodos) v['*']=SIM.varTodos; return Object.keys(v).length?{var:v}:null; }
 VIEWS.cenarios=function(){
   SIM.tam=prim('tam','P'); SIM.canal=prim('can','direto'); sub('Tamanho e canal pelos filtros do topo (vale o primeiro marcado) · teste um preço único para todos os sabores e/ou uma alta (ou queda) no preço dos insumos · nada é salvo');
-  var ctx=ctxCen(), alvo=+D().config.margemAlvo, ins=D().insumos.slice().sort(function(a,b){return a.nome.localeCompare(b.nome);});
+  var ctx=Object.assign(ctxCen()||{},{semKit:true}), RP=SG.rateioPote(), alvo=+D().config.margemAlvo, ins=D().insumos.slice().sort(function(a,b){return a.nome.localeCompare(b.nome);});
   var tags=Object.keys(SIM.var).map(function(k){var i=SG.insumo(k);return '<button class="dimb on" title="Remover" onclick="delete SIM.var[\''+k+'\'];render()">'+esc(i?i.nome:k)+' '+(SIM.var[k]>0?'+':'')+SG.pct(SIM.var[k],0)+' ×</button>';}).join(' ');
   var h='<div class="card" style="padding:12px 16px;flex:0 0 auto"><div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap">'
     + '<div class="fld" style="margin:0"><label>Preço a testar (R$)</label><input class="inp num" value="'+(SIM.precoTodos!=null?nv(SIM.precoTodos):'')+'" placeholder="tabela" style="width:110px" onchange="SIM.precoTodos=numIn(this.value);render()"></div>'
@@ -833,25 +833,25 @@ VIEWS.cenarios=function(){
     + '<button class="btn pri" onclick="var v=numIn($(\'cVar\').value);if(v==null)return;SIM.var[$(\'cIns\').value]=v/100;render()">Aplicar</button>'
     + '<button class="btn" onclick="SIM.var={};SIM.varTodos=0;SIM.precoTodos=null;render()">Limpar</button>'+(tags?'<div class="dims">'+tags+'</div>':'')+'</div></div>';
   var ls=D().produtos.filter(function(p){return p.receita&&p.ativo!==false;}).map(function(p){
-    var a=SG.precificar(p.id,SIM.tam,SIM.canal,{}), pr=SIM.precoTodos!=null?SIM.precoTodos:a.tabela, b=SG.precificar(p.id,SIM.tam,SIM.canal,pr!=null?{preco:pr}:{},ctx);
-    return {p:p,a:a,b:b,pr:pr,meta:SG.precificar(p.id,SIM.tam,SIM.canal,{margem:alvo},ctx).sugerido}; });
+    var a=SG.precificar(p.id,SIM.tam,SIM.canal,{extra:RP.porPote},{semKit:true}), pr=SIM.precoTodos!=null?SIM.precoTodos:a.tabela, b=SG.precificar(p.id,SIM.tam,SIM.canal,pr!=null?{preco:pr,extra:RP.porPote}:{extra:RP.porPote},ctx);
+    return {p:p,a:a,b:b,pr:pr,meta:SG.precificar(p.id,SIM.tam,SIM.canal,{margem:alvo,extra:RP.porPote},ctx).sugerido}; });
   var fm=function(m){ return m==null||!isFinite(m)?'—':'<span class="'+corMg(m)+'">'+SG.pct(m,0)+'</span>'; };
   if(!ORD.tCen) ORD.tCen={i:7,d:1};   /* abre sempre ordenado pela margem simulada (a menor primeiro) */
-  h+='<div class="card tsec"><div class="thead-row"><div class="tsub">'+esc(nTam(SIM.tam))+' · '+esc(nCanal(SIM.canal))+' · verde = atinge a meta de '+SG.pct(alvo,0)+' · âmbar = lucra abaixo da meta · vermelho = prejuízo</div></div><div class="twrap">'+tabela('tCen',[
+  h+='<div class="card tsec"><div class="thead-row"><div class="tsub">'+esc(nTam(SIM.tam))+' · '+esc(nCanal(SIM.canal))+' · <b>margem líquida</b>: custo do pote + fixos e sacos de '+SG.brl(RP.porPote)+'/pote (média '+RP.meses.map(function(m){return SG.nomeMes(m,true);}).join('–')+': fixos '+SG.brl0(RP.fixos)+' + sacos '+SG.brl0(RP.sacos)+' por mês ÷ '+SG.num(RP.potes,0)+' potes/mês) · verde = atinge a meta de '+SG.pct(alvo,0)+' · âmbar = lucra abaixo da meta · vermelho = prejuízo</div></div><div class="twrap">'+tabela('tCen',[
     {t:'Sabor',f:function(l){return esc(l.p.nome);},s:function(l){return l.p.nome;},cls:'conta'},
-    {t:'Custo hoje',f:function(l){return SG.brl(l.a.custo.total);},v:function(l){return l.a.custo.total;},cls:'num'},
+    {t:'Custo total hoje',f:function(l){return SG.brl(l.a.ct);},v:function(l){return l.a.ct;},cls:'num'},
     {t:'Preço tabela',f:function(l){return l.a.tabela!=null?SG.brl(l.a.tabela):'—';},v:function(l){return l.a.tabela||0;},cls:'num'},
-    {t:'Margem hoje',f:function(l){return l.a.tabela!=null?fm(l.a.margem):'—';},v:function(l){return l.a.tabela!=null?l.a.margem:-9;},cls:'num'},
-    {t:'Custo simulado',f:function(l){var d=l.b.custo.total-l.a.custo.total;return SG.brl(l.b.custo.total)+(Math.abs(d)>0.005?' <span class="'+(d>0?'cr':'cg')+'">('+(d>0?'+':'')+SG.brl(d)+')</span>':'');},v:function(l){return l.b.custo.total;},cls:'num sep-l'},
+    {t:'Margem líquida hoje',f:function(l){return l.a.tabela!=null?fm(l.a.margem):'—';},v:function(l){return l.a.tabela!=null?l.a.margem:-9;},cls:'num'},
+    {t:'Custo total simulado',f:function(l){var d=l.b.ct-l.a.ct;return SG.brl(l.b.ct)+(Math.abs(d)>0.005?' <span class="'+(d>0?'cr':'cg')+'">('+(d>0?'+':'')+SG.brl(d)+')</span>':'');},v:function(l){return l.b.ct;},cls:'num sep-l'},
     {t:'Preço simulado',f:function(l){return l.pr!=null?SG.brl(l.pr):'—';},v:function(l){return l.pr||0;},cls:'num'},
-    {t:'Lucro/pote',f:function(l){return l.pr!=null?'<span class="'+(l.b.lucro>=0?'cg':'cr')+'">'+SG.brl(l.b.lucro)+'</span>':'—';},v:function(l){return l.pr!=null?l.b.lucro:-99;},cls:'num'},
-    {t:'Margem simulada',f:function(l){return l.pr!=null?fm(l.b.margem):'—';},v:function(l){return l.pr!=null?l.b.margem:-9;},cls:'num'},
+    {t:'Lucro líquido/pote',f:function(l){return l.pr!=null?'<span class="'+(l.b.lucro>=0?'cg':'cr')+'">'+SG.brl(l.b.lucro)+'</span>':'—';},v:function(l){return l.pr!=null?l.b.lucro:-99;},cls:'num'},
+    {t:'Margem líquida simulada',f:function(l){return l.pr!=null?fm(l.b.margem):'—';},v:function(l){return l.pr!=null?l.b.margem:-9;},cls:'num'},
     {t:'Preço p/ meta',f:function(l){return SG.brl(l.meta);},v:function(l){return l.meta||0;},cls:'num'},
   ],ls,(function(){ /* totalizador: média simples dos sabores (preço/margem só de quem tem preço) */
     var md=function(a){ a=a.filter(function(x){return x!=null&&isFinite(x);}); return a.length?a.reduce(function(s,x){return s+x;},0)/a.length:null; };
     var cT=ls.filter(function(l){return l.a.tabela!=null;}), cP=ls.filter(function(l){return l.pr!=null;}), lu=md(cP.map(function(l){return l.b.lucro;}));
-    return ['Média · '+ls.length+' sabores', SG.brl(md(ls.map(function(l){return l.a.custo.total;}))), cT.length?SG.brl(md(cT.map(function(l){return l.a.tabela;}))):'—', cT.length?fm(md(cT.map(function(l){return l.a.margem;}))):'—',
-      SG.brl(md(ls.map(function(l){return l.b.custo.total;}))), cP.length?SG.brl(md(cP.map(function(l){return l.pr;}))):'—', lu!=null?'<span class="'+(lu>=0?'cg':'cr')+'">'+SG.brl(lu)+'</span>':'—', cP.length?fm(md(cP.map(function(l){return l.b.margem;}))):'—', SG.brl(md(ls.map(function(l){return l.meta;})))]; })())+'</div></div>';
+    return ['Média · '+ls.length+' sabores', SG.brl(md(ls.map(function(l){return l.a.ct;}))), cT.length?SG.brl(md(cT.map(function(l){return l.a.tabela;}))):'—', cT.length?fm(md(cT.map(function(l){return l.a.margem;}))):'—',
+      SG.brl(md(ls.map(function(l){return l.b.ct;}))), cP.length?SG.brl(md(cP.map(function(l){return l.pr;}))):'—', lu!=null?'<span class="'+(lu>=0?'cg':'cr')+'">'+SG.brl(lu)+'</span>':'—', cP.length?fm(md(cP.map(function(l){return l.b.margem;}))):'—', SG.brl(md(ls.map(function(l){return l.meta;})))]; })())+'</div></div>';
   $('view').innerHTML=h;
 };
 

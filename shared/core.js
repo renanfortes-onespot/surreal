@@ -167,7 +167,7 @@
     var pote = t.pote ? custoInsumo(t.pote, ctx).valor : 0;
     var it = t.pote && insumo(t.pote); if (it && it.estimado && !ultimaCompra(t.pote)) avisos.push(it.nome + ': preço estimado — registre uma compra para ficar exato.');
     var acab = (D.config.embalagemPote || []).reduce(function (s, id) { return s + custoInsumo(id, ctx).valor; }, 0);
-    var kit = c.kitEntrega ? (D.config.kitEntrega || []).reduce(function (s, id) { return s + custoInsumo(id, ctx).valor; }, 0) : 0;
+    var kit = c.kitEntrega && !(ctx && ctx.semKit) ? (D.config.kitEntrega || []).reduce(function (s, id) { return s + custoInsumo(id, ctx).valor; }, 0) : 0;
     var ind = indiretoKg() * g / 1000;
     var linhas = [
       { id: 'base', nome: 'Gelato', valor: base },
@@ -193,17 +193,26 @@
   function precificar(pid, tid, cid, opt, ctx) {
     opt = opt || {};
     var cp = custoPote(pid, tid, cid, ctx); if (!cp) return null;
+    var extra = +opt.extra || 0, ct = cp.total + extra;   // extra = fixos + sacos por pote (margem líquida)
     var tx = taxaCanal(cid);
     var margem = opt.margem != null ? +opt.margem : +D.config.margemAlvo;
     var den = 1 - margem - tx;
-    var sugerido = den > 0 ? cp.total / den : null;
-    var minimo = 1 - tx > 0 ? cp.total / (1 - tx) : null;
+    var sugerido = den > 0 ? ct / den : null;
+    var minimo = 1 - tx > 0 ? ct / (1 - tx) : null;
     var tabela = precoTabela(pid, cid, tid);
     var preco = opt.preco != null ? +opt.preco : (tabela != null ? tabela : sugerido);
     var taxaR = preco != null ? preco * tx : null;
-    var lucro = preco != null ? preco - taxaR - cp.total : null;
+    var lucro = preco != null ? preco - taxaR - ct : null;
     return { custo: cp, taxa: tx, margemAlvo: margem, sugerido: sugerido, minimo: minimo, tabela: tabela, preco: preco,
-             taxaR: taxaR, lucro: lucro, margem: preco ? lucro / preco : null, markup: cp.total ? preco / cp.total : null };
+             taxaR: taxaR, lucro: lucro, margem: preco ? lucro / preco : null, markup: ct ? preco / ct : null, extra: extra, ct: ct };
+  }
+  /* para a margem LÍQUIDA por pote: custos fixos do mês (despesas, DAS, financeiro) + sacos de entrega,
+     divididos pelos potes vendidos — média real dos últimos 3 meses com venda */
+  function rateioPote() {
+    var at = mesAtual(), ms = mesesComDados().filter(function (m) { return m <= at && vendasMes(m).length; }).slice(-3);
+    if (!ms.length) return { fixos: 0, sacos: 0, potes: 0, porPote: 0, meses: [] };
+    var o = dre(ms), n = ms.length, fixos = (o.despT + o.dasV + o.impOutros + o.fin) / n, sacos = o.kit / n, potes = o.potes / n;
+    return { fixos: fixos, sacos: sacos, potes: potes, porPote: potes ? (fixos + sacos) / potes : 0, meses: ms };
   }
   // quantos potes por mês/dia para bater a meta de lucro líquido
   function metaPotes(lucroUnit, meta) {
@@ -492,7 +501,7 @@
     indiretosMes: indiretosMes, indiretoKg: indiretoKg, contasOBZ: contasOBZ, contaOBZ: contaOBZ, pacoteDespesa: pacoteDespesa, obzPorPacote: obzPorPacote, PACOTES_OBZ: PACOTES_OBZ, custoPote: custoPote, taxaCanal: taxaCanal,
     precoTabela: precoTabela, definirPreco: definirPreco, precificar: precificar, metaPotes: metaPotes,
     totalVenda: totalVenda, potesVenda: potesVenda, resultadoVenda: resultadoVenda, vendasMes: vendasMes, nomeItem: nomeItem, nomeCliente: nomeCliente,
-    resumo: resumo, mesesComDados: mesesComDados, caixa: caixa, extrato: extrato, saldoConta: saldoConta, dre: dre, dreItens: dreItens, SACOS: SACOS, sacosVenda: sacosVenda, gastosDRE: gastosDRE, cmvVenda: cmvVenda, DRE_LINHA: DRE_LINHA, regime: regime, dasMensal: dasMensal, NOME_SOCIO: NOME_SOCIO,
+    resumo: resumo, mesesComDados: mesesComDados, caixa: caixa, extrato: extrato, saldoConta: saldoConta, dre: dre, dreItens: dreItens, rateioPote: rateioPote, SACOS: SACOS, sacosVenda: sacosVenda, gastosDRE: gastosDRE, cmvVenda: cmvVenda, DRE_LINHA: DRE_LINHA, regime: regime, dasMensal: dasMensal, NOME_SOCIO: NOME_SOCIO,
     consumoProducao: consumoProducao, estoque: estoque, estoqueBaixo: estoqueBaixo,
     produtosAtivos: produtosAtivos, tamanhosAtivos: tamanhosAtivos, unidade: unidade, qtdFmt: qtdFmt,
   };

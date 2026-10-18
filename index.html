@@ -13,12 +13,12 @@
 <link rel="icon" href="img/icone-192.png">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.SG_BUILD='20261018170536';</script>
-<script src="shared/versao.js?v=20261018170536"></script>
-<script src="shared/config.js?v=20261018170536"></script>
-<script src="shared/seed.js?v=20261018170536"></script>
-<script src="shared/core.js?v=20261018170536"></script>
-<script src="shared/remote.js?v=20261018170536"></script>
+<script>window.SG_BUILD='20261018171002';</script>
+<script src="shared/versao.js?v=20261018171002"></script>
+<script src="shared/config.js?v=20261018171002"></script>
+<script src="shared/seed.js?v=20261018171002"></script>
+<script src="shared/core.js?v=20261018171002"></script>
+<script src="shared/remote.js?v=20261018171002"></script>
 <style>
 /* ============================================================
    SURREAL · gelato artesanal — app (PWA)
@@ -885,17 +885,17 @@ TELAS.vendas = function(a){
 
 /* SIMULAR TODOS OS SABORES — custo, preço de tabela e margem lado a lado */
 TELAS.simTodos = function(a){
-  var ts=SG.tamanhosAtivos(), t=a.tam||(ts[0]&&ts[0].id)||'P', c=a.canal||'direto', alvo=+D().config.margemAlvo||0;
+  var ts=SG.tamanhosAtivos(), t=a.tam||(ts[0]&&ts[0].id)||'P', c=a.canal||'direto', alvo=+D().config.margemAlvo||0, RP=SG.rateioPote();
   var h=cab('calc','Simular todos os sabores','Custo do pote, preço de tabela e margem · toque no sabor para simular');
   h+='<div class="seg">'+D().tamanhos.map(function(x){ return '<button class="'+(x.id===t?'on':'')+'" onclick="atual().tam=\''+x.id+'\';render()">'+x.nome+'<small>'+x.ml+' ml</small></button>'; }).join('')+'</div>';
   h+='<div class="seg">'+D().canais.map(function(x){ return '<button class="'+(x.id===c?'on':'')+'" onclick="atual().canal=\''+x.id+'\';render()">'+esc(x.nome.replace(' (mercadinhos)',''))+(x.taxa?'<small>taxa '+SG.pct(x.taxa,0)+'</small>':'')+'</button>'; }).join('')+'</div>';
   var M={c:0,nc:0,p:0,np:0,m:0,nm:0};
   /* sempre ordenado pela margem (a menor primeiro; sem preço de tabela no fim) */
-  var rows=SG.produtosAtivos().filter(function(p){ return p.receita; }).map(function(p){ return {p:p, x:SG.precificar(p.id,t,c)}; }).filter(function(o){ return o.x; })
+  var rows=SG.produtosAtivos().filter(function(p){ return p.receita; }).map(function(p){ return {p:p, x:SG.precificar(p.id,t,c,{extra:RP.porPote},{semKit:true})}; }).filter(function(o){ return o.x; })
     .sort(function(A,B){ var ma=A.x.tabela!=null&&!A.x.custo.semFicha?A.x.margem:9, mb=B.x.tabela!=null&&!B.x.custo.semFicha?B.x.margem:9; return ma-mb; }).map(function(o){ var p=o.p, x=o.x;
-    var ok=x.tabela!=null&&!x.custo.semFicha; M.c+=x.custo.total; M.nc++; if(x.tabela!=null){ M.p+=x.tabela; M.np++; } if(ok){ M.m+=x.margem; M.nm++; }
-    return '<tr class="lk" onclick="simAbre(\''+p.id+'\',\''+t+'\',\''+c+'\')"><td>'+esc(p.nome)+'</td><td>'+SG.brl(x.custo.total)+'</td><td>'+(x.tabela!=null?SG.brl(x.tabela):'—')+'</td><td class="'+(ok?(x.margem>=alvo-0.005?'pos':x.margem>0?'amb':'neg'):'')+'">'+(ok?SG.pct(x.margem,0):'—')+'</td></tr>'; }).join('');
-  h+='<table class="mini"><tr><th>Sabor</th><th>Custo</th><th>Preço</th><th>Margem</th></tr>'+rows
+    var ok=x.tabela!=null&&!x.custo.semFicha; M.c+=x.ct; M.nc++; if(x.tabela!=null){ M.p+=x.tabela; M.np++; } if(ok){ M.m+=x.margem; M.nm++; }
+    return '<tr class="lk" onclick="simAbre(\''+p.id+'\',\''+t+'\',\''+c+'\')"><td>'+esc(p.nome)+'</td><td>'+SG.brl(x.ct)+'</td><td>'+(x.tabela!=null?SG.brl(x.tabela):'—')+'</td><td class="'+(ok?(x.margem>=alvo-0.005?'pos':x.margem>0?'amb':'neg'):'')+'">'+(ok?SG.pct(x.margem,0):'—')+'</td></tr>'; }).join('');
+  h+='<div class="nota2" style="margin:0 2px 8px">Margem <b>líquida</b>: custo do pote + '+SG.brl(RP.porPote)+' de fixos e sacos por pote (média dos últimos meses)</div><table class="mini"><tr><th>Sabor</th><th>Custo</th><th>Preço</th><th>Margem líq.</th></tr>'+rows
     + '<tr class="tot"><td>Média</td><td>'+(M.nc?SG.brl(M.c/M.nc):'—')+'</td><td>'+(M.np?SG.brl(M.p/M.np):'—')+'</td><td>'+(M.nm?SG.pct(M.m/M.nm,0):'—')+'</td></tr></table>';
   h+='<div class="nota2">Margem pela meta de '+SG.pct(alvo,0)+': verde atingiu · âmbar abaixo · vermelho prejuízo. Sem preço de tabela, a margem fica em branco.</div>';
   return h;
