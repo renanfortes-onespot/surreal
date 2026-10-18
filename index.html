@@ -13,12 +13,12 @@
 <link rel="icon" href="img/icone-192.png">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.SG_BUILD='20261018155732';</script>
-<script src="shared/versao.js?v=20261018155732"></script>
-<script src="shared/config.js?v=20261018155732"></script>
-<script src="shared/seed.js?v=20261018155732"></script>
-<script src="shared/core.js?v=20261018155732"></script>
-<script src="shared/remote.js?v=20261018155732"></script>
+<script>window.SG_BUILD='20261018160117';</script>
+<script src="shared/versao.js?v=20261018160117"></script>
+<script src="shared/config.js?v=20261018160117"></script>
+<script src="shared/seed.js?v=20261018160117"></script>
+<script src="shared/core.js?v=20261018160117"></script>
+<script src="shared/remote.js?v=20261018160117"></script>
 <style>
 /* ============================================================
    SURREAL · gelato artesanal — app (PWA)
@@ -111,8 +111,8 @@ body.claro .li .ic.ac{border-color:var(--acc);color:var(--acc);}
 .nav{position:absolute;left:16px;right:16px;bottom:calc(var(--safe-bot) + 14px);display:flex;justify-content:space-between;align-items:center;gap:4px;background:var(--nav);border-radius:16px;padding:6px 8px;box-shadow:0 14px 34px rgba(0,0,0,.45);z-index:10;}
 body.claro .nav{box-shadow:0 14px 34px rgba(18,26,46,.14);border:1px solid var(--brd);}
 .app.foco .nav{display:none;}
-.nav button{flex:1;min-width:0;background:none;border:0;color:var(--txt2);font-size:9px;font-weight:500;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 0 5px;border-radius:10px;min-height:42px;}
-.nav button svg{width:17px;height:17px;}
+.nav button{flex:1;min-width:0;background:none;border:0;color:var(--txt2);font-size:9.5px;font-weight:500;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 0 5px;border-radius:10px;min-height:42px;}
+.nav button svg{width:20px;height:20px;}
 .nav button.on{color:#fff;background:linear-gradient(135deg,var(--acc2),var(--acc));}
 
 /* sub-telas */
@@ -388,8 +388,9 @@ function topo(){
 function toast(t){ var e=$('toast'); e.textContent=t; e.classList.add('on'); clearTimeout(toast.t); toast.t=setTimeout(function(){ e.classList.remove('on'); }, 2200); }
 
 /* ── navegação ── */
-var ABAS = [['inicio','Início','casa'],['pedidos','Pedidos','sacola'],['caixa','Caixa','moeda'],['dre','DRE','dre'],['estoque','Estoque','caixa'],['mais','Mais','mais']];
-var pilha = [{tela:'inicio'}];
+var HOME = 'pedidos';   /* o app abre em Pedidos (a aba Início saiu da barra) */
+var ABAS = [['pedidos','Pedidos','sacola'],['caixa','Caixa','moeda'],['dre','DRE','dre'],['estoque','Estoque','caixa'],['mais','Mais','mais']];
+var pilha = [{tela:HOME}];
 function navBar(){ var at=pilha[0].tela; $('nav').innerHTML = ABAS.map(function(a){ return '<button class="'+(a[0]===at?'on':'')+'" onclick="aba(\''+a[0]+'\')">'+ic(a[2])+a[1]+'</button>'; }).join(''); }
 function aba(t){ naoGuarda=false; pilha=[{tela:t}]; render(); }
 function abre(t, p){ naoGuarda=false; pilha.push(Object.assign({tela:t}, p||{})); render(); }
@@ -403,14 +404,14 @@ function render(){
     $('corpo').innerHTML = (sub ? vbar() : '') + f(a);
     $('corpo').scrollTop = a.scroll || 0;
     if (TELAS[a.tela+'_depois']) TELAS[a.tela+'_depois'](a);
-  } catch (e) { console.error(e); if (pilha.length>1 || a.tela!=='inicio') { pilha=[{tela:'inicio'}]; return render(); } throw e; }
+  } catch (e) { console.error(e); if (pilha.length>1 || a.tela!==HOME) { pilha=[{tela:HOME}]; return render(); } throw e; }
   navBar(); guardaTela(); guardaVolta();
 }
-/* botão "voltar" do celular: volta uma tela dentro do app (e das abas para o Início) em vez de sair.
-   Mantém UMA entrada extra no histórico sempre que não estamos no Início. */
+/* botão "voltar" do celular: volta uma tela dentro do app (e das abas para Pedidos) em vez de sair.
+   Mantém UMA entrada extra no histórico sempre que não estamos em Pedidos. */
 var temGuarda=false, ignoraPop=false;
 function guardaVolta(){
-  var raiz = pilha.length===1 && pilha[0].tela==='inicio';
+  var raiz = pilha.length===1 && pilha[0].tela===HOME;
   try{
     if(!raiz && !temGuarda){ history.pushState({sg:1}, ''); temGuarda=true; }
     else if(raiz && temGuarda){ ignoraPop=true; temGuarda=false; history.back(); }
@@ -421,13 +422,13 @@ window.addEventListener('popstate', function(){
   temGuarda=false;
   var s=document.querySelector('.sheet'); if(s){ s.remove(); guardaVolta(); return; }
   if(pilha.length>1){ pilha.pop(); render(); }
-  else if(atual().tela!=='inicio'){ pilha=[{tela:'inicio'}]; naoGuarda=true; render(); }
+  else if(atual().tela!==HOME){ pilha=[{tela:HOME}]; naoGuarda=true; render(); }
 });
 /* o app abre na última tela usada (formulários pela metade não voltam) */
-/* naoGuarda: o voltar do celular levou ao Início só para sair; ao reabrir, volta para onde estava */
+/* naoGuarda: o voltar do celular levou a Pedidos só para sair; ao reabrir, volta para onde estava */
 var appIni=false, naoGuarda=false;
 function guardaTela(){ if(!appIni) return; if(naoGuarda) return; try{ var p=[]; for(var i=0;i<pilha.length;i++){ if(pilha[i].form) break; p.push(pilha[i]); } localStorage.setItem('sg_tela', JSON.stringify({t:Date.now(), p:p})); }catch(e){} }
-function restauraTela(){ try{ var x=JSON.parse(localStorage.getItem('sg_tela')||'null'); if(!x||!x.p||!x.p.length||Date.now()-x.t>24*3600e3) return; if(x.p.every(function(q){ return TELAS[q.tela]; })) pilha=x.p; }catch(e){} }
+function restauraTela(){ try{ var x=JSON.parse(localStorage.getItem('sg_tela')||'null'); if(!x||!x.p||!x.p.length||Date.now()-x.t>24*3600e3) return; if(x.p[0].tela==='inicio') x.p[0]={tela:HOME}; if(x.p.every(function(q){ return TELAS[q.tela]; })) pilha=x.p; }catch(e){} }
 document.addEventListener('DOMContentLoaded', function(){ var c=$('corpo'); if(c) c.addEventListener('scroll', function(){ atual().scroll=c.scrollTop; clearTimeout(guardaTela.t); guardaTela.t=setTimeout(guardaTela, 400); }, {passive:true}); });
 document.addEventListener('visibilitychange', function(){ if(document.hidden) guardaTela(); });
 SG.aoMudar(function(){ var a=atual(); if(!a.form) render(); });
@@ -641,6 +642,7 @@ TELAS.estoque = function(a){
   h += '<div class="val">'+totPotes+' potes</div><div class="aviso">prontos para vender</div></div>';
   h += '<div class="seg">'+[['potes','Potes prontos'],['insumos','Insumos']].map(function(o){ return '<button class="'+(o[0]===modo?'on':'')+'" onclick="atual().modo=\''+o[0]+'\';render()">'+o[1]+'</button>'; }).join('')+'</div>';
   h += '<div class="duo2" style="margin-bottom:16px"><button class="btn" onclick="abre(\'producaoNova\',{form:1})">'+ic('pote')+'Produzir</button><button class="btn sec2" onclick="abre(\'contagem\',{form:1,modo:\''+modo+'\'})">'+ic('lista')+'Contar</button></div>';
+  var baixo=SG.estoqueBaixo(); if(baixo.length) h += '<div class="aviso2">'+ic('alerta')+'<div><b>Estoque baixo:</b> '+baixo.map(function(b){return esc(b.insumo.nome);}).join(', ')+'</div></div>';
   h += '<div class="nota2" style="margin:-6px 2px 12px">Toque no item para ver os movimentos ou corrigir a quantidade.</div>';
   if(modo==='potes'){
     var sp=e.semProducao||{}, ks=Object.keys(e.potes).filter(function(k){ return e.potes[k]>0 || sp[k]; }).sort(function(x,y){ var a=SG.produto(x.split('|')[0]), b=SG.produto(y.split('|')[0]); return ((a&&a.nome)||x).localeCompare((b&&b.nome)||y) || x.localeCompare(y); });
@@ -753,7 +755,7 @@ TELAS.estoqueItem = function(a){
     if(s<0) h+='<div class="aviso2">'+ic('alerta')+'<div>Foi usado <b>'+SG.qtdFmt(-s,i.un)+'</b> a mais do que as compras lançadas. Lance a compra ou corrija a quantidade.</div></div>';
     h+='<div class="campo"><label>Quanto tem de verdade agora ('+(g?'gramas':'unidades')+')</label><input id="eiQ" inputmode="decimal" placeholder="'+(s>0?Math.round(s*f):'')+'"><div class="dica">Vira uma contagem com o seu nome no histórico de contagens.</div></div>';
     h+='<div class="duo2"><button class="btn" onclick="eiCorrige()">'+ic('ok')+'Corrigir</button><button class="btn sec2" onclick="abre(\'compraNova\',{form:1,ins:\''+a.k+'\'})">'+ic('carrinho')+'Lançar compra</button></div>';
-    h+='<div class="campo" style="margin-top:16px"><label>Estoque mínimo ('+(g?'gramas':'unidades')+')</label><div class="lado" style="grid-template-columns:1fr auto;align-items:center"><input id="eiMin" inputmode="decimal" value="'+(i.min?Math.round(i.min*f):'')+'" placeholder="sem mínimo"><button class="btn sec2" style="margin:0;width:auto;padding:0 18px;min-height:48px" onclick="eiMin()">Salvar</button></div><div class="dica">Abaixo disso, aparece o aviso de estoque baixo no Início.</div></div>';
+    h+='<div class="campo" style="margin-top:16px"><label>Estoque mínimo ('+(g?'gramas':'unidades')+')</label><div class="lado" style="grid-template-columns:1fr auto;align-items:center"><input id="eiMin" inputmode="decimal" value="'+(i.min?Math.round(i.min*f):'')+'" placeholder="sem mínimo"><button class="btn sec2" style="margin:0;width:auto;padding:0 18px;min-height:48px" onclick="eiMin()">Salvar</button></div><div class="dica">Abaixo disso, aparece o aviso de estoque baixo na tela Estoque.</div></div>';
   }
   var fmt=function(x){ x=x||0; return a.t==='pote' ? x+(Math.abs(x)===1?' pote':' potes') : SG.qtdFmt(x,un); };
   var mv=e.movimentosItem||[];
