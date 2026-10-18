@@ -293,7 +293,7 @@ body.exporting .pdf-wrap,body.exporting .dica{display:none!important;}
       function montaCapa(){
         const capa=document.createElement('div'); capa.id='pdf-capa';
         const now=new Date();
-        capa.innerHTML='<div class="cp-tit"></div><div class="cp-regua"></div><div class="cp-sub"></div>'+
+        capa.innerHTML=(CFG.logo?'<img class="cp-logo" src="'+(typeof CFG.logo==='function'?CFG.logo():CFG.logo)+'" alt="" style="display:block;height:58px;width:auto;margin:0 0 26px">':'')+'<div class="cp-tit"></div><div class="cp-regua"></div><div class="cp-sub"></div>'+
           '<div class="cp-fil">'+filtrosResumo()+'</div>'+
           '<div class="cp-meta">Gerado em '+now.toLocaleDateString('pt-BR')+' '+
           now.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})+'<br>'+esc(CFG.marca||'Gestão em Movimento · BI Frota')+'</div>';

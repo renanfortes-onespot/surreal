@@ -16,7 +16,7 @@
   var flag = null; try { flag = localStorage.getItem('sg_modo'); } catch (e) {}
   var ATIVO = !!(CFG.url && CFG.key && window.supabase && (!local || flag === 'remoto'));
   var CACHE = 'sg_cache_r';
-  var COLS = ['insumos', 'receitas', 'produtos', 'tamanhos', 'canais', 'compras', 'producoes', 'vendas', 'despesas', 'clientes', 'contagens', 'ajustes'];
+  var COLS = ['insumos', 'receitas', 'produtos', 'tamanhos', 'canais', 'compras', 'producoes', 'vendas', 'despesas', 'clientes', 'contagens', 'ajustes', 'socios'];
   var ORDENADAS = { insumos: 1, receitas: 1, produtos: 1, tamanhos: 1, canais: 1 };
 
   var nomes = {}, sb = null, perfil = null, snap = {}, ultimo = null, enviando = false, pendente = false, tmPush = null, tmPull = null;

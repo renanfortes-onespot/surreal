@@ -18,6 +18,7 @@
     try { bruto = localStorage.getItem(CHAVE); } catch (e) {}
     if (bruto) { try { D = JSON.parse(bruto); } catch (e) { D = null; } }
     if (!D || !D.versao) { D = clone(window.SG_SEED); salvar(true); }
+    if (!D.socios) D.socios = [];
     return D;
   }
   var aoSalvarRemoto = null;   // shared/remote.js pluga aqui a sincronia com o Supabase
@@ -254,20 +255,45 @@
   }
 
   /* ───────────── financeiro (caixa) ─────────────
-     entradas = vendas pagas; saídas = compras + despesas. Pela data do lançamento. */
+     entradas = vendas pagas; saídas = compras + despesas; + movimentos dos sócios. Pela data do lançamento. */
+  function socios() { return D.socios || (D.socios = []); }
+  /* movimentos dos sócios: retirada (sai), aporte (entra), acerto de saldo (+/−). Ficam FORA do DRE. */
+  function sinalSocio(m) { return m.tipo === 'retirada' ? -(+m.valor || 0) : (+m.valor || 0); }
+  function noPer(d, ym) { if (!ym) return true; d = (d || '').slice(0, 7); return Array.isArray(ym) ? ym.indexOf(d) >= 0 : d === ym; }
+  /* ym: 'AAAA-MM', lista de meses ou vazio (= tudo) */
   function caixa(ym) {
-    var ent = 0, comp = 0, desp = 0, cats = {};
-    D.vendas.forEach(function (v) { if (v.pago && (!ym || v.data.slice(0, 7) === ym)) ent += totalVenda(v); });
-    D.compras.forEach(function (c) { if (!ym || c.data.slice(0, 7) === ym) { comp += +c.valor || 0; var i = insumo(c.insumo); var k = i ? (i.tipo === 'embalagem' ? 'Embalagens' : 'Ingredientes') : 'Compras'; cats[k] = (cats[k] || 0) + (+c.valor || 0); } });
-    D.despesas.forEach(function (d) { if (!ym || d.data.slice(0, 7) === ym) { desp += +d.valor || 0; cats[d.categoria] = (cats[d.categoria] || 0) + (+d.valor || 0); } });
-    return { entradas: ent, compras: comp, despesas: desp, saidas: comp + desp, saldo: ent - comp - desp, categorias: cats };
+    var ent = 0, receber = 0, comp = 0, compI = 0, compE = 0, desp = 0, cats = {}, despPk = {}, ret = 0, apo = 0, ace = 0;
+    D.vendas.forEach(function (v) { if (!noPer(v.data, ym)) return; var t = totalVenda(v); if (v.pago) ent += t; else receber += t; });
+    D.compras.forEach(function (c) { if (!noPer(c.data, ym)) return; var val = +c.valor || 0, i = insumo(c.insumo); comp += val; if (i && i.tipo === 'embalagem') compE += val; else compI += val; var k = i ? (i.tipo === 'embalagem' ? 'Embalagens' : 'Ingredientes') : 'Compras'; cats[k] = (cats[k] || 0) + val; });
+    D.despesas.forEach(function (d) { if (!noPer(d.data, ym)) return; var val = +d.valor || 0; desp += val; cats[d.categoria] = (cats[d.categoria] || 0) + val; var pk = pacoteDespesa(d); despPk[pk] = (despPk[pk] || 0) + val; });
+    socios().forEach(function (m) { if (!noPer(m.data, ym)) return; var v = +m.valor || 0; if (m.tipo === 'retirada') ret += v; else if (m.tipo === 'aporte') apo += v; else ace += v; });
+    return { entradas: ent, receber: receber, compras: comp, comprasIng: compI, comprasEmb: compE, despesas: desp, despPacote: despPk, saidas: comp + desp,
+             retiradas: ret, aportes: apo, acertos: ace, socios: apo + ace - ret, operacional: ent - comp - desp, saldo: ent - comp - desp - ret + apo + ace, categorias: cats };
   }
+  /* dinheiro em conta hoje = tudo o que entrou − tudo o que saiu, desde o começo */
+  function saldoConta() { return caixa(null).saldo; }
+  var NOME_SOCIO = { retirada: 'Retirada dos sócios', aporte: 'Aporte dos sócios', acerto: 'Acerto de saldo' };
   function extrato(ym) {
     var l = [];
-    D.vendas.forEach(function (v) { if (!ym || v.data.slice(0, 7) === ym) l.push({ data: v.data, tipo: 'entrada', desc: nomeCliente(v), det: v.itens.length + (v.itens.length > 1 ? ' itens' : ' item') + (v.pago ? '' : ' · a receber'), valor: totalVenda(v), pendente: !v.pago, ref: v.id, orig: 'venda' }); });
-    D.compras.forEach(function (c) { if (!ym || c.data.slice(0, 7) === ym) { var i = insumo(c.insumo); l.push({ data: c.data, tipo: 'saida', desc: i ? i.nome : c.desc, det: 'Compra', valor: +c.valor, ref: c.id, orig: 'compra' }); } });
-    D.despesas.forEach(function (d) { if (!ym || d.data.slice(0, 7) === ym) l.push({ data: d.data, tipo: 'saida', desc: d.desc, det: d.categoria, valor: +d.valor, ref: d.id, orig: 'despesa' }); });
-    return l.sort(function (a, b) { return a.data < b.data ? 1 : a.data > b.data ? -1 : 0; });
+    D.vendas.forEach(function (v) { if (noPer(v.data, ym)) l.push({ data: v.data, ts: v.ts || 0, tipo: 'entrada', desc: nomeCliente(v), det: v.itens.length + (v.itens.length > 1 ? ' itens' : ' item') + (v.pago ? '' : ' · a receber'), valor: totalVenda(v), pendente: !v.pago, ref: v.id, orig: 'venda' }); });
+    D.compras.forEach(function (c) { if (noPer(c.data, ym)) { var i = insumo(c.insumo); l.push({ data: c.data, ts: c.ts || 0, tipo: 'saida', desc: i ? i.nome : c.desc, det: 'Compra', valor: +c.valor, ref: c.id, orig: 'compra' }); } });
+    D.despesas.forEach(function (d) { if (noPer(d.data, ym)) l.push({ data: d.data, ts: d.ts || 0, tipo: 'saida', desc: d.desc, det: d.categoria, valor: +d.valor, ref: d.id, orig: 'despesa' }); });
+    socios().forEach(function (m) { if (!noPer(m.data, ym)) return; var v = sinalSocio(m);
+      l.push({ data: m.data, ts: m.ts || 0, tipo: v >= 0 ? 'entrada' : 'saida', desc: m.desc || NOME_SOCIO[m.tipo], det: NOME_SOCIO[m.tipo], valor: Math.abs(v), ref: m.id, orig: 'socio' }); });
+    return l.sort(function (a, b) { return a.data < b.data ? 1 : a.data > b.data ? -1 : (b.ts || 0) - (a.ts || 0); });
+  }
+
+  /* DRE (competência): venda na data do pedido; insumo vira custo quando é USADO na produção;
+     kit de entrega quando o pedido é entregue; despesas na data. Retirada/aporte NÃO entram. */
+  function dre(ym) {
+    var o = { rec: 0, taxa: 0, ins: 0, emb: 0, kit: 0, desp: {}, despT: 0, lotes: 0, kg: 0, potes: 0 };
+    var kitU = (D.config.kitEntrega || []).reduce(function (t, id) { return t + custoInsumo(id).valor; }, 0);
+    D.vendas.forEach(function (v) { if (!noPer(v.data, ym)) return; var r = resultadoVenda(v); o.rec += r.receita; o.taxa += r.taxa; o.potes += potesVenda(v);
+      if (v.entregue && (canal(v.canal) || {}).kitEntrega && v.itens.some(function (i) { return i.tam; })) o.kit += kitU; });
+    D.producoes.forEach(function (pr) { if (!noPer(pr.data, ym)) return; o.lotes++; o.kg += +pr.kg || 0; var c = consumoProducao(pr);
+      Object.keys(c).forEach(function (id) { var i = insumo(id), val = c[id] * custoInsumo(id).valor; if (i && i.tipo === 'embalagem') o.emb += val; else o.ins += val; }); });
+    D.despesas.forEach(function (d) { if (!noPer(d.data, ym)) return; var pk = pacoteDespesa(d); o.desp[pk] = (o.desp[pk] || 0) + (+d.valor || 0); o.despT += +d.valor || 0; });
+    o.liq = o.rec - o.taxa; o.cprod = o.ins + o.emb + o.kit; o.bruto = o.liq - o.cprod; o.res = o.bruto - o.despT; return o;
   }
 
   /* ───────────── estoque ─────────────
@@ -304,11 +330,13 @@
     D.ajustes.forEach(function (a) { mv.push({ data: a.data, ts: a.ts || 1, tipo: 'ajuste', c: a }); });
     return mv.sort(function (a, b) { return a.data < b.data ? -1 : a.data > b.data ? 1 : a.ts - b.ts; });
   }
-  function estoque() {
-    var ins = {}, potes = {}, contado = { ins: {}, pote: {} }, hist = [];
+  /* log: 'ins|<id>' ou 'pote|<produto|tam>' devolve também os movimentos desse item */
+  function estoque(log) {
+    var ins = {}, potes = {}, contado = { ins: {}, pote: {} }, hist = [], semProd = {}, mov = [];
+    var lt = log ? log.slice(0, log.indexOf('|')) : null, lk = log ? log.slice(log.indexOf('|') + 1) : null;
     function add(o, k, q) { o[k] = (o[k] || 0) + q; }
     movimentos().forEach(function (m) {
-      var c = m.c;
+      var c = m.c, antes = lt === 'ins' ? ins[lk] : lt === 'pote' ? potes[lk] : null, sp = lt === 'pote' ? semProd[lk] || 0 : 0;
       if (m.tipo === 'contagem') {
         /* guarda o que o sistema esperava antes do acerto: a diferença mostra perdas/erros */
         Object.keys(c.insumos || {}).forEach(function (k) { hist.push({ c: c, tipo: 'ins', k: k, antes: ins[k] == null ? null : ins[k], depois: +c.insumos[k] }); ins[k] = +c.insumos[k]; contado.ins[k] = c.data; });
@@ -325,8 +353,13 @@
         if (c.insumo) add(ins, c.insumo, +c.qtd || 0);
         if (c.pote) add(potes, c.pote, +c.qtd || 0);
       }
+      /* pote não fica negativo: o que saiu sem produção lançada vira aviso (feito antes do app) */
+      Object.keys(potes).forEach(function (k) { if (potes[k] < 0) { semProd[k] = (semProd[k] || 0) - potes[k]; potes[k] = 0; } });
+      if (lt) { var depois = lt === 'ins' ? ins[lk] : potes[lk];
+        if (m.tipo === 'contagem' ? (lt === 'ins' ? c.insumos && lk in c.insumos : c.potes && lk in c.potes) : Math.abs((depois || 0) - (antes || 0)) > 1e-9 || (semProd[lk] || 0) !== sp)
+          mov.push({ data: m.data, tipo: m.tipo, c: c, antes: antes, depois: depois, semProd: (semProd[lk] || 0) - sp }); }
     });
-    return { insumos: ins, potes: potes, contado: contado, historico: hist, iniciado: true, potesIniciado: Object.keys(contado.pote).length > 0 || D.producoes.some(function (p) { return !p.historico; }) };
+    return { insumos: ins, potes: potes, contado: contado, historico: hist, semProducao: semProd, movimentosItem: mov.reverse(), iniciado: true, potesIniciado: Object.keys(contado.pote).length > 0 || D.producoes.some(function (p) { return !p.historico; }) };
   }
   function estoqueBaixo() {
     var e = estoque(), l = [];
@@ -349,7 +382,7 @@
     indiretosMes: indiretosMes, indiretoKg: indiretoKg, contasOBZ: contasOBZ, contaOBZ: contaOBZ, pacoteDespesa: pacoteDespesa, obzPorPacote: obzPorPacote, PACOTES_OBZ: PACOTES_OBZ, custoPote: custoPote, taxaCanal: taxaCanal,
     precoTabela: precoTabela, definirPreco: definirPreco, precificar: precificar, metaPotes: metaPotes,
     totalVenda: totalVenda, potesVenda: potesVenda, resultadoVenda: resultadoVenda, vendasMes: vendasMes, nomeItem: nomeItem, nomeCliente: nomeCliente,
-    resumo: resumo, mesesComDados: mesesComDados, caixa: caixa, extrato: extrato,
+    resumo: resumo, mesesComDados: mesesComDados, caixa: caixa, extrato: extrato, saldoConta: saldoConta, dre: dre, NOME_SOCIO: NOME_SOCIO,
     consumoProducao: consumoProducao, estoque: estoque, estoqueBaixo: estoqueBaixo,
     produtosAtivos: produtosAtivos, tamanhosAtivos: tamanhosAtivos, unidade: unidade, qtdFmt: qtdFmt,
   };

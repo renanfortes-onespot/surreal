@@ -10,14 +10,14 @@
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.SG_BUILD='20261016203456';</script>
-<script src="../shared/versao.js?v=20261016203456"></script>
-<script src="../shared/config.js?v=20261016203456"></script>
-<script src="../shared/seed.js?v=20261016203456"></script>
-<script src="../shared/core.js?v=20261016203456"></script>
+<script>window.SG_BUILD='20261018145557';</script>
+<script src="../shared/versao.js?v=20261018145557"></script>
+<script src="../shared/config.js?v=20261018145557"></script>
+<script src="../shared/seed.js?v=20261018145557"></script>
+<script src="../shared/core.js?v=20261018145557"></script>
 <script src="../assets/excel-export.js"></script>
 <script src="../assets/pdf-export.js"></script>
-<script src="../shared/remote.js?v=20261016203456"></script>
+<script src="../shared/remote.js?v=20261018145557"></script>
 <style>
 /* ============================================================
    SURREAL — Painel de gestão (PC). OneSpot · 16/10/2026
@@ -294,7 +294,7 @@ input[type=range]{accent-color:var(--acc2);}
 </div></div>
 <div class="toast" id="toast"></div>
 <div id="login"><div class="lg-box">
-  <img class="esc" src="../img/logo-arabesco-branco.png" alt="Surreal"><img class="cla" src="../img/logo-arabesco-navy.png" alt="Surreal">
+  <img class="esc" src="../img/logo-branco.png" alt="Surreal gelato artesanal"><img class="cla" src="../img/logo-navy.png" alt="Surreal gelato artesanal">
   <div id="lgForm"><div class="fld"><label>E-mail</label><input class="inp" id="lgEmail" type="email" autocomplete="username"></div>
   <div class="fld"><label>Senha</label><input class="inp" id="lgSenha" type="password" autocomplete="current-password" onkeydown="if(event.key==='Enter')entrar()"></div>
   <div class="lg-erro" id="lgErro"></div><button class="btn pri" id="btEntrar" onclick="entrar()">Entrar</button></div>
@@ -595,23 +595,8 @@ VIEWS.vendasA=function(){
         (o que foi comprado e não produzido fica no estoque); kit de entrega quando o pedido é entregue;
         despesas na data. Valores dos insumos ao custo de hoje (última compra).
    CAIXA: dinheiro na data em que entra (pedido pago) e sai (compra e despesa). */
-function dreMeses(ms){
-  var o={rec:0,taxa:0,ins:0,emb:0,kit:0,desp:{},despT:0,lotes:0,kg:0,potes:0};
-  var kitU=(D().config.kitEntrega||[]).reduce(function(t,id){return t+SG.custoInsumo(id).valor;},0);
-  D().vendas.forEach(function(v){ if(ms.indexOf((v.data||'').slice(0,7))<0) return; var r=SG.resultadoVenda(v); o.rec+=r.receita; o.taxa+=r.taxa; o.potes+=SG.potesVenda(v);
-    if(v.entregue&&(SG.canal(v.canal)||{}).kitEntrega&&v.itens.some(function(i){return i.tam;})) o.kit+=kitU; });
-  D().producoes.forEach(function(pr){ if(ms.indexOf((pr.data||'').slice(0,7))<0) return; o.lotes++; o.kg+=+pr.kg||0; var c=SG.consumoProducao(pr);
-    Object.keys(c).forEach(function(id){ var i=SG.insumo(id), val=c[id]*SG.custoInsumo(id).valor; if(i&&i.tipo==='embalagem') o.emb+=val; else o.ins+=val; }); });
-  D().despesas.forEach(function(d){ if(ms.indexOf((d.data||'').slice(0,7))<0) return; var pk=SG.pacoteDespesa(d); o.desp[pk]=(o.desp[pk]||0)+(+d.valor||0); o.despT+=+d.valor||0; });
-  o.liq=o.rec-o.taxa; o.cprod=o.ins+o.emb+o.kit; o.bruto=o.liq-o.cprod; o.res=o.bruto-o.despT; return o;
-}
-function caixaMeses(ms){
-  var o={ent:0,comp:0,compI:0,compE:0,desp:{},despT:0,receber:0};
-  D().vendas.forEach(function(v){ if(ms.indexOf((v.data||'').slice(0,7))<0) return; var t=SG.totalVenda(v); if(v.pago) o.ent+=t; else o.receber+=t; });
-  D().compras.forEach(function(c){ if(ms.indexOf((c.data||'').slice(0,7))<0) return; var i=SG.insumo(c.insumo); o.comp+=+c.valor||0; if(i&&i.tipo==='embalagem') o.compE+=+c.valor||0; else o.compI+=+c.valor||0; });
-  D().despesas.forEach(function(d){ if(ms.indexOf((d.data||'').slice(0,7))<0) return; var pk=SG.pacoteDespesa(d); o.desp[pk]=(o.desp[pk]||0)+(+d.valor||0); o.despT+=+d.valor||0; });
-  o.sai=o.comp+o.despT; o.saldo=o.ent-o.sai; return o;
-}
+function dreMeses(ms){ return SG.dre(ms); }
+function caixaMeses(ms){ var c=SG.caixa(ms); return {ent:c.entradas, comp:c.compras, compI:c.comprasIng, compE:c.comprasEmb, desp:c.despPacote, despT:c.despesas, receber:c.receber, ret:c.retiradas, apo:c.aportes, ace:c.acertos, sai:c.saidas, saldo:c.saldo}; }
 function tabelaPY(linhas, A, Y, rotA){
   return '<table class="dre"><thead><tr><th>Linha</th><th class="num">'+rotA+'</th><th class="num">% receita</th><th class="num sep-l"><span class="ytd">YTD</span>Acumulado</th><th class="num">% receita</th></tr></thead><tbody>'
     + linhas.map(function(l){ var a=l.f(A), y=l.f(Y), ra=l.base?l.base(A):A.rec, ry=l.base?l.base(Y):Y.rec;
@@ -661,7 +646,7 @@ function obzTab(A, n){
 VIEWS.caixa=function(){
   var ms=perMeses(), ym=ymV(), ano=ym.slice(0,4), ytd=anoMeses(ym).filter(function(m){return m<=ym;});
   var A=caixaMeses(ms), Y=caixaMeses(ytd);
-  sub('Caixa: entra quando o pedido é pago · sai na compra de insumo e na despesa · '+perTxt());
+  sub('Caixa: entra quando o pedido é pago · sai na compra, na despesa e na retirada dos sócios · '+perTxt());
   var cats={}; [A,Y].forEach(function(o){ Object.keys(o.desp).forEach(function(k){cats[k]=1;}); });
   var base=function(o){return o.ent;};
   var L=[
@@ -670,12 +655,13 @@ VIEWS.caixa=function(){
     {n:'(−) Compras de embalagens', f:function(o){return -o.compE;}, base:base},
     {n:'(−) Despesas', f:function(o){return -o.despT;}, base:base},
   ].concat(Object.keys(cats).sort().map(function(k){ return {n:k, f:function(o){return -(o.desp[k]||0);}, sub:1, base:base}; }))
+   .concat((A.ret||Y.ret?[{n:'(−) Retiradas dos sócios', f:function(o){return -o.ret;}, base:base}]:[]).concat(A.apo||Y.apo?[{n:'(+) Aportes dos sócios', f:function(o){return o.apo;}, base:base}]:[]).concat(A.ace||Y.ace?[{n:'(±) Acertos de saldo', f:function(o){return o.ace;}, base:base}]:[]))
    .concat([{n:'= Saldo de caixa', f:function(o){return o.saldo;}, tot:1, cor:1, base:base}, {n:'A receber (pedidos não pagos)', f:function(o){return o.receber;}, semPct:1}]);
   var acum=0; anoMeses(ym).forEach(function(m){ if(m<=ym) acum+=caixaMeses([m]).saldo; });
   var h='<div class="hero"><div><div class="hl">Saldo de caixa · '+perTxt()+'</div><div class="hv '+(A.saldo>=0?'cg':'cr')+'">'+SG.brl(A.saldo)+'</div><div class="tsub">entrou '+SG.brl(A.ent)+' · saiu '+SG.brl(A.sai)+'</div></div>'
-    + '<div class="hd"><div>Entradas<b>'+SG.brl(A.ent)+'</b></div><div>Saídas<b>'+SG.brl(A.sai)+'</b></div><div>A receber<b class="'+(A.receber?'amb':'')+'">'+SG.brl(A.receber)+'</b></div><div>Saldo acumulado no ano<b class="'+(acum>=0?'cg':'cr')+'">'+SG.brl(acum)+'</b></div></div></div>';
+    + '<div class="hd"><div>Entradas<b>'+SG.brl(A.ent)+'</b></div><div>Saídas<b>'+SG.brl(A.sai)+'</b></div><div>A receber<b class="'+(A.receber?'amb':'')+'">'+SG.brl(A.receber)+'</b></div><div>Saldo em conta hoje<b class="'+(SG.saldoConta()>=0?'cg':'cr')+'" title="Tudo o que entrou − tudo o que saiu, desde o começo (inclui retiradas e aportes)">'+SG.brl(SG.saldoConta())+'</b></div></div></div>';
   h+='<div class="split"><div class="card tsec"><div class="thead-row"><div class="ttit">Fluxo de caixa</div><div class="tsub">YTD = janeiro a '+SG.nomeMes(ym)+' de '+ano+' · % sobre as entradas</div></div><div class="twrap">'+tabelaPY(L,A,Y,rotPer())+'</div>'
-    + '<div class="nota">No caixa a compra de insumo sai no dia da compra, mesmo que ainda não tenha sido usada — por isso o caixa e o DRE do mesmo mês são diferentes.</div></div>';
+    + '<div class="nota">No caixa a compra de insumo sai no dia da compra, mesmo que ainda não tenha sido usada — por isso o caixa e o DRE do mesmo mês são diferentes. Retirada e aporte dos sócios mexem no caixa, mas não no DRE.</div></div>';
   h+='<div class="pilha">'+gcard('gCx','Saldo de caixa · Mensal', ano+' · entradas − compras − despesas', legQ('Saldo do mês'))+gcard('gCat','Para onde foi o dinheiro', perTxt(), legQ('R$'))+'</div></div>';
   $('view').innerHTML=h;
   var an=anoMeses(ym), sal=an.map(function(m){ var c=caixaMeses([m]); return (c.ent||c.sai)?+c.saldo.toFixed(2):null; });
@@ -818,17 +804,18 @@ VIEWS.cenarios=function(){
 /* ════════════════════ GESTÃO À VISTA ════════════════════ */
 
 /* LANÇAMENTOS — tudo o que foi lançado, numa lista só; "+ Novo lançamento" escolhe o tipo */
-var TIPOS_L={pedido:['Venda (pedido)','vendas'], compra:['Compra','compra'], despesa:['Despesa','recibo']};
+var TIPOS_L={pedido:['Venda (pedido)','vendas'], compra:['Compra','compra'], despesa:['Despesa','recibo'], socio:['Retirada / aporte','fin']};
 function todosLanc(){
   var l=[];
   D().vendas.forEach(function(v){ var st=[]; if(!v.pago) st.push('a receber'); if(!v.entregue) st.push('a entregar'); l.push({tipo:'pedido', id:v.id, data:v.data, desc:SG.nomeCliente(v), det:resumoItens(v)+' · '+nCanal(v.canal), valor:SG.totalVenda(v), sinal:1, st:st.join(' · '), hist:v.historico, ts:v.ts||0}); });
   D().compras.forEach(function(c){ var i=SG.insumo(c.insumo); l.push({tipo:'compra', id:c.id, data:c.data, desc:i?i.nome:c.desc, det:SG.qtdFmt(c.qtd,i&&i.un)+' · '+SG.brl(c.valor/c.qtd)+'/'+(i&&i.un==='un'?'un':'kg'), valor:+c.valor, sinal:-1, hist:c.historico, ts:c.ts||0}); });
   D().despesas.forEach(function(d){ l.push({tipo:'despesa', id:d.id, data:d.data, desc:d.desc, det:d.categoria, valor:+d.valor, sinal:-1, hist:d.historico, ts:d.ts||0}); });
+  (D().socios||[]).forEach(function(m){ var sg=m.tipo==='retirada'?-1:(m.tipo==='acerto'&&+m.valor<0?-1:1); l.push({tipo:'socio', id:m.id, data:m.data, desc:m.desc||SG.NOME_SOCIO[m.tipo], det:SG.NOME_SOCIO[m.tipo]+' · fora do DRE', valor:Math.abs(+m.valor||0), sinal:sg, ts:m.ts||0}); });
   return l;
 }
 VIEWS.lancamentos=function(){
   var ft='';
-  sub('Extrato do dinheiro: vendas (pedidos), compras e despesas · produção fica em Produção e contagens no Estoque');
+  sub('Extrato do dinheiro: vendas (pedidos), compras, despesas e retiradas/aportes dos sócios · produção fica em Produção e contagens no Estoque');
   var soPed=F.can.size||F.cli.size||F.sit.size, ls=todosLanc().filter(function(x){ return ymOk(x.data)&&fOk('tip',x.tipo)&&(!soPed||(x.tipo==='pedido'&&vOk(D().vendas.filter(function(v){return v.id===x.id;})[0])))&&qOk('lan',[x.desc,x.det,TIPOS_L[x.tipo][0]]); });
   var ent=0, sai=0; ls.forEach(function(x){ if(x.sinal>0) ent+=x.valor; if(x.sinal<0) sai+=x.valor; });
   if(!ORD.tLan) ORD.tLan={i:0,d:-1};
@@ -843,9 +830,9 @@ VIEWS.lancamentos=function(){
       {t:'Origem',f:function(x){return x.hist?'<span class="mut">planilha</span>':'app';}},
     ], ls, null, function(x){ return "abreLanc('"+x.tipo+"','"+x.id+"')"; }));
 };
-function abreLanc(t,id){ if(t==='pedido') abrirPedido(id); else if(t==='producao') abrirProducao(id); else if(t==='compra') abrirCompra(id); else if(t==='despesa') abrirDespesa(id); else verContagem(id); }
+function abreLanc(t,id){ if(t==='pedido') abrirPedido(id); else if(t==='producao') abrirProducao(id); else if(t==='compra') abrirCompra(id); else if(t==='despesa') abrirDespesa(id); else if(t==='socio') abrirSocio(id); else verContagem(id); }
 function novoLanc(){
-  var op=[['pedido','Venda (pedido)','venda para um cliente','abrirPedido(null)'],['compra','Compra','insumo ou embalagem comprado','abrirCompra(null)'],['despesa','Despesa','marketing, conta, taxa…','abrirDespesa(null)']];
+  var op=[['pedido','Venda (pedido)','venda para um cliente','abrirPedido(null)'],['compra','Compra','insumo ou embalagem comprado','abrirCompra(null)'],['despesa','Despesa','marketing, conta, taxa…','abrirDespesa(null)'],['socio','Retirada / aporte','dinheiro dos sócios · fora do DRE','abrirSocio(null)']];
   abrirModal('Novo lançamento','<div class="tsub" style="margin-bottom:12px">O que você quer lançar?</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">'
     + op.map(function(o){ return '<button class="btn" style="justify-content:flex-start;padding:14px 16px;text-align:left;white-space:normal;gap:12px" onclick="'+o[3]+'"><span style="width:34px;height:34px;border-radius:9px;background:var(--hover);display:flex;align-items:center;justify-content:center;color:var(--acc2);flex:0 0 auto">'+ic(TIPOS_L[o[0]][1])+'</span><span><b style="display:block;color:var(--txt);font-size:13px">'+o[1]+'</b><small style="font-weight:600;color:var(--txt3)">'+o[2]+'</small></span></button>'; }).join('')+'</div>',
     '<button class="btn" onclick="fecharModal()">Cancelar</button>');
@@ -1071,6 +1058,25 @@ function salvaDespesa(id){ var v=numIn($('deVal').value); if(!v){ $('deErro').te
   var ct=SG.contaOBZ($('deCat').value), o={id:id||SG.novoId('d'), data:$('deData').value||SG.hoje(), conta:ct.id, categoria:ct.nome, desc:$('deDesc').value||ct.nome, valor:v, ts:Date.now(), por:eu().id};
   if(id) D().despesas=D().despesas.map(function(x){return x.id===id?Object.assign({},x,o):x;}); else D().despesas.push(o);
   SG.salvar(true); fecharModal(); toast('Despesa salva'); }
+
+/* RETIRADA / APORTE DOS SÓCIOS — mexe no caixa, não no DRE */
+var SOC=null;
+function abrirSocio(id){
+  var m=id?(D().socios||[]).filter(function(x){return x.id===id;})[0]:null; SOC={tipo:m?m.tipo:'retirada'};
+  var b=segH('soTipo',[['retirada','Retirada'],['aporte','Aporte'],['acerto','Acerto de saldo']],SOC.tipo,'soTipo')
+    + '<div class="frow"><div class="fld"><label>Data</label><input class="inp" type="date" id="soData" value="'+(m?m.data:SG.hoje())+'"></div><div class="fld"><label>Valor (R$)</label><input class="inp num" id="soVal" value="'+(m?nv(m.valor):'')+'"><div class="fdica" id="soDica"></div></div></div>'
+    + '<div class="fld"><label>Descrição</label><input class="inp" id="soDesc" value="'+esc(m?m.desc||'':'')+'" placeholder="Ex.: transferência para a conta pessoal"></div>'
+    + '<div class="nota">Retirada = dinheiro da Surreal que vai para vocês · Aporte = dinheiro de vocês que entra na Surreal · Acerto = corrige o saldo para bater com o banco (use − para diminuir). Nenhum dos três entra no DRE.</div><div class="erro" id="soErro"></div>';
+  abrirModal(m?SG.NOME_SOCIO[m.tipo]+' · '+SG.brl(m.valor):'Retirada / aporte dos sócios', b, footPad("salvaSocio("+(m?"'"+m.id+"'":'null')+")", m?"apagaReg('socios','"+m.id+"')":null));
+  soTipo(SOC.tipo);
+}
+function soTipo(t){ SOC.tipo=t; var d=$('soDica'); if(d) d.textContent=t==='retirada'?'sai do caixa':t==='aporte'?'entra no caixa':'positivo soma, negativo (−) diminui'; }
+function salvaSocio(id){ var v=numIn($('soVal').value); if(!v){ $('soErro').textContent='Informe o valor.'; return; }
+  if(SOC.tipo!=='acerto') v=Math.abs(v);
+  var o={id:id||SG.novoId('s'), data:$('soData').value||SG.hoje(), tipo:SOC.tipo, valor:v, desc:$('soDesc').value.trim(), ts:Date.now(), por:eu().id};
+  D().socios=D().socios||[];
+  if(id) D().socios=D().socios.map(function(x){return x.id===id?Object.assign({},x,o):x;}); else D().socios.push(o);
+  SG.salvar(true); fecharModal(); toast(SG.NOME_SOCIO[o.tipo]+' salva · saldo em conta '+SG.brl(SG.saldoConta())); }
 
 /* ESTOQUE */
 VIEWS.estoque=function(){
@@ -1364,7 +1370,7 @@ aplicaTema();
 function ligaPdf(){ if(window._pdfWrap||!window.initPdfExport) return;
   initPdfExport({ btnContainer:'#pdf-slot', btnClass:'s-item', btnAoFim:true,
     title:'Surreal · gelato artesanal', subtitle:function(){ return $('tsub').textContent; }, fileBase:'surreal',
-    main:function(){ return $('view'); }, marca:'Surreal · OneSpot', cor:'#2563EB',
+    main:function(){ return $('view'); }, marca:'Surreal · OneSpot', cor:'#2563EB', logo:function(){ return document.body.classList.contains('claro')?'../img/logo-navy.png':'../img/logo-branco.png'; },
     views:function(){ return ['resumo','vendasA','dre','caixa','simulador','cenarios','lancamentos','estoque'].map(function(k){ return {label:TIT[k], ativar:function(){ vai(k); }}; }); },
     viewAtual:function(){ return V.view; }, irPara:function(k){ vai(k); },
     isLight:function(){ return document.body.classList.contains('claro'); }, setTheme:function(t){ if((t==='light')!==document.body.classList.contains('claro')) alternaTema(); } });
