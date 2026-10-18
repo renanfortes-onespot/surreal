@@ -13,12 +13,12 @@
 <link rel="icon" href="img/icone-192.png">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.SG_BUILD='20261018171002';</script>
-<script src="shared/versao.js?v=20261018171002"></script>
-<script src="shared/config.js?v=20261018171002"></script>
-<script src="shared/seed.js?v=20261018171002"></script>
-<script src="shared/core.js?v=20261018171002"></script>
-<script src="shared/remote.js?v=20261018171002"></script>
+<script>window.SG_BUILD='20261018171842';</script>
+<script src="shared/versao.js?v=20261018171842"></script>
+<script src="shared/config.js?v=20261018171842"></script>
+<script src="shared/seed.js?v=20261018171842"></script>
+<script src="shared/core.js?v=20261018171842"></script>
+<script src="shared/remote.js?v=20261018171842"></script>
 <style>
 /* ============================================================
    SURREAL · gelato artesanal — app (PWA)
@@ -939,6 +939,74 @@ function salvaConferir(){ var d=cfDif(); if(d==null){ toast('Digite o valor da c
   D().socios=D().socios||[]; D().socios.push({id:SG.novoId('s'), data:SG.hoje(), tipo:'acerto', valor:d, desc:'Conferência com o banco', ts:Date.now(), por:usuario().id});
   SG.salvar(true); volta(); toast('Saldo acertado · em conta '+SG.brl(SG.saldoConta())); }
 
+/* PARÂMETROS — os mesmos do painel: metas, regime tributário, orçamento OBZ, canais e tamanhos */
+TELAS.parametros = function(a){
+  var t=a.t||'metas', c=D().config, rg=SG.regime(), h=cab('engr','Parâmetros','Valores usados em custo, preço, DRE e metas');
+  h+='<div class="chips">'+[['metas','Preço e metas'],['regime','Regime'],['obz','Orçamento OBZ'],['can','Canais'],['tam','Tamanhos']].map(function(o){ return '<button class="chip'+(o[0]===t?' on':'')+'" onclick="atual().t=\''+o[0]+'\';render()">'+o[1]+'</button>'; }).join('')+'</div>';
+  if(t==='metas'){
+    h+=li({ic:'grafico', t:'Margem desejada', s:'sobre o preço de venda', v:SG.pct(c.margemAlvo,0), on:"abre('parForm',{form:1,k:'margemAlvo'})"});
+    h+=li({ic:'moeda', t:'Meta de lucro do mês', s:'Resumo e simulador', v:SG.brl0(c.metaLucroMes), on:"abre('parForm',{form:1,k:'metaLucroMes'})"});
+    h+=li({ic:'lista', t:'Dias de venda por mês', s:'para potes por dia', v:c.diasVendaMes, on:"abre('parForm',{form:1,k:'diasVendaMes'})"});
+  } else if(t==='regime'){
+    h+=li({ic:'conta', cor:'ac', t:rg.tipo==='mei'?'MEI':rg.tipo==='simples'?'Simples Nacional':'Lucro Presumido', s:rg.tipo==='mei'?'DAS: INSS '+SG.brl(rg.inss)+' + ICMS '+SG.brl(rg.icms)+' + ISS '+SG.brl(rg.iss):rg.tipo==='simples'?'alíquota '+SG.pct(c.imposto,2):'impostos '+SG.pct(c.imposto,2)+' + IR/CSLL '+SG.pct(rg.aliqIR,2), v:rg.tipo==='mei'?SG.brl(SG.dasMensal()):'', vs:rg.tipo==='mei'?'por mês':'', on:"abre('regimeForm',{form:1})"});
+    h+='<div class="nota2" style="margin:2px 2px 0">MEI: o INSS vai para Pessoal e o ICMS/ISS para impostos no DRE. Mês sem DAS lançado usa estes valores.</div>';
+  } else if(t==='obz'){
+    var obz=SG.contasOBZ(), tot=SG.indiretosMes();
+    h+='<div class="nota2" style="margin:-4px 2px 10px">Custos fixos do mês · total '+SG.brl(tot)+'/mês</div>';
+    SG.PACOTES_OBZ.forEach(function(pc){ var l=obz.filter(function(x){return x.pacote===pc;}); if(!l.length) return;
+      h+='<div class="sec" style="margin-top:8px">'+pc+'<span class="cont">'+SG.brl0(l.reduce(function(s,x){return s+(+x.valor||0);},0))+'</span></div>'
+        + l.map(function(x){ return li({ic:'conta', t:esc(x.nome), v:x.valor?SG.brl(x.valor):'<span style="color:var(--txt3)">R$ 0</span>', on:"abre('contaForm',{form:1,id:'"+x.id+"'})"}); }).join(''); });
+    h+='<button class="btn" onclick="abre(\'contaForm\',{form:1})">'+ic('mais1')+'Nova conta</button>';
+  } else if(t==='can'){
+    h+=D().canais.map(function(x){ return li({ic:x.id==='revenda'?'cami':'sacola', t:esc(x.nome), s:'kit de entrega no preço: '+(x.kitEntrega?'sim':'não'), v:SG.pct(x.taxa,1), vs:'taxa', on:"abre('canalForm',{form:1,id:'"+x.id+"'})"}); }).join('');
+  } else {
+    h+=D().tamanhos.map(function(x){ var i=SG.insumo(x.pote); return li({ic:'pote', t:x.nome+' · '+x.ml+' ml', s:SG.num(x.g,0)+' g de gelato · '+esc(i?i.nome:'sem pote'), v:x.ativo?'<span class="pos">ativo</span>':'<span style="color:var(--txt3)">só simulação</span>', on:"abre('tamForm',{form:1,id:'"+x.id+"'})"}); }).join('');
+  }
+  return h;
+};
+var PAR={margemAlvo:['Margem desejada (%)',100,'sobre o preço de venda'], metaLucroMes:['Meta de lucro do mês (R$)',1,'usada no Resumo e no simulador'], diasVendaMes:['Dias de venda por mês',1,'para calcular potes por dia']};
+TELAS.parForm = function(a){ var k=a.k, d=PAR[k], v=+D().config[k]||0;
+  return cab('engr', d[0].replace(/ \(.*\)/,''), d[2]) + '<div class="campo"><label>'+d[0]+'</label><input id="pfV" inputmode="decimal" value="'+String(+(v*d[1]).toFixed(2)).replace('.',',')+'"></div><button class="btn" onclick="salvaPar()">'+ic('ok')+'Salvar</button>'; };
+function salvaPar(){ var a=atual(), n=numIn($('pfV').value); if(n==null){ toast('Digite o valor'); return; } D().config[a.k]=n/PAR[a.k][1]; SG.salvar(true); volta(); toast('Salvo'); }
+TELAS.regimeForm = function(a){ var r=SG.regime(), c=D().config; if(!a.tp) a.tp=r.tipo; var t=a.tp, f=function(v){ return String(+(+v||0).toFixed(2)).replace('.',','); };
+  var h=cab('conta','Regime tributário','Impostos do DRE e do preço');
+  h+='<div class="seg">'+[['mei','MEI'],['simples','Simples'],['presumido','Presumido']].map(function(o){ return '<button class="'+(o[0]===t?'on':'')+'" onclick="rgGuarda();atual().tp=\''+o[0]+'\';render()">'+o[1]+'</button>'; }).join('')+'</div>';
+  if(t==='mei') h+='<div class="vazio" style="margin-bottom:12px">Copie os valores do boleto do DAS. INSS = 5% do salário mínimo; ICMS R$ 1,00 (comércio/indústria); ISS R$ 5,00 (serviço).</div>'
+    + '<div class="lado"><div class="campo"><label>INSS (R$)</label><input id="rgInss" inputmode="decimal" value="'+f(a.inss!=null?a.inss:r.inss)+'"></div><div class="campo"><label>ICMS (R$)</label><input id="rgIcms" inputmode="decimal" value="'+f(a.icms!=null?a.icms:r.icms)+'"></div></div>'
+    + '<div class="lado"><div class="campo"><label>ISS (R$)</label><input id="rgIss" inputmode="decimal" value="'+f(a.iss!=null?a.iss:r.iss)+'"></div><div></div></div>';
+  else h+='<div class="campo"><label>'+(t==='simples'?'Alíquota efetiva do Simples (%)':'Impostos sobre a venda (%) · PIS+COFINS+ICMS/ISS')+'</label><input id="rgAliq" inputmode="decimal" value="'+f((c.imposto||0)*100)+'"></div>'
+    + (t==='presumido'?'<div class="campo"><label>IR + CSLL (% da receita)</label><input id="rgIr" inputmode="decimal" value="'+f((r.aliqIR||0)*100)+'"></div>':'');
+  return h+'<button class="btn" onclick="salvaRegimeApp()">'+ic('ok')+'Salvar</button>'; };
+function rgGuarda(){ var a=atual(); ['Inss','Icms','Iss'].forEach(function(k){ var e=$('rg'+k); if(e) a[k.toLowerCase()]=numIn(e.value)||0; }); }
+function salvaRegimeApp(){ var a=atual(), c=D().config, r=SG.regime(), t=a.tp; rgGuarda();
+  var n={tipo:t, inss:a.inss!=null?a.inss:r.inss, icms:a.icms!=null?a.icms:r.icms, iss:a.iss!=null?a.iss:r.iss, aliqIR:$('rgIr')?(numIn($('rgIr').value)||0)/100:(t==='presumido'?r.aliqIR:0)};
+  c.regime=n; c.imposto = t==='mei' ? 0 : ($('rgAliq')?(numIn($('rgAliq').value)||0)/100:c.imposto);
+  var das=SG.contaOBZ('das'); if(das) das.valor = t==='mei' ? SG.dasMensal() : 0;
+  SG.salvar(true); volta(); toast('Regime salvo'); }
+TELAS.contaForm = function(a){ var x=a.id?SG.contaOBZ(a.id):null, usos=a.id?D().despesas.filter(function(d){return d.conta===a.id;}).length:0;
+  var h=cab('conta', x?esc(x.nome):'Nova conta OBZ', 'Custo fixo do mês'+(usos?' · '+usos+' despesas lançadas':''));
+  h+='<div class="campo"><label>Pacote</label><select id="ctP">'+SG.PACOTES_OBZ.map(function(p){ return '<option'+(x&&x.pacote===p?' selected':'')+'>'+p+'</option>'; }).join('')+'</select></div>';
+  h+='<div class="campo"><label>Conta</label><input id="ctN" value="'+esc(x?x.nome:'')+'" placeholder="ex.: Aluguel"></div>';
+  h+='<div class="campo"><label>Orçado por mês (R$)</label><input id="ctV" inputmode="decimal" value="'+(x&&x.valor?String(x.valor).replace('.',','):'')+'"></div>';
+  h+='<button class="btn" onclick="salvaContaApp()">'+ic('ok')+'Salvar</button>'+(x&&!usos?'<button class="btn perigo" onclick="apagaContaApp()">Excluir</button>':'');
+  return h; };
+function salvaContaApp(){ var a=atual(), n=($('ctN').value||'').trim(), v=numIn($('ctV').value)||0, pk=$('ctP').value; if(!n){ toast('Digite o nome'); return; }
+  if(a.id){ var x=SG.contaOBZ(a.id); x.nome=n; x.valor=v; x.pacote=pk; D().despesas.forEach(function(d){ if(d.conta===a.id) d.categoria=n; }); }
+  else SG.contasOBZ().push({id:SG.novoId('oz'), pacote:pk, nome:n, valor:v});
+  SG.salvar(true); volta(); toast('Conta salva'); }
+function apagaContaApp(){ var a=atual(); if(!confirm('Excluir esta conta do OBZ?')) return; D().config.obz=SG.contasOBZ().filter(function(c){ return c.id!==a.id; }); SG.salvar(true); volta(); toast('Excluída'); }
+TELAS.canalForm = function(a){ var x=SG.canal(a.id); if(a.kit==null) a.kit=!!x.kitEntrega;
+  return cab('sacola', esc(x.nome), 'Taxa e kit de entrega no preço sugerido')
+    + '<div class="campo"><label>Taxa do canal (%)</label><input id="caT" inputmode="decimal" value="'+String(+(x.taxa*100).toFixed(2)).replace('.',',')+'"></div>'
+    + '<div class="tg'+(a.kit?' on':'')+'" onclick="atual().kit=!atual().kit;this.classList.toggle(\'on\')"><div><b>Kit de entrega no preço</b><span>soma 1 saco térmico + 1 kraft no preço sugerido do simulador</span></div><div class="sw"></div></div>'
+    + '<button class="btn" onclick="var a=atual(),c=SG.canal(a.id);c.taxa=(numIn($(\'caT\').value)||0)/100;c.kitEntrega=a.kit;SG.salvar(true);volta();toast(\'Salvo\')">'+ic('ok')+'Salvar</button>'; };
+TELAS.tamForm = function(a){ var t=SG.tamanho(a.id); if(a.at==null) a.at=!!t.ativo;
+  return cab('pote', 'Tamanho '+t.nome+' · '+t.ml+' ml', 'Gelato no pote e pote usado')
+    + '<div class="campo"><label>Gelato no pote (gramas)</label><input id="tmG" inputmode="decimal" value="'+t.g+'"></div>'
+    + '<div class="campo"><label>Pote usado</label><select id="tmP">'+D().insumos.filter(function(x){return x.tipo==='embalagem';}).map(function(x){ return '<option value="'+x.id+'"'+(x.id===t.pote?' selected':'')+'>'+esc(x.nome)+'</option>'; }).join('')+'</select></div>'
+    + '<div class="tg'+(a.at?' on':'')+'" onclick="atual().at=!atual().at;this.classList.toggle(\'on\')"><div><b>Ativo</b><span>desligado = só aparece no simulador</span></div><div class="sw"></div></div>'
+    + '<button class="btn" onclick="var a=atual(),t=SG.tamanho(a.id);t.g=numIn($(\'tmG\').value)||t.g;t.pote=$(\'tmP\').value;t.ativo=a.at;SG.salvar(true);volta();toast(\'Salvo\')">'+ic('ok')+'Salvar</button>'; };
+
 /* MAIS */
 TELAS.mais = function(){
   var h = '<div class="saldo" style="margin-top:20px"><div class="rot">Visões</div></div>';
@@ -953,6 +1021,7 @@ TELAS.mais = function(){
   h += li({ic:'pessoas', t:'Clientes', s:D().clientes.length+' cadastrados', on:"abre('clientes')"});
   h += li({ic:'frasco', t:'Fichas técnicas', s:'Custo por kg de cada receita', on:"abre('fichas')"});
   h += li({ic:'conta', t:'Tabela de preços', s:'Preço por sabor, tamanho e canal', on:"abre('tabela')"});
+  h += li({ic:'engr', t:'Parâmetros', s:'Metas, regime (DAS), orçamento OBZ, canais e tamanhos', on:"abre('parametros')"});
   if(!instalado()) h += li({ic:'baixar', cor:'ac', t:'Baixar o app no celular', s:'Ícone na tela de início, abre em tela cheia', on:'instalar()'});
   h += '<div style="text-align:center;margin:18px 0 4px"><a onclick="location.href=\'gestao/\'" style="font-size:11px;color:var(--txt3);cursor:pointer;text-decoration:underline">Abrir o painel do computador</a></div>';
   return h;
