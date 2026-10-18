@@ -308,13 +308,20 @@
   }
 /* CMV de um pedido: custo de cada pote vendido pela ficha técnica, com os preços da última compra
      até a data da venda (pacote ÷ quantidade). Gelato + cobertura = insumos; pote + lacre + adesivo = embalagens. */
+/* SACOS de entrega: escolhidos em cada pedido, com quantidade (saco térmico e saco kraft) */
+  var SACOS = [{ campo: 'sacoTermico', id: 'saco-termico', nome: 'Saco térmico' }, { campo: 'sacoKraft', id: 'sacola-kraft', nome: 'Saco kraft' }];
+  function sacosVenda(v, ctx) { return SACOS.reduce(function (t, x) { return t + (+v[x.campo] || 0) * custoInsumo(x.id, ctx).valor; }, 0); }
+  /* embalagem de cada pote: pote + adesivo + lacre (pedidos antigos marcados semLacre não levavam lacre) */
+  function embPote(v) { return (D.config.embalagemPote || []).filter(function (id) { return !(v.semLacre && id === 'lacre'); }); }
   function cmvVenda(v) {
     var o = { ins: 0, emb: 0, sem: 0 };
     v.itens.forEach(function (it) {
       if (!it.produto || !it.tam) { o.sem += it.qtd; return; }   // repasse do iFood sem sabor ou item avulso: custo desconhecido
       var cp = custoPote(it.produto, it.tam, v.canal, { ate: v.data });
       if (!cp || cp.semFicha) { o.sem += it.qtd; return; }
-      cp.linhas.forEach(function (l) { if (l.id === 'base' || l.id === 'cob') o.ins += l.valor * it.qtd; else if (l.id === 'pote' || l.id === 'acab') o.emb += l.valor * it.qtd; });
+      var ctx = { ate: v.data };
+      cp.linhas.forEach(function (l) { if (l.id === 'base' || l.id === 'cob') o.ins += l.valor * it.qtd; else if (l.id === 'pote') o.emb += l.valor * it.qtd; });
+      embPote(v).forEach(function (id) { o.emb += custoInsumo(id, ctx).valor * it.qtd; });
     });
     return o;
   }
@@ -328,10 +335,10 @@
         var gr = +t.g || 0, pc = p.cobertura ? (+p.pctCob || 0) : 0;
         addReceita(p.receita, gr * (1 - pc) / 1000 * it.qtd, ctx); if (p.cobertura) addReceita(p.cobertura, gr * pc / 1000 * it.qtd, ctx);
         if (t.pote) { var ip = insumo(t.pote); add(ip ? ip.nome : t.pote, 'Embalagem', custoInsumo(t.pote, ctx).valor * it.qtd); }
-        (D.config.embalagemPote || []).forEach(function (id) { var i = insumo(id); add(i ? i.nome : id, 'Embalagem', custoInsumo(id, ctx).valor * it.qtd); }); });
+        embPote(v).forEach(function (id) { var i = insumo(id); add(i ? i.nome : id, 'Embalagem', custoInsumo(id, ctx).valor * it.qtd); }); });
       var rep = v.itens.every(function (i) { return !i.produto && !i.tam; }), liq = totalVenda(v);
       if (!rep && c && +c.taxa) add('Taxa ' + c.nome, 'Taxa', liq * c.taxa);
-      if (v.entregue && (c || {}).kitEntrega && v.itens.some(function (i) { return i.tam; })) (D.config.kitEntrega || []).forEach(function (id) { var i = insumo(id); add(i ? i.nome : id, 'Kit entrega', custoInsumo(id, ctx).valor); }); });
+      SACOS.forEach(function (x) { var q = +v[x.campo] || 0, i = insumo(x.id); if (q) add(i ? i.nome : x.nome, 'Saco de entrega', q * custoInsumo(x.id, ctx).valor); }); });
     var o = dre(ym);
     if (mei) { add('DAS · INSS do MEI', 'Imposto', o.inss); add('DAS · ICMS/ISS', 'Imposto', o.dasV); }
     if (o.impV) add('Impostos sobre a venda', 'Imposto', o.impV); if (o.ir) add('IR / CSLL', 'Imposto', o.ir);
@@ -348,15 +355,13 @@
     var rg = regime(), mei = rg.tipo === 'mei', aliqV = mei ? 0 : (+D.config.imposto || 0), aliqIR = rg.tipo === 'presumido' ? (+rg.aliqIR || 0) : 0;
     var o = { bruta: 0, desc: 0, impV: 0, dasV: 0, impOutros: 0, taxa: 0, ins: 0, emb: 0, kit: 0, desp: {}, despT: 0, inss: 0, fin: 0, finD: {}, ir: 0,
               lotes: 0, kg: 0, potes: 0, das: [], despPk: {}, retiradas: 0, regime: rg.tipo, semCusto: 0, repasses: 0 };
-    function kitAte(d) { return (D.config.kitEntrega || []).reduce(function (t, id) { return t + custoInsumo(id, { ate: d }).valor; }, 0); }
-    var kitU = (D.config.kitEntrega || []).reduce(function (t, id) { return t + custoInsumo(id).valor; }, 0);
     D.vendas.forEach(function (v) { if (!noPer(v.data, ym)) return;
       var bruto = v.itens.reduce(function (s, i) { return s + i.qtd * i.preco; }, 0), liq = totalVenda(v), repasse = v.itens.every(function (i) { return !i.produto && !i.tam; });
       o.bruta += bruto; o.desc += bruto - liq; o.potes += potesVenda(v);
       if (!repasse) { var c = canal(v.canal); o.taxa += liq * (c ? +c.taxa || 0 : 0); o.impV += liq * aliqV; }
       var cv = cmvVenda(v); o.ins += cv.ins; o.emb += cv.emb; o.semCusto += cv.sem;
       if (repasse) o.repasses++;
-      if (v.entregue && (canal(v.canal) || {}).kitEntrega && v.itens.some(function (i) { return i.tam; })) o.kit += kitAte(v.data); });
+      o.kit += sacosVenda(v, { ate: v.data }); });
     D.producoes.forEach(function (pr) { if (!noPer(pr.data, ym)) return; o.lotes++; o.kg += +pr.kg || 0; });
     var dasLanc = {}, icmsMes = (+rg.icms || 0) + (+rg.iss || 0);
     despesasDRE().forEach(function (d) { if (!noPer(d.data, ym)) return; var val = +d.valor || 0, pk = pacoteDespesa(d);
@@ -379,16 +384,15 @@
   }
 
   /* itens por trás de uma linha do DRE (o PC e o app abrem o mesmo detalhe) */
-  var DRE_LINHA = { rec: 'Receita bruta', desc: 'Descontos', imp: 'Impostos sobre a venda', taxa: 'Taxas de canal', ins: 'Insumos dos potes vendidos', emb: 'Embalagens dos potes vendidos', kit: 'Kit de entrega', desp: 'Despesas', fin: 'Resultado financeiro', ir: 'IR / CSLL' };
+  var DRE_LINHA = { rec: 'Receita bruta', desc: 'Descontos', imp: 'Impostos sobre a venda', taxa: 'Taxas de canal', ins: 'Insumos dos potes vendidos', emb: 'Embalagens dos potes vendidos', kit: 'Sacos de entrega (térmico e kraft)', desp: 'Despesas', fin: 'Resultado financeiro', ir: 'IR / CSLL' };
   function dreItens(l, pk, ym) {
     var rows = [], rg = regime(), mei = rg.tipo === 'mei', aliqV = mei ? 0 : (+D.config.imposto || 0);
-    var kitU = (D.config.kitEntrega || []).reduce(function (t, id) { return t + custoInsumo(id).valor; }, 0);
     var resumo = function (v) { return v.itens.map(function (i) { return i.qtd + '× ' + nomeItem(i).replace(/ com .*/, '') + (i.tam ? ' ' + i.tam : ''); }).join(' · '); };
     if (l === 'rec' || l === 'desc' || l === 'taxa' || l === 'kit' || l === 'ins' || l === 'emb' || (l === 'imp' && aliqV)) D.vendas.forEach(function (v) { if (!noPer(v.data, ym)) return;
       var bruto = v.itens.reduce(function (s, i) { return s + i.qtd * i.preco; }, 0), liq = totalVenda(v), rep = v.itens.every(function (i) { return !i.produto && !i.tam; }), c = canal(v.canal), val = 0;
       if (l === 'rec') val = bruto; else if (l === 'desc') val = bruto - liq; else if (l === 'taxa') val = rep ? 0 : liq * (c ? +c.taxa || 0 : 0);
       else if (l === 'imp') val = rep ? 0 : liq * aliqV; else if (l === 'ins' || l === 'emb') val = cmvVenda(v)[l];
-      else val = (v.entregue && (c || {}).kitEntrega && v.itens.some(function (i) { return i.tam; })) ? (D.config.kitEntrega || []).reduce(function (t, id) { return t + custoInsumo(id, { ate: v.data }).valor; }, 0) : 0;
+      else val = sacosVenda(v, { ate: v.data });
       if (Math.abs(val) > 0.004) rows.push({ d: v.data, desc: nomeCliente(v), det: resumo(v) + ' · ' + (c ? c.nome : v.canal), v: val, tipo: 'venda', id: v.id }); });
     if (l === 'imp' || l === 'desp' || l === 'fin') {
       var o = dre(ym);
@@ -452,9 +456,9 @@
         var cons = consumoProducao(c); Object.keys(cons).forEach(function (k) { add(ins, k, -cons[k]); });
         if (c.produto && !c.historico) Object.keys(c.potes || {}).forEach(function (t) { add(potes, c.produto + '|' + t, +c.potes[t] || 0); });
       } else if (m.tipo === 'venda') {
-        var kit = (canal(c.canal) || {}).kitEntrega;
+
         c.itens.forEach(function (it) { if (it.produto && it.tam) add(potes, it.produto + '|' + it.tam, -it.qtd); });
-        if (kit) (D.config.kitEntrega || []).forEach(function (id) { add(ins, id, -1); });
+        SACOS.forEach(function (x) { if (+c[x.campo]) add(ins, x.id, -(+c[x.campo])); });
       } else if (m.tipo === 'ajuste') {
         if (c.insumo) add(ins, c.insumo, +c.qtd || 0);
         if (c.pote) add(potes, c.pote, +c.qtd || 0);
@@ -488,7 +492,7 @@
     indiretosMes: indiretosMes, indiretoKg: indiretoKg, contasOBZ: contasOBZ, contaOBZ: contaOBZ, pacoteDespesa: pacoteDespesa, obzPorPacote: obzPorPacote, PACOTES_OBZ: PACOTES_OBZ, custoPote: custoPote, taxaCanal: taxaCanal,
     precoTabela: precoTabela, definirPreco: definirPreco, precificar: precificar, metaPotes: metaPotes,
     totalVenda: totalVenda, potesVenda: potesVenda, resultadoVenda: resultadoVenda, vendasMes: vendasMes, nomeItem: nomeItem, nomeCliente: nomeCliente,
-    resumo: resumo, mesesComDados: mesesComDados, caixa: caixa, extrato: extrato, saldoConta: saldoConta, dre: dre, dreItens: dreItens, gastosDRE: gastosDRE, cmvVenda: cmvVenda, DRE_LINHA: DRE_LINHA, regime: regime, dasMensal: dasMensal, NOME_SOCIO: NOME_SOCIO,
+    resumo: resumo, mesesComDados: mesesComDados, caixa: caixa, extrato: extrato, saldoConta: saldoConta, dre: dre, dreItens: dreItens, SACOS: SACOS, sacosVenda: sacosVenda, gastosDRE: gastosDRE, cmvVenda: cmvVenda, DRE_LINHA: DRE_LINHA, regime: regime, dasMensal: dasMensal, NOME_SOCIO: NOME_SOCIO,
     consumoProducao: consumoProducao, estoque: estoque, estoqueBaixo: estoqueBaixo,
     produtosAtivos: produtosAtivos, tamanhosAtivos: tamanhosAtivos, unidade: unidade, qtdFmt: qtdFmt,
   };

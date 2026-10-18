@@ -10,14 +10,14 @@
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.SG_BUILD='20261018164724';</script>
-<script src="../shared/versao.js?v=20261018164724"></script>
-<script src="../shared/config.js?v=20261018164724"></script>
-<script src="../shared/seed.js?v=20261018164724"></script>
-<script src="../shared/core.js?v=20261018164724"></script>
+<script>window.SG_BUILD='20261018165811';</script>
+<script src="../shared/versao.js?v=20261018165811"></script>
+<script src="../shared/config.js?v=20261018165811"></script>
+<script src="../shared/seed.js?v=20261018165811"></script>
+<script src="../shared/core.js?v=20261018165811"></script>
 <script src="../assets/excel-export.js"></script>
 <script src="../assets/pdf-export.js"></script>
-<script src="../shared/remote.js?v=20261018164724"></script>
+<script src="../shared/remote.js?v=20261018165811"></script>
 <style>
 /* ============================================================
    SURREAL — Painel de gestão (PC). OneSpot · 16/10/2026
@@ -925,6 +925,7 @@ function abrirPedido(id){
     + '<div class="fld"><label>Canal</label>'+segH('pfCan',D().canais.map(function(x){return [x.id,x.nome.replace(' (mercadinhos)','')+(x.taxa?' · '+SG.pct(x.taxa,0):'')];}),PF.canal,'pfCanal')+'</div>'
     + '<div class="frow"><div class="fld"><label>Pagamento</label>'+segH('pfPag',[['1','Pago'],['0','A receber']],PF.pago?'1':'0','pfPago')+'</div><div class="fld"><label>Entrega</label>'+segH('pfEnt',[['1','Entregue'],['0','A entregar']],PF.entregue?'1':'0','pfEntregue')+'</div></div>'
     + '<div class="frow"><div class="fld"><label>Desconto (R$)</label><input class="inp num" id="pfDesc" value="'+nv(PF.desconto||0)+'" oninput="PF.desconto=numIn(this.value)||0;pfTotal()"></div><div></div></div>'
+    + '<div class="frow"><div class="fld"><label>Saco térmico (qtd)</label><input class="inp num" id="pfSt" value="'+(PF.sacoTermico||0)+'" oninput="PF.sacoTermico=Math.max(0,Math.round(numIn(this.value)||0))"><div class="fdica">pote, adesivo e lacre já entram sempre</div></div><div class="fld"><label>Saco kraft (qtd)</label><input class="inp num" id="pfSk" value="'+(PF.sacoKraft||0)+'" oninput="PF.sacoKraft=Math.max(0,Math.round(numIn(this.value)||0))"></div></div>'
     + '<div class="fld"><label>Observação</label><textarea class="inp" id="pfObs" placeholder="Ex.: entregar sábado de manhã">'+esc(PF.obs||'')+'</textarea></div>'
     + '<div class="mk" id="pfMk"></div><div class="erro" id="pfErro"></div>';
   var itens='<div class="sec2" style="padding-top:0">No pedido</div><div id="pfItens"></div><div class="sec2">Adicionar sabor</div><div class="busca" style="margin-bottom:6px">'+ic('lupa')+'<input id="pfQ" placeholder="Buscar sabor" oninput="pfProds()" style="width:100%"></div><div id="pfProds"></div>';

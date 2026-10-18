@@ -13,12 +13,12 @@
 <link rel="icon" href="img/icone-192.png">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.SG_BUILD='20261018164724';</script>
-<script src="shared/versao.js?v=20261018164724"></script>
-<script src="shared/config.js?v=20261018164724"></script>
-<script src="shared/seed.js?v=20261018164724"></script>
-<script src="shared/core.js?v=20261018164724"></script>
-<script src="shared/remote.js?v=20261018164724"></script>
+<script>window.SG_BUILD='20261018165811';</script>
+<script src="shared/versao.js?v=20261018165811"></script>
+<script src="shared/config.js?v=20261018165811"></script>
+<script src="shared/seed.js?v=20261018165811"></script>
+<script src="shared/core.js?v=20261018165811"></script>
+<script src="shared/remote.js?v=20261018165811"></script>
 <style>
 /* ============================================================
    SURREAL · gelato artesanal — app (PWA)
@@ -525,6 +525,7 @@ TELAS.pedido = function(a){
   h += '<div class="tg'+(v.entregue?' on':'')+'" onclick="marca(\''+v.id+'\',\'entregue\')"><div><b>Entregue</b><span>'+(v.entregue?'Saiu do estoque':'Aguardando entrega')+'</span></div><div class="sw"></div></div>';
   h += '<div class="tg'+(v.pago?' on':'')+'" onclick="marca(\''+v.id+'\',\'pago\')"><div><b>Pago</b><span>'+(v.pago?'Valor recebido':'A receber')+'</span></div><div class="sw"></div></div>';
   h += '<div class="sec" style="margin-top:16px">Itens</div><div class="itens">'+v.itens.map(function(i){ return '<div class="it"><div class="tx"><b>'+esc(SG.nomeItem(i))+'</b><span>'+(i.tam?nTam(i.tam)+' · ':'')+i.qtd+' × '+SG.brl(i.preco)+'</span></div><b>'+SG.brl(i.qtd*i.preco)+'</b></div>'; }).join('')+'</div>';
+  var sc=SG.SACOS.filter(function(x){ return +v[x.campo]; }); if(sc.length) h += '<div class="nota2" style="margin:8px 2px 0">Sacos: '+sc.map(function(x){ return v[x.campo]+'× '+x.nome.toLowerCase(); }).join(' · ')+'</div>';
   h += '<div class="res" style="margin-top:14px"><div class="n"><span>Total</span><b>'+SG.brl(r.receita)+'</b></div><div class="n"><span>Lucro estimado</span><b class="'+(r.lucro>=0?'pos':'neg')+'">'+SG.brl(r.lucro)+'</b><small>'+(r.completo?'custo de hoje dos potes':'algum item sem ficha técnica')+'</small></div></div>';
   h += '<div class="duo2"><button class="btn sec2" onclick="editaPedido(\''+v.id+'\')">Editar</button><button class="btn perigo" onclick="apagaPedido(\''+v.id+'\')">Excluir</button></div>';
   return h;
@@ -543,12 +544,17 @@ TELAS.pedidoForm = function(){
   h += '<div id="pProds"></div>';
   h += '<div class="sec" style="margin-top:12px">No pedido</div><div class="itens" id="pItens"></div>';
   h += '<div id="pTotal"></div>';
+  h += '<div class="sec" style="margin-top:12px">Sacos de entrega<span class="cont">pote, adesivo e lacre já entram sempre</span></div><div class="itens" id="pSacos"></div>';
   h += '<div class="tg'+(p.entregue?' on':'')+'" onclick="PED.entregue=!PED.entregue;this.classList.toggle(\'on\')"><div><b>Já entregue</b><span>Baixa os potes do estoque</span></div><div class="sw"></div></div>';
   h += '<div class="tg'+(p.pago?' on':'')+'" onclick="PED.pago=!PED.pago;this.classList.toggle(\'on\')"><div><b>Já pago</b><span>Desligue se for receber depois</span></div><div class="sw"></div></div>';
   h += '<button class="btn" onclick="salvaPedido()">'+ic('ok')+'Salvar pedido</button>';
   return h;
 };
-TELAS.pedidoForm_depois = function(){ pedFiltra(); pedItens(); };
+TELAS.pedidoForm_depois = function(){ pedFiltra(); pedItens(); pedSacos(); };
+/* sacos de entrega: quantidade escolhida em cada pedido */
+function pedSacos(){ $('pSacos').innerHTML = SG.SACOS.map(function(x){ var q=+PED[x.campo]||0;
+  return '<div class="it"><div class="tx"><b>'+x.nome+'</b><span>'+SG.brl(SG.custoInsumo(x.id).valor)+' cada</span></div><div class="step"><button onclick="pedSaco(\''+x.campo+'\',-1)">−</button><span>'+q+'</span><button onclick="pedSaco(\''+x.campo+'\',1)">+</button></div></div>'; }).join(''); }
+function pedSaco(c, d){ PED[c]=Math.max(0,(+PED[c]||0)+d); pedSacos(); }
 function pedCanal(c){ PED.canal=c; PED.itens.forEach(function(i){ if(i.produto){ var t=SG.precoTabela(i.produto,c,i.tam); if(t!=null) i.preco=t; } }); guardaCampos(); render(); }
 function guardaCampos(){ var c=$('pCli'); if(c){ PED._cliNome=c.value; PED.data=$('pData').value; } }
 function pedFiltra(){
