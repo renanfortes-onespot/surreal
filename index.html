@@ -13,12 +13,12 @@
 <link rel="icon" href="img/icone-192.png">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.SG_BUILD='20261018171842';</script>
-<script src="shared/versao.js?v=20261018171842"></script>
-<script src="shared/config.js?v=20261018171842"></script>
-<script src="shared/seed.js?v=20261018171842"></script>
-<script src="shared/core.js?v=20261018171842"></script>
-<script src="shared/remote.js?v=20261018171842"></script>
+<script>window.SG_BUILD='20261018172252';</script>
+<script src="shared/versao.js?v=20261018172252"></script>
+<script src="shared/config.js?v=20261018172252"></script>
+<script src="shared/seed.js?v=20261018172252"></script>
+<script src="shared/core.js?v=20261018172252"></script>
+<script src="shared/remote.js?v=20261018172252"></script>
 <style>
 /* ============================================================
    SURREAL · gelato artesanal — app (PWA)
@@ -611,6 +611,9 @@ TELAS.simular = function(){
   h += '<div class="chips">'+ps.map(function(p){ return '<button class="chip'+(p.id===SIM.prod?' on':'')+'" onclick="SIM.prod=\''+p.id+'\';SIM.preco=null;render()">'+esc(p.nome.replace(/ com .*/,''))+'</button>'; }).join('')+'</div>';
   h += '<div class="seg">'+D().tamanhos.map(function(t){ return '<button class="'+(t.id===SIM.tam?'on':'')+'" onclick="SIM.tam=\''+t.id+'\';SIM.preco=null;render()">'+t.nome+'<small>'+t.ml+' ml</small></button>'; }).join('')+'</div>';
   h += '<div class="seg">'+D().canais.map(function(c){ return '<button class="'+(c.id===SIM.canal?'on':'')+'" onclick="SIM.canal=\''+c.id+'\';SIM.preco=null;render()">'+esc(c.nome.replace(' (mercadinhos)',''))+(c.taxa?'<small>'+SG.pct(c.taxa,0)+'</small>':'')+'</button>'; }).join('')+'</div>';
+  var tab=SG.precoTabela(SIM.prod,SIM.canal,SIM.tam);
+  h += '<div class="campo"><label>Preço que quero cobrar (R$)</label><input id="simPreco" inputmode="decimal" placeholder="'+(tab!=null?String(tab.toFixed(2)).replace('.',','):'preço de tabela')+'" value="'+(SIM.preco!=null?String(SIM.preco).replace('.',','):'')+'" oninput="SIM.preco=numIn(this.value);simCalc()"><div class="dica">Calcula enquanto você digita · em branco = preço da tabela'+(tab!=null?' ('+SG.brl(tab)+')':'')+'</div></div>';
+  h += '<div class="campo"><label>Margem desejada: <b id="mgV">'+SG.pct(SIM.margem,0)+'</b></label><input type="range" min="0.1" max="0.75" step="0.01" value="'+SIM.margem+'" oninput="SIM.margem=+this.value;$(\'mgV\').textContent=SG.pct(SIM.margem,0);simCalc()"></div>';
   h += '<div id="simOut"></div>';
   return h;
 };
@@ -623,8 +626,6 @@ function simCalc(){
     + '<div class="pv">'+SG.brl(x.sugerido)+'</div>'
     + '<div class="sub"><div>Custo do pote<b>'+SG.brl(cp.total)+'</b></div><div>Preço mínimo<b>'+SG.brl(x.minimo)+'</b></div><div>Tabela hoje<b>'+(x.tabela!=null?SG.brl(x.tabela):'—')+'</b></div></div></div>';
   cp.avisos.forEach(function(a){ h+='<div class="aviso2">'+ic('alerta')+'<div>'+esc(a)+'</div></div>'; });
-  h += '<div class="campo"><label>Margem desejada: <b id="mgV">'+SG.pct(SIM.margem,0)+'</b></label><input type="range" min="0.1" max="0.75" step="0.01" value="'+SIM.margem+'" oninput="SIM.margem=+this.value;simCalc()"></div>';
-  h += '<div class="campo"><label>Preço que quero cobrar</label><input id="simPreco" inputmode="decimal" placeholder="'+(x.preco!=null?String(x.preco.toFixed(2)).replace('.',','):'')+'" value="'+(SIM.preco!=null?String(SIM.preco).replace('.',','):'')+'" onchange="SIM.preco=numIn(this.value);simCalc()"><div class="dica">Em branco = usa o preço da tabela ('+(x.tabela!=null?SG.brl(x.tabela):'sem preço definido, usa o sugerido')+').</div></div>';
   h += '<div class="res"><div class="n"><span>Lucro por pote</span><b class="'+(x.lucro>=0?'pos':'neg')+'">'+SG.brl(x.lucro)+'</b><small>a '+SG.brl(x.preco)+(x.taxaR?' · taxa '+SG.brl(x.taxaR):'')+'</small></div>'
     + '<div class="n"><span>Margem real</span><b class="'+(x.margem>=SIM.margem-0.005?'pos':x.margem>0?'amb':'neg')+'">'+SG.pct(x.margem,0)+'</b><small>markup '+(x.markup?x.markup.toFixed(2).replace('.',',')+'×':'—')+'</small></div>'
     + '<div class="n"><span>Para lucrar '+SG.brl0(D().config.metaLucroMes)+'/mês</span><b>'+(mp?Math.ceil(mp.mes):'—')+'</b><small>potes no mês</small></div>'
@@ -885,21 +886,31 @@ TELAS.vendas = function(a){
 
 /* SIMULAR TODOS OS SABORES — custo, preço de tabela e margem lado a lado */
 TELAS.simTodos = function(a){
-  var ts=SG.tamanhosAtivos(), t=a.tam||(ts[0]&&ts[0].id)||'P', c=a.canal||'direto', alvo=+D().config.margemAlvo||0, RP=SG.rateioPote();
-  var h=cab('calc','Simular todos os sabores','Custo do pote, preço de tabela e margem · toque no sabor para simular');
+  var ts=SG.tamanhosAtivos(), t=a.tam||(ts[0]&&ts[0].id)||'P', c=a.canal||'direto';
+  var h=cab('calc','Simular todos os sabores','Teste um preço e/ou uma alta nos insumos · nada é salvo');
   h+='<div class="seg">'+D().tamanhos.map(function(x){ return '<button class="'+(x.id===t?'on':'')+'" onclick="atual().tam=\''+x.id+'\';render()">'+x.nome+'<small>'+x.ml+' ml</small></button>'; }).join('')+'</div>';
   h+='<div class="seg">'+D().canais.map(function(x){ return '<button class="'+(x.id===c?'on':'')+'" onclick="atual().canal=\''+x.id+'\';render()">'+esc(x.nome.replace(' (mercadinhos)',''))+(x.taxa?'<small>taxa '+SG.pct(x.taxa,0)+'</small>':'')+'</button>'; }).join('')+'</div>';
-  var M={c:0,nc:0,p:0,np:0,m:0,nm:0};
-  /* sempre ordenado pela margem (a menor primeiro; sem preço de tabela no fim) */
-  var rows=SG.produtosAtivos().filter(function(p){ return p.receita; }).map(function(p){ return {p:p, x:SG.precificar(p.id,t,c,{extra:RP.porPote},{semKit:true})}; }).filter(function(o){ return o.x; })
-    .sort(function(A,B){ var ma=A.x.tabela!=null&&!A.x.custo.semFicha?A.x.margem:9, mb=B.x.tabela!=null&&!B.x.custo.semFicha?B.x.margem:9; return ma-mb; }).map(function(o){ var p=o.p, x=o.x;
-    var ok=x.tabela!=null&&!x.custo.semFicha; M.c+=x.ct; M.nc++; if(x.tabela!=null){ M.p+=x.tabela; M.np++; } if(ok){ M.m+=x.margem; M.nm++; }
-    return '<tr class="lk" onclick="simAbre(\''+p.id+'\',\''+t+'\',\''+c+'\')"><td>'+esc(p.nome)+'</td><td>'+SG.brl(x.ct)+'</td><td>'+(x.tabela!=null?SG.brl(x.tabela):'—')+'</td><td class="'+(ok?(x.margem>=alvo-0.005?'pos':x.margem>0?'amb':'neg'):'')+'">'+(ok?SG.pct(x.margem,0):'—')+'</td></tr>'; }).join('');
-  h+='<div class="nota2" style="margin:0 2px 8px">Margem <b>líquida</b>: custo do pote + '+SG.brl(RP.porPote)+' de fixos e sacos por pote (média dos últimos meses)</div><table class="mini"><tr><th>Sabor</th><th>Custo</th><th>Preço</th><th>Margem líq.</th></tr>'+rows
-    + '<tr class="tot"><td>Média</td><td>'+(M.nc?SG.brl(M.c/M.nc):'—')+'</td><td>'+(M.np?SG.brl(M.p/M.np):'—')+'</td><td>'+(M.nm?SG.pct(M.m/M.nm,0):'—')+'</td></tr></table>';
-  h+='<div class="nota2">Margem pela meta de '+SG.pct(alvo,0)+': verde atingiu · âmbar abaixo · vermelho prejuízo. Sem preço de tabela, a margem fica em branco.</div>';
+  h+='<div class="lado"><div class="campo"><label>Preço a testar (R$)</label><input id="stPreco" inputmode="decimal" placeholder="tabela" value="'+(a.preco!=null?String(a.preco).replace('.',','):'')+'" oninput="atual().preco=numIn(this.value);stCalc()"></div>'
+    + '<div class="campo"><label>Insumos +/− (%)</label><input id="stVar" inputmode="decimal" placeholder="0" value="'+(a.varT?String(a.varT*100).replace('.',','):'')+'" oninput="atual().varT=(numIn(this.value)||0)/100;stCalc()"></div></div>';
+  h+='<div id="stOut"></div>';
   return h;
 };
+TELAS.simTodos_depois = function(){ stCalc(); };
+function stCalc(){
+  var a=atual(), ts=SG.tamanhosAtivos(), t=a.tam||(ts[0]&&ts[0].id)||'P', c=a.canal||'direto', alvo=+D().config.margemAlvo||0, RP=SG.rateioPote();
+  var ctx={semKit:true}; if(a.varT) ctx.var={'*':a.varT};
+  var M={c:0,nc:0,p:0,np:0,m:0,nm:0};
+  /* sempre ordenado pela margem (a menor primeiro; sem preço no fim) */
+  var rows=SG.produtosAtivos().filter(function(p){ return p.receita; }).map(function(p){ var o={extra:RP.porPote}; if(a.preco!=null) o.preco=a.preco; return {p:p, x:SG.precificar(p.id,t,c,o,ctx)}; }).filter(function(o){ return o.x; })
+    .sort(function(A,B){ var ma=A.x.preco!=null&&!A.x.custo.semFicha?A.x.margem:9, mb=B.x.preco!=null&&!B.x.custo.semFicha?B.x.margem:9; return ma-mb; }).map(function(o){ var p=o.p, x=o.x;
+    var ok=x.preco!=null&&!x.custo.semFicha; M.c+=x.ct; M.nc++; if(x.preco!=null){ M.p+=x.preco; M.np++; } if(ok){ M.m+=x.margem; M.nm++; }
+    return '<tr class="lk" onclick="simAbre(\''+p.id+'\',\''+t+'\',\''+c+'\')"><td>'+esc(p.nome)+'</td><td>'+SG.brl(x.ct)+'</td><td>'+(x.preco!=null?SG.brl(x.preco):'—')+'</td><td class="'+(ok?(x.margem>=alvo-0.005?'pos':x.margem>0?'amb':'neg'):'')+'">'+(ok?SG.pct(x.margem,0):'—')+'</td></tr>'; }).join('');
+  var h='<div class="nota2" style="margin:-4px 2px 8px">Margem <b>líquida</b>: custo do pote + '+SG.brl(RP.porPote)+' de fixos e sacos por pote'+(a.varT?' · insumos '+(a.varT>0?'+':'')+SG.pct(a.varT,0):'')+'</div>'
+    + '<table class="mini"><tr><th>Sabor</th><th>Custo</th><th>'+(a.preco!=null?'Preço testado':'Preço tabela')+'</th><th>Margem líq.</th></tr>'+rows
+    + '<tr class="tot"><td>Média</td><td>'+(M.nc?SG.brl(M.c/M.nc):'—')+'</td><td>'+(M.np?SG.brl(M.p/M.np):'—')+'</td><td>'+(M.nm?SG.pct(M.m/M.nm,0):'—')+'</td></tr></table>';
+  h+='<div class="nota2">Meta de '+SG.pct(alvo,0)+': verde atingiu · âmbar abaixo · vermelho prejuízo · toque no sabor para simular só ele.</div>';
+  $('stOut').innerHTML=h;
+}
 function simAbre(pid,t,c){ SIM.prod=pid; SIM.tam=t; SIM.canal=c; SIM.preco=null; abre('simular'); }
 
 /* RETIRADA / APORTE DOS SÓCIOS — mexe no caixa, não no DRE */
