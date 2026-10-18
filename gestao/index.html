@@ -10,14 +10,14 @@
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.SG_BUILD='20261018170037';</script>
-<script src="../shared/versao.js?v=20261018170037"></script>
-<script src="../shared/config.js?v=20261018170037"></script>
-<script src="../shared/seed.js?v=20261018170037"></script>
-<script src="../shared/core.js?v=20261018170037"></script>
+<script>window.SG_BUILD='20261018170536';</script>
+<script src="../shared/versao.js?v=20261018170536"></script>
+<script src="../shared/config.js?v=20261018170536"></script>
+<script src="../shared/seed.js?v=20261018170536"></script>
+<script src="../shared/core.js?v=20261018170536"></script>
 <script src="../assets/excel-export.js"></script>
 <script src="../assets/pdf-export.js"></script>
-<script src="../shared/remote.js?v=20261018170037"></script>
+<script src="../shared/remote.js?v=20261018170536"></script>
 <style>
 /* ============================================================
    SURREAL — Painel de gestão (PC). OneSpot · 16/10/2026
@@ -491,7 +491,7 @@ function barras(id, o){
   if(o.meta) ds.push({type:'line', label:o.nomeMeta||'Meta', data:o.meta, borderColor:t.ref, borderWidth:2, borderDash:[5,3], pointRadius:0, tension:0, order:1});
   var vs=o.dados.concat(o.meta||[]).filter(function(x){return x!=null;}), mx=Math.max.apply(null,vs.concat([0])), mn=Math.min.apply(null,vs.concat([0]));
   grafico(id,{type:'bar', data:{labels:o.labels, datasets:ds}, plugins:[ChartDataLabels],
-    options:{responsive:true, maintainAspectRatio:false, animation:false, layout:{padding:{top:26,bottom:mn<0?20:0}},
+    options:{responsive:true, maintainAspectRatio:false, animation:false, interaction:{mode:'index', intersect:false}, layout:{padding:{top:26,bottom:mn<0?20:0}},
       plugins:{legend:{display:false}, tooltip:Object.assign({callbacks:{label:function(x){ return x.dataset.label+': '+(o.fmt||fmtR)(x.parsed.y); }}}, t.tooltip),
         datalabels:{display:function(c){ var v=c.dataset.data[c.dataIndex]; return c.datasetIndex===0 && v!=null && v!==0; },
           anchor:function(c){ return c.dataset.data[c.dataIndex]<0?'start':'end'; }, align:function(c){ return c.dataset.data[c.dataIndex]<0?'bottom':'top'; },
@@ -538,13 +538,15 @@ VIEWS.resumo=function(){
     + kpi('Sabor mais vendido', top.length?esc(top[0].nome):'—', top.length?top[0].qtd+' potes · '+SG.pct(r.potes?top[0].qtd/r.potes:0,0)+' dos potes':'sem vendas', true)
     + kpi('Melhor cliente', cli.length?esc(cli[0].n):'—', cli.length?SG.brl(cli[0].v)+' · '+cli.length+' clientes compraram':'sem vendas', true)
     + '</div>';
-  h+='<div class="gr2">'+gcard('gMes','Lucro · Mensal', ym.slice(0,4)+' · faturamento − custo dos potes − taxas · com os filtros', legQ('Lucro do mês')+legL('Meta de lucro'))
+  var lmg=V.rluc==='mg', alvo=+D().config.margemAlvo||0;
+  h+='<div class="gr2">'+gcard('gMes',(lmg?'Margem líquida':'Lucro')+' · Mensal', ym.slice(0,4)+' · '+(lmg?'lucro ÷ faturamento':'faturamento − custo dos potes − taxas')+' · metas em Parâmetros → Preço e metas', legQ(lmg?'Margem do mês':'Lucro do mês')+legL(lmg?'Meta de margem · '+SG.pct(alvo,0):'Meta de lucro · '+SG.brl0(meta)+'/mês'),
+        '<div class="dims">'+[['rs','Lucro R$'],['mg','Margem líquida']].map(function(m){return '<button class="dimb'+((m[0]==='mg')===lmg?' on':'')+'" onclick="V.rluc=\''+m[0]+'\';render()">'+m[1]+'</button>';}).join('')+'</div>')
     + gcard('gTop', (rmed()==='rs'?'Faturamento':'Potes vendidos')+' por '+RDIM[V.rdim||'sabor'][0], perTxt(), legQ(rmed()==='rs'?'R$ faturado':'Potes vendidos'),
         '<div class="dims" style="margin-right:6px">'+[['rs','R$'],['qtd','Potes']].map(function(m){return '<button class="dimb'+(m[0]===rmed()?' on':'')+'" onclick="V.rmed=\''+m[0]+'\';render()" title="'+(m[0]==='rs'?'Valor faturado':'Quantidade de potes')+'">'+m[1]+'</button>';}).join('')+'</div>'
         + '<div class="dims">'+Object.keys(RDIM).map(function(k){return '<button class="dimb'+(k===(V.rdim||'sabor')?' on':'')+'" onclick="V.rdim=\''+k+'\';render()">'+RDIM[k][1]+'</button>';}).join('')+'</div>')+'</div>';
   $('view').innerHTML=h;
-  var an=anoMeses(ym), luc=an.map(function(m){ var x=resumoF([m]); return x.pedidos?+x.lucro.toFixed(2):null; });
-  barras('gMes',{labels:an.map(function(m){return SG.MES3[+m.slice(5)-1];}), dados:luc, meta:an.map(function(){return meta;}), nome:'Lucro', nomeMeta:'Meta', foco:F.per.size?an.map(function(m,i){return F.per.has(m)?i:-1;}).filter(function(i){return i>=0;}):null, cores:function(v,i,t){ return v>=meta?t.verde:t.vermelho; }});
+  var an=anoMeses(ym), luc=an.map(function(m){ var x=resumoF([m]); return x.pedidos?(lmg?+x.margem.toFixed(4):+x.lucro.toFixed(2)):null; }), mt=lmg?alvo:meta;
+  barras('gMes',{labels:an.map(function(m){return SG.MES3[+m.slice(5)-1];}), dados:luc, meta:an.map(function(){return mt;}), nome:lmg?'Margem líquida':'Lucro', nomeMeta:'Meta', fmt:lmg?function(v){return SG.pct(v,0);}:null, foco:F.per.size?an.map(function(m,i){return F.per.has(m)?i:-1;}).filter(function(i){return i>=0;}):null, cores:function(v,i,t){ return v>=mt?t.verde:t.vermelho; }});
   var rd=V.rdim||'sabor', emPotes=rmed()==='qtd', ag={};
   linhasVenda(ms).forEach(function(x){ var k=rd==='sabor'?SG.nomeItem(x.it):rd==='cliente'?SG.nomeCliente(x.v):rd==='canal'?nCanal(x.v.canal):(x.it.tam?nTam(x.it.tam):null); if(!k) return; var v=emPotes?x.potes:x.rec; if(emPotes&&!v) return; ag[k]=(ag[k]||0)+v; });
   var ks=Object.keys(ag).sort(function(a,b){return ag[b]-ag[a];}).slice(0,12);
