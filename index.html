@@ -13,12 +13,12 @@
 <link rel="icon" href="img/icone-192.png">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.SG_BUILD='20261018161419';</script>
-<script src="shared/versao.js?v=20261018161419"></script>
-<script src="shared/config.js?v=20261018161419"></script>
-<script src="shared/seed.js?v=20261018161419"></script>
-<script src="shared/core.js?v=20261018161419"></script>
-<script src="shared/remote.js?v=20261018161419"></script>
+<script>window.SG_BUILD='20261018162254';</script>
+<script src="shared/versao.js?v=20261018162254"></script>
+<script src="shared/config.js?v=20261018162254"></script>
+<script src="shared/seed.js?v=20261018162254"></script>
+<script src="shared/core.js?v=20261018162254"></script>
+<script src="shared/remote.js?v=20261018162254"></script>
 <style>
 /* ============================================================
    SURREAL · gelato artesanal — app (PWA)
@@ -284,6 +284,7 @@ body.claro .passo2 b{color:var(--acc);}
 .dl .r.tot span,.dl .r.tot b{font-weight:700;}
 .dl .r.sub span{padding-left:12px;color:var(--txt2);font-size:11.5px;}
 .dl .r.sub b{font-weight:500;color:var(--txt2);}
+.dl .r.grp span{font-weight:700;} .dl .r.grp.tap span::after{content:none;} .dl .r i.seta{font-style:normal;display:inline-block;width:14px;color:var(--txt3);}
 .dl .r.tap{cursor:pointer;} .dl .r.tap span::after{content:' ›';color:var(--txt3);}
 .rk{padding:10px 0;border-bottom:1px solid var(--brd);}
 .rk:last-child{border-bottom:0;}
@@ -707,7 +708,8 @@ TELAS.compraNova = function(a){
   var h = cab('carrinho','Registrar compra','Atualiza o custo do insumo e o estoque');
   h += '<div class="campo"><label>Insumo</label><select id="coIns" onchange="coCalc()">'+opts(ins,(a&&a.ins)||'leite-integral')+'</select></div>';
   h += '<div class="lado"><div class="campo"><label id="coQl">Quantidade (gramas)</label><input id="coQtd" inputmode="decimal" placeholder="ex.: 2000" oninput="coCalc()"></div><div class="campo"><label>Valor pago (R$)</label><input id="coVal" inputmode="decimal" placeholder="ex.: 35,90" oninput="coCalc()"></div></div>';
-  h += '<div class="campo"><label>Data</label><input id="coData" type="date" value="'+SG.hoje()+'"></div><div id="coOut"></div>';
+  h += '<div class="campo"><label>Data</label><input id="coData" type="date" value="'+SG.hoje()+'"></div>';
+  h += '<div class="campo"><label>Linha do DRE</label><select id="coConta"><option value="">Custo dos produtos · entra no estoque</option>'+SG.PACOTES_OBZ.map(function(pc){ var l=SG.contasOBZ().filter(function(c){return c.pacote===pc;}); return l.length?'<optgroup label="'+pc+'">'+l.map(function(c){return '<option value="'+c.id+'">'+esc(c.nome)+'</option>';}).join('')+'</optgroup>':''; }).join('')+'</select><div class="dica">Padrão: vai para o estoque e vira custo quando usar. Escolhendo uma conta, vira despesa dessa linha e não entra no estoque.</div></div><div id="coOut"></div>';
   h += '<button class="btn" onclick="salvaCompra()">'+ic('ok')+'Salvar compra</button>';
   return h;
 };
@@ -720,7 +722,7 @@ function coCalc(){
   $('coOut').innerHTML=h+'</div>';
 }
 function salvaCompra(){ var q=(numIn($('coQtd').value)||0)/(SG.insumo($('coIns').value).un==='un'?1:1000), v=numIn($('coVal').value); if(!q||!v){ toast('Preencha quantidade e valor'); return; }
-  D().compras.push({id:SG.novoId('c'), data:$('coData').value||SG.hoje(), insumo:$('coIns').value, qtd:q, valor:v, ts:Date.now(), por:usuario().id, historico:false}); SG.salvar(true); volta(); toast('Compra registrada'); }
+  D().compras.push({id:SG.novoId('c'), data:$('coData').value||SG.hoje(), insumo:$('coIns').value, qtd:q, valor:v, conta:$('coConta').value||null, ts:Date.now(), por:usuario().id, historico:false}); SG.salvar(true); volta(); toast('Compra registrada'); }
 
 /* DESPESA */
 var CATS_DESP = ['Aluguel','Energia','Água','Gás','Marketing','Embalagens','Equipamentos','Taxas','Outros'];
@@ -802,33 +804,41 @@ function liExtrato(l){
 
 /* DRE (aba) — quanto a Surreal lucrou com o que vendeu (competência) */
 TELAS.dre = function(a){
-  var ym=perYM(a), o=SG.dre(ym), base=o.rec, pc=function(v){ return base?SG.pct(v/base,0):'—'; };
+  var ym=perYM(a), o=SG.dre(ym), base=o.bruta, rg=SG.regime(), ab=a.ab||(a.ab={}), pc=function(v){ return base?SG.pct(Math.abs(v)/base,0):'—'; };
   var ano = a.per==='mes' ? SG.dre(SG.mesesComDados().filter(function(m){ return m.slice(0,4)===a.ym.slice(0,4) && m<=a.ym; })) : null;
-  var h='<div class="saldo"><div class="rot">Resultado · '+perNome(a)+'</div><div class="val '+(o.res>=0?'pos':'neg')+'">'+SG.brl(o.res)+'</div><div class="aviso">margem <b>'+(o.rec?SG.pct(o.res/o.rec,1):'—')+'</b> · '+o.potes+' potes vendidos · '+o.lotes+' lotes produzidos'+(ano?'<br>No ano: '+SG.brl(ano.res):'')+'</div></div>';
+  var h='<div class="saldo"><div class="rot">Lucro líquido · '+perNome(a)+'</div><div class="val '+(o.res>=0?'pos':'neg')+'">'+SG.brl(o.res)+'</div><div class="aviso">margem <b>'+(o.bruta?SG.pct(o.res/o.bruta,1):'—')+'</b> · '+o.potes+' potes vendidos · '+o.lotes+' lotes produzidos'+(ano?'<br>No ano: '+SG.brl(ano.res):'')+'</div></div>';
   h+=perSel(a);
-  var L=[['Receita bruta (pedidos)',o.rec,'tot','rec'],['(−) Taxas de canal',-o.taxa,'','taxa'],['= Receita líquida',o.liq,'tot'],['(−) Insumos usados na produção',-o.ins,'','ins'],['(−) Embalagens usadas',-o.emb,'','emb'],['(−) Kit de entrega',-o.kit,'','kit'],['= Lucro bruto',o.bruto,'tot cor'],['(−) Despesas',-o.despT,'','desp']];
-  Object.keys(o.desp).sort().forEach(function(k){ L.push([k,-o.desp[k],'sub','desp',k]); });
-  L.push(['= Resultado',o.res,'tot cor']);
-  h+='<div class="dl">'+L.map(function(l){ if(Math.abs(l[1])<0.005) l[1]=0; var cor=l[2].indexOf('cor')>=0?(l[1]>=0?'pos':'neg'):''; return '<div class="r '+l[2]+(l[3]?' tap':'')+'"'+(l[3]?' onclick="abre(\'dreDet\',{l:\''+l[3]+'\''+(l[4]?',pk:\''+esc(l[4])+'\'':'')+',per:\''+a.per+'\',ym:\''+a.ym+'\'})"':'')+'><span>'+esc(l[0])+'</span><b class="'+cor+'">'+SG.brl(l[1])+'</b><small>'+pc(l[1])+'</small></div>'; }).join('')+'</div>';
-  h+=vazio('Compra de insumo não entra aqui: ele só vira custo quando é usado numa produção. Retiradas e aportes dos sócios também ficam de fora. Toque numa linha para ver o detalhe.');
+  var pks=SG.PACOTES_OBZ.filter(function(k){ return o.desp[k]; }).concat(Object.keys(o.desp).filter(function(k){ return SG.PACOTES_OBZ.indexOf(k)<0; }));
+  var L=[['Receita bruta',o.bruta,'tot','rec'],
+    ['(−) Deduções',-o.ded,'grp',null,'ded'], ['Descontos',-o.desc,'sub','desc',null,'ded'], [rg.tipo==='mei'?'Impostos (DAS · ICMS/ISS)':'Impostos sobre a venda',-o.imp,'sub','imp',null,'ded'], ['Taxas de canal (iFood)',-o.taxa,'sub','taxa',null,'ded'],
+    ['= Receita líquida',o.liq,'tot'],
+    ['(−) Custo dos produtos',-o.cmv,'grp',null,'cmv'], ['Insumos usados',-o.ins,'sub','ins',null,'cmv'], ['Embalagens usadas',-o.emb,'sub','emb',null,'cmv'],
+    ['= Lucro bruto',o.bruto,'tot cor'],
+    ['(−) Variáveis de venda',-o.kit,'grp',null,'var'], ['Kit de entrega',-o.kit,'sub','kit',null,'var'],
+    ['= Margem de contribuição',o.mc,'tot cor'],
+    ['(−) Despesas operacionais',-o.despT,'grp',null,'op']]
+    .concat(pks.map(function(k){ return [k+(k==='Pessoal'&&rg.tipo==='mei'?' (com INSS do DAS)':''),-o.desp[k],'sub','desp',null,'op',k]; }))
+    .concat([['= Resultado operacional',o.oper,'tot cor'],
+    ['(−) Financeiro',-o.fin,'sub','fin'],
+    ['= LAIR',o.lair,'tot cor'],
+    ['(−) IR / CSLL'+(rg.tipo==='presumido'?'':' · isento'),-o.ir,'sub','ir'],
+    ['= Lucro líquido',o.res,'tot cor']]);
+  h+='<div class="dl">'+L.filter(function(l){ return !l[5] || ab[l[5]]; }).map(function(l){
+    var v=Math.abs(l[1])<0.005?0:l[1], cor=l[2].indexOf('cor')>=0?(v>=0?'pos':'neg'):'', grp=l[2]==='grp';
+    var on=grp?"atual().ab['"+l[4]+"']=!atual().ab['"+l[4]+"'];render()":l[3]?"abre('dreDet',{l:'"+l[3]+"'"+(l[6]?",pk:'"+esc(l[6])+"'":'')+",per:'"+a.per+"',ym:'"+a.ym+"'})":null;
+    return '<div class="r '+(grp?'tot grp':l[2])+(on?' tap':'')+'"'+(on?' onclick="'+on+'"':'')+'><span>'+(grp?'<i class="seta">'+(ab[l[4]]?'▾':'▸')+'</i>':'')+esc(l[0])+'</span><b class="'+cor+'">'+SG.brl(v)+'</b><small>'+pc(v)+'</small></div>'; }).join('')+'</div>';
+  if(o.retiradas) h+='<div class="nota2" style="margin:-6px 2px 12px">Retiradas dos sócios no período: '+SG.brl(o.retiradas)+' (fora do resultado)</div>';
+  h+=vazio('Toque num grupo (▸) para abrir e numa linha para ver os lançamentos. Compra de insumo só vira custo quando é usada numa produção.'+(rg.tipo==='mei'?' MEI: o DAS é dividido em ICMS/ISS (imposto) e INSS (Pessoal); mês sem DAS lançado usa o valor do regime.':''));
   return h;
 };
 TELAS.dreDet = function(a){
-  var ym=a.per==='todos'?null:a.ym, inP=function(d){ return !ym || (d||'').slice(0,7)===ym; }, l=[], tot=0;
-  var T={rec:'Receita bruta',taxa:'Taxas de canal',ins:'Insumos usados na produção',emb:'Embalagens usadas',kit:'Kit de entrega',desp:'Despesas'};
-  var kitU=(D().config.kitEntrega||[]).reduce(function(t,id){ return t+SG.custoInsumo(id).valor; },0);
-  if(a.l==='rec'||a.l==='taxa'||a.l==='kit'){
-    D().vendas.filter(function(v){ return inP(v.data); }).forEach(function(v){ var r=SG.resultadoVenda(v), val=a.l==='rec'?r.receita:a.l==='taxa'?r.taxa:((v.entregue&&(SG.canal(v.canal)||{}).kitEntrega&&v.itens.some(function(i){return i.tam;}))?kitU:0);
-      if(!val) return; tot+=val; l.push({d:v.data, h:li({ic:'sacola', t:esc(SG.nomeCliente(v)), s:SG.dataBR(v.data)+' · '+esc(pedidoCurto(v))+' · '+esc(nCanal(v.canal)), v:SG.brl(val), on:"abre('pedido',{id:'"+v.id+"'})"})}); });
-  } else if(a.l==='ins'||a.l==='emb'){
-    D().producoes.filter(function(p){ return inP(p.data); }).forEach(function(p){ var c=SG.consumoProducao(p), val=0;
-      Object.keys(c).forEach(function(id){ var i=SG.insumo(id), emb=i&&i.tipo==='embalagem'; if((a.l==='emb')===!!emb) val+=c[id]*SG.custoInsumo(id).valor; });
-      if(!val) return; tot+=val; var r=SG.receita(p.receita); l.push({d:p.data, h:li({ic:'pote', t:esc(r?r.nome:p.receita), s:SG.dataBR(p.data)+' · '+SG.num((p.kg||0)*1000,0)+' g de mistura', v:SG.brl(val)})}); });
-  } else {
-    D().despesas.filter(function(d){ return inP(d.data) && (!a.pk || SG.pacoteDespesa(d)===a.pk); }).forEach(function(d){ tot+=+d.valor||0; l.push({d:d.data, h:li({ic:'recibo', t:esc(d.desc), s:SG.dataBR(d.data)+' · '+esc(d.categoria), v:SG.brl(d.valor)})}); });
-  }
-  l.sort(function(x,y){ return x.d<y.d?1:-1; });
-  return cab('dre', a.pk?'Despesas · '+esc(a.pk):T[a.l], (ym?SG.nomeMes(ym)+' de '+ym.slice(0,4):'todo o período')+' · total '+SG.brl(tot)) + (l.map(function(x){return x.h;}).join('') || vazio('Nada neste período.'));
+  var ym=a.per==='todos'?null:a.ym, rows=SG.dreItens(a.l, a.pk, ym), tot=rows.reduce(function(t,x){ return t+x.v; },0);
+  var h=cab('dre', a.pk?'Despesas · '+esc(a.pk):SG.DRE_LINHA[a.l], (ym?SG.nomeMes(ym)+' de '+ym.slice(0,4):'todo o período')+' · total '+SG.brl(tot));
+  h+= rows.map(function(x){
+    var icn=x.tipo==='venda'?'sacola':x.tipo==='producao'?'pote':x.tipo==='das'||x.tipo==='ir'?'conta':'recibo';
+    var dt=x.tipo==='das'||x.tipo==='ir'?SG.nomeMes(x.d.slice(0,7),true):SG.dataBR(x.d);
+    return li({ic:icn, t:esc(x.desc), s:dt+' · '+esc(x.det), v:SG.brl(x.v), on:x.tipo==='venda'?"abre('pedido',{id:'"+x.id+"'})":null}); }).join('') || vazio('Nada neste período.');
+  return h;
 };
 
 /* RESUMO GERENCIAL */

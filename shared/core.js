@@ -112,12 +112,12 @@
   /* ───────────── OBZ: custos fixos do mês por pacote (orçamento base zero) ─────────────
      Substitui os "custos indiretos rateados por kg": fixo fica como fixo do mês (não entra no
      custo do pote). As despesas lançadas caem numa conta OBZ, para comparar orçado × realizado. */
-  var PACOTES_OBZ = ['Ocupação', 'Marketing', 'Manutenção', 'Administrativo', 'Pessoal'];
+  var PACOTES_OBZ = ['Impostos', 'Ocupação', 'Marketing', 'Manutenção', 'Administrativo', 'Pessoal', 'Financeiro'];
   var CONTAS_PADRAO = [
     ['aluguel', 'Ocupação', 'Aluguel'], ['energia', 'Ocupação', 'Energia elétrica'], ['agua', 'Ocupação', 'Água'], ['gas', 'Ocupação', 'Gás'],
     ['anuncios', 'Marketing', 'Impulsionamento / anúncios'], ['marca', 'Marketing', 'Materiais de marca (adesivos, impressos)'], ['degustacao', 'Marketing', 'Degustações e brindes'],
     ['manutencao', 'Manutenção', 'Manutenção de equipamentos'], ['limpeza', 'Manutenção', 'Limpeza / utensílios'],
-    ['internet', 'Administrativo', 'Internet / celular'], ['contador', 'Administrativo', 'Contador'], ['das', 'Administrativo', 'DAS / MEI'], ['bancarias', 'Administrativo', 'Taxas bancárias'], ['outros-adm', 'Administrativo', 'Outros administrativos'],
+    ['internet', 'Administrativo', 'Internet / celular'], ['contador', 'Administrativo', 'Contador'], ['bancarias', 'Financeiro', 'Taxas bancárias'], ['juros', 'Financeiro', 'Juros e multas'], ['das', 'Impostos', 'DAS do MEI (INSS + ICMS/ISS)'], ['outros-adm', 'Administrativo', 'Outros administrativos'],
     ['prolabore', 'Pessoal', 'Pró-labore'], ['ajudante', 'Pessoal', 'Ajudante'],
   ];
   var CAT_ANTIGA = { 'Marketing': 'anuncios', 'Embalagens': 'marca', 'Aluguel': 'aluguel', 'Energia': 'energia', 'Água': 'agua', 'Gás': 'gas', 'Equipamentos': 'manutencao', 'Taxas': 'bancarias', 'Outros': 'outros-adm' };
@@ -128,6 +128,16 @@
       setTimeout(function () { salvar(true); }, 0);
     }
     var mudou = false;
+    /* v2 (18/10/2026): pacotes Impostos e Financeiro; DAS vai para Impostos; regime tributário */
+    if (!D.config.obzV2) {
+      var das = por(D.config.obz, 'das'), ban = por(D.config.obz, 'bancarias');
+      if (das) { das.pacote = 'Impostos'; das.nome = 'DAS do MEI (INSS + ICMS/ISS)'; } else D.config.obz.push({ id: 'das', pacote: 'Impostos', nome: 'DAS do MEI (INSS + ICMS/ISS)', valor: 0 });
+      if (ban) ban.pacote = 'Financeiro';
+      if (!por(D.config.obz, 'juros')) D.config.obz.push({ id: 'juros', pacote: 'Financeiro', nome: 'Juros e multas', valor: 0 });
+      if (!D.config.regime) D.config.regime = { tipo: 'mei', inss: 0, icms: 1, iss: 0, aliq: 0, aliqIR: 0 };
+      D.config.obzV2 = 1; mudou = true;
+    }
+    D.despesas.forEach(function (d) { var c0 = d.conta && por(D.config.obz, d.conta); if (c0 && d.categoria !== c0.nome) { d.categoria = c0.nome; mudou = true; } });
     D.despesas.forEach(function (d) { if (!d.conta) { var id = CAT_ANTIGA[d.categoria] || 'outros-adm', c = por(D.config.obz, id); d.conta = id; d.categoria = c ? c.nome : d.categoria; mudou = true; } });
     if (mudou) setTimeout(function () { salvar(true); }, 0);
     return D.config.obz;
@@ -283,17 +293,79 @@
     return l.sort(function (a, b) { return a.data < b.data ? 1 : a.data > b.data ? -1 : (b.ts || 0) - (a.ts || 0); });
   }
 
-  /* DRE (competência): venda na data do pedido; insumo vira custo quando é USADO na produção;
-     kit de entrega quando o pedido é entregue; despesas na data. Retirada/aporte NÃO entram. */
+  /* DRE gerencial (competência), agrupado:
+     Receita bruta → (−) Deduções [descontos, impostos sobre a venda, taxas de canal] → Receita líquida
+     → (−) CMV [insumos, embalagens] → Lucro bruto → (−) Variáveis de venda [kit] → Margem de contribuição
+     → (−) Despesas operacionais [pacotes OBZ; INSS do MEI em Pessoal] → Resultado operacional
+     → (−) Financeiro → LAIR → (−) IR/CSLL → Lucro líquido. Retiradas dos sócios só informativas.
+     MEI: o DAS é INSS (vai para Pessoal) + ICMS/ISS (imposto sobre a venda). Mês sem DAS lançado
+     usa o valor cadastrado no regime (automático); mês com DAS lançado usa o lançado. */
+  /* despesas do DRE = despesas lançadas + compras em que se escolheu uma linha do DRE (conta OBZ):
+     essas não vão para o estoque, viram despesa da conta na data da compra */
+  function despesasDRE() {
+    return D.despesas.concat(D.compras.filter(function (c) { return c.conta; }).map(function (c) { var i = insumo(c.insumo), k = contaOBZ(c.conta);
+      return { id: c.id, data: c.data, valor: c.valor, conta: c.conta, categoria: k ? k.nome : c.conta, desc: (i ? i.nome : c.desc || 'Compra') + ' · ' + qtdFmt(c.qtd, i && i.un), _compra: true }; }));
+  }
+  function regime() { return D.config.regime || { tipo: 'mei', inss: 0, icms: 1, iss: 0, aliq: 0, aliqIR: 0 }; }
+  function dasMensal() { var r = regime(); return (+r.inss || 0) + (+r.icms || 0) + (+r.iss || 0); }
+  /* meses do período em que a gelateria já existia (do 1º mês com movimento até hoje) — DAS automático só neles */
+  function mesesDe(ym) { var at = mesAtual(), ini = mesesComDados()[0] || at; return (!ym ? mesesComDados() : Array.isArray(ym) ? ym : [ym]).filter(function (m) { return m <= at && m >= ini; }); }
   function dre(ym) {
-    var o = { rec: 0, taxa: 0, ins: 0, emb: 0, kit: 0, desp: {}, despT: 0, lotes: 0, kg: 0, potes: 0 };
+    var rg = regime(), mei = rg.tipo === 'mei', aliqV = mei ? 0 : (+D.config.imposto || 0), aliqIR = rg.tipo === 'presumido' ? (+rg.aliqIR || 0) : 0;
+    var o = { bruta: 0, desc: 0, impV: 0, dasV: 0, impOutros: 0, taxa: 0, ins: 0, emb: 0, kit: 0, desp: {}, despT: 0, inss: 0, fin: 0, finD: {}, ir: 0,
+              lotes: 0, kg: 0, potes: 0, das: [], despPk: {}, retiradas: 0, regime: rg.tipo };
     var kitU = (D.config.kitEntrega || []).reduce(function (t, id) { return t + custoInsumo(id).valor; }, 0);
-    D.vendas.forEach(function (v) { if (!noPer(v.data, ym)) return; var r = resultadoVenda(v); o.rec += r.receita; o.taxa += r.taxa; o.potes += potesVenda(v);
+    D.vendas.forEach(function (v) { if (!noPer(v.data, ym)) return;
+      var bruto = v.itens.reduce(function (s, i) { return s + i.qtd * i.preco; }, 0), liq = totalVenda(v), repasse = v.itens.every(function (i) { return !i.produto && !i.tam; });
+      o.bruta += bruto; o.desc += bruto - liq; o.potes += potesVenda(v);
+      if (!repasse) { var c = canal(v.canal); o.taxa += liq * (c ? +c.taxa || 0 : 0); o.impV += liq * aliqV; }
       if (v.entregue && (canal(v.canal) || {}).kitEntrega && v.itens.some(function (i) { return i.tam; })) o.kit += kitU; });
     D.producoes.forEach(function (pr) { if (!noPer(pr.data, ym)) return; o.lotes++; o.kg += +pr.kg || 0; var c = consumoProducao(pr);
       Object.keys(c).forEach(function (id) { var i = insumo(id), val = c[id] * custoInsumo(id).valor; if (i && i.tipo === 'embalagem') o.emb += val; else o.ins += val; }); });
-    D.despesas.forEach(function (d) { if (!noPer(d.data, ym)) return; var pk = pacoteDespesa(d); o.desp[pk] = (o.desp[pk] || 0) + (+d.valor || 0); o.despT += +d.valor || 0; });
-    o.liq = o.rec - o.taxa; o.cprod = o.ins + o.emb + o.kit; o.bruto = o.liq - o.cprod; o.res = o.bruto - o.despT; return o;
+    var dasLanc = {}, icmsMes = (+rg.icms || 0) + (+rg.iss || 0);
+    despesasDRE().forEach(function (d) { if (!noPer(d.data, ym)) return; var val = +d.valor || 0, pk = pacoteDespesa(d);
+      o.despPk[pk] = (o.despPk[pk] || 0) + val;
+      if (d.conta === 'das') { var m = d.data.slice(0, 7); dasLanc[m] = (dasLanc[m] || 0) + val; return; }
+      if (pk === 'Impostos') { o.impOutros += val; return; }
+      if (pk === 'Financeiro') { o.fin += val; o.finD[d.categoria] = (o.finD[d.categoria] || 0) + val; return; }
+      o.desp[pk] = (o.desp[pk] || 0) + val; o.despT += val; });
+    if (mei) mesesDe(ym).forEach(function (m) {
+      var tot = dasLanc[m] != null ? dasLanc[m] : dasMensal(), icms = Math.min(tot, icmsMes), inss = tot - icms;
+      o.dasV += icms; o.inss += inss; o.das.push({ ym: m, total: tot, icms: icms, inss: inss, auto: dasLanc[m] == null });
+    }); else Object.keys(dasLanc).forEach(function (m) { o.impOutros += dasLanc[m]; });
+    if (o.inss) { o.desp['Pessoal'] = (o.desp['Pessoal'] || 0) + o.inss; o.despT += o.inss; }
+    socios().forEach(function (s) { if (noPer(s.data, ym) && s.tipo === 'retirada') o.retiradas += +s.valor || 0; });
+    o.imp = o.impV + o.dasV + o.impOutros; o.ded = o.desc + o.imp + o.taxa; o.liq = o.bruta - o.ded;
+    o.cmv = o.ins + o.emb; o.bruto = o.liq - o.cmv; o.mc = o.bruto - o.kit; o.oper = o.mc - o.despT;
+    o.lair = o.oper - o.fin; o.ir = o.bruta * aliqIR; o.res = o.lair - o.ir;
+    o.rec = o.bruta; o.cprod = o.cmv + o.kit;   // nomes antigos
+    return o;
+  }
+
+  /* itens por trás de uma linha do DRE (o PC e o app abrem o mesmo detalhe) */
+  var DRE_LINHA = { rec: 'Receita bruta', desc: 'Descontos', imp: 'Impostos sobre a venda', taxa: 'Taxas de canal', ins: 'Insumos usados na produção', emb: 'Embalagens usadas', kit: 'Kit de entrega', desp: 'Despesas', fin: 'Resultado financeiro', ir: 'IR / CSLL' };
+  function dreItens(l, pk, ym) {
+    var rows = [], rg = regime(), mei = rg.tipo === 'mei', aliqV = mei ? 0 : (+D.config.imposto || 0);
+    var kitU = (D.config.kitEntrega || []).reduce(function (t, id) { return t + custoInsumo(id).valor; }, 0);
+    var resumo = function (v) { return v.itens.map(function (i) { return i.qtd + '× ' + nomeItem(i).replace(/ com .*/, '') + (i.tam ? ' ' + i.tam : ''); }).join(' · '); };
+    if (l === 'rec' || l === 'desc' || l === 'taxa' || l === 'kit' || (l === 'imp' && aliqV)) D.vendas.forEach(function (v) { if (!noPer(v.data, ym)) return;
+      var bruto = v.itens.reduce(function (s, i) { return s + i.qtd * i.preco; }, 0), liq = totalVenda(v), rep = v.itens.every(function (i) { return !i.produto && !i.tam; }), c = canal(v.canal), val = 0;
+      if (l === 'rec') val = bruto; else if (l === 'desc') val = bruto - liq; else if (l === 'taxa') val = rep ? 0 : liq * (c ? +c.taxa || 0 : 0);
+      else if (l === 'imp') val = rep ? 0 : liq * aliqV; else val = (v.entregue && (c || {}).kitEntrega && v.itens.some(function (i) { return i.tam; })) ? kitU : 0;
+      if (Math.abs(val) > 0.004) rows.push({ d: v.data, desc: nomeCliente(v), det: resumo(v) + ' · ' + (c ? c.nome : v.canal), v: val, tipo: 'venda', id: v.id }); });
+    if (l === 'ins' || l === 'emb') D.producoes.forEach(function (p) { if (!noPer(p.data, ym)) return; var c = consumoProducao(p), val = 0;
+      Object.keys(c).forEach(function (id) { var i = insumo(id), e = i && i.tipo === 'embalagem'; if ((l === 'emb') === !!e) val += c[id] * custoInsumo(id).valor; });
+      var r = receita(p.receita); if (val) rows.push({ d: p.data, desc: r ? r.nome : p.receita, det: num((p.kg || 0) * 1000, 0) + ' g de mistura', v: val, tipo: 'producao', id: p.id }); });
+    if (l === 'imp' || l === 'desp' || l === 'fin') {
+      var o = dre(ym);
+      if (mei && (l === 'imp' || (l === 'desp' && pk === 'Pessoal'))) o.das.forEach(function (x) { var val = l === 'imp' ? x.icms : x.inss;
+        if (val) rows.push({ d: x.ym + '-01', desc: l === 'imp' ? 'DAS · ICMS/ISS' : 'DAS · INSS do MEI', det: nomeMes(x.ym, true) + (x.auto ? ' · automático (valor do regime)' : ' · DAS lançado'), v: val, tipo: 'das' }); });
+      despesasDRE().forEach(function (d) { if (!noPer(d.data, ym) || (mei && d.conta === 'das')) return; var p = pacoteDespesa(d);
+        var ok = l === 'imp' ? p === 'Impostos' : l === 'fin' ? p === 'Financeiro' : (p !== 'Impostos' && p !== 'Financeiro' && (!pk || p === pk));
+        if (ok) rows.push({ d: d.data, desc: d.desc, det: d.categoria + (d._compra ? ' · compra' : ''), v: +d.valor || 0, tipo: d._compra ? 'compra' : 'despesa', id: d.id }); });
+    }
+    if (l === 'ir') { var a = rg.tipo === 'presumido' ? +rg.aliqIR || 0 : 0; mesesDe(ym).forEach(function (m) { var b = 0; D.vendas.forEach(function (v) { if (noPer(v.data, m)) b += v.itens.reduce(function (s, i) { return s + i.qtd * i.preco; }, 0); }); if (b * a) rows.push({ d: m + '-01', desc: 'IR / CSLL', det: nomeMes(m, true) + ' · ' + pct(a, 2) + ' da receita', v: b * a, tipo: 'ir' }); }); }
+    return rows.sort(function (x, y) { return x.d < y.d ? 1 : x.d > y.d ? -1 : 0; });
   }
 
   /* ───────────── estoque ─────────────
@@ -341,7 +413,7 @@
         /* guarda o que o sistema esperava antes do acerto: a diferença mostra perdas/erros */
         Object.keys(c.insumos || {}).forEach(function (k) { hist.push({ c: c, tipo: 'ins', k: k, antes: ins[k] == null ? null : ins[k], depois: +c.insumos[k] }); ins[k] = +c.insumos[k]; contado.ins[k] = c.data; });
         Object.keys(c.potes || {}).forEach(function (k) { hist.push({ c: c, tipo: 'pote', k: k, antes: potes[k] == null ? null : potes[k], depois: +c.potes[k] }); potes[k] = +c.potes[k]; contado.pote[k] = c.data; });
-      } else if (m.tipo === 'compra') add(ins, c.insumo, +c.qtd || 0);
+      } else if (m.tipo === 'compra') { if (!c.conta) add(ins, c.insumo, +c.qtd || 0); }   // compra com linha do DRE escolhida não vai para o estoque
       else if (m.tipo === 'producao') {
         var cons = consumoProducao(c); Object.keys(cons).forEach(function (k) { add(ins, k, -cons[k]); });
         if (c.produto && !c.historico) Object.keys(c.potes || {}).forEach(function (t) { add(potes, c.produto + '|' + t, +c.potes[t] || 0); });
@@ -382,7 +454,7 @@
     indiretosMes: indiretosMes, indiretoKg: indiretoKg, contasOBZ: contasOBZ, contaOBZ: contaOBZ, pacoteDespesa: pacoteDespesa, obzPorPacote: obzPorPacote, PACOTES_OBZ: PACOTES_OBZ, custoPote: custoPote, taxaCanal: taxaCanal,
     precoTabela: precoTabela, definirPreco: definirPreco, precificar: precificar, metaPotes: metaPotes,
     totalVenda: totalVenda, potesVenda: potesVenda, resultadoVenda: resultadoVenda, vendasMes: vendasMes, nomeItem: nomeItem, nomeCliente: nomeCliente,
-    resumo: resumo, mesesComDados: mesesComDados, caixa: caixa, extrato: extrato, saldoConta: saldoConta, dre: dre, NOME_SOCIO: NOME_SOCIO,
+    resumo: resumo, mesesComDados: mesesComDados, caixa: caixa, extrato: extrato, saldoConta: saldoConta, dre: dre, dreItens: dreItens, DRE_LINHA: DRE_LINHA, regime: regime, dasMensal: dasMensal, NOME_SOCIO: NOME_SOCIO,
     consumoProducao: consumoProducao, estoque: estoque, estoqueBaixo: estoqueBaixo,
     produtosAtivos: produtosAtivos, tamanhosAtivos: tamanhosAtivos, unidade: unidade, qtdFmt: qtdFmt,
   };
