@@ -10,14 +10,14 @@
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.SG_BUILD='20261018165811';</script>
-<script src="../shared/versao.js?v=20261018165811"></script>
-<script src="../shared/config.js?v=20261018165811"></script>
-<script src="../shared/seed.js?v=20261018165811"></script>
-<script src="../shared/core.js?v=20261018165811"></script>
+<script>window.SG_BUILD='20261018170037';</script>
+<script src="../shared/versao.js?v=20261018170037"></script>
+<script src="../shared/config.js?v=20261018170037"></script>
+<script src="../shared/seed.js?v=20261018170037"></script>
+<script src="../shared/core.js?v=20261018170037"></script>
 <script src="../assets/excel-export.js"></script>
 <script src="../assets/pdf-export.js"></script>
-<script src="../shared/remote.js?v=20261018165811"></script>
+<script src="../shared/remote.js?v=20261018170037"></script>
 <style>
 /* ============================================================
    SURREAL — Painel de gestão (PC). OneSpot · 16/10/2026
@@ -834,6 +834,7 @@ VIEWS.cenarios=function(){
     var a=SG.precificar(p.id,SIM.tam,SIM.canal,{}), pr=SIM.precoTodos!=null?SIM.precoTodos:a.tabela, b=SG.precificar(p.id,SIM.tam,SIM.canal,pr!=null?{preco:pr}:{},ctx);
     return {p:p,a:a,b:b,pr:pr,meta:SG.precificar(p.id,SIM.tam,SIM.canal,{margem:alvo},ctx).sugerido}; });
   var fm=function(m){ return m==null||!isFinite(m)?'—':'<span class="'+corMg(m)+'">'+SG.pct(m,0)+'</span>'; };
+  if(!ORD.tCen) ORD.tCen={i:7,d:1};   /* abre sempre ordenado pela margem simulada (a menor primeiro) */
   h+='<div class="card tsec"><div class="thead-row"><div class="tsub">'+esc(nTam(SIM.tam))+' · '+esc(nCanal(SIM.canal))+' · verde = atinge a meta de '+SG.pct(alvo,0)+' · âmbar = lucra abaixo da meta · vermelho = prejuízo</div></div><div class="twrap">'+tabela('tCen',[
     {t:'Sabor',f:function(l){return esc(l.p.nome);},s:function(l){return l.p.nome;},cls:'conta'},
     {t:'Custo hoje',f:function(l){return SG.brl(l.a.custo.total);},v:function(l){return l.a.custo.total;},cls:'num'},

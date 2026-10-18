@@ -13,12 +13,12 @@
 <link rel="icon" href="img/icone-192.png">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.SG_BUILD='20261018165811';</script>
-<script src="shared/versao.js?v=20261018165811"></script>
-<script src="shared/config.js?v=20261018165811"></script>
-<script src="shared/seed.js?v=20261018165811"></script>
-<script src="shared/core.js?v=20261018165811"></script>
-<script src="shared/remote.js?v=20261018165811"></script>
+<script>window.SG_BUILD='20261018170037';</script>
+<script src="shared/versao.js?v=20261018170037"></script>
+<script src="shared/config.js?v=20261018170037"></script>
+<script src="shared/seed.js?v=20261018170037"></script>
+<script src="shared/core.js?v=20261018170037"></script>
+<script src="shared/remote.js?v=20261018170037"></script>
 <style>
 /* ============================================================
    SURREAL · gelato artesanal — app (PWA)
@@ -890,7 +890,9 @@ TELAS.simTodos = function(a){
   h+='<div class="seg">'+D().tamanhos.map(function(x){ return '<button class="'+(x.id===t?'on':'')+'" onclick="atual().tam=\''+x.id+'\';render()">'+x.nome+'<small>'+x.ml+' ml</small></button>'; }).join('')+'</div>';
   h+='<div class="seg">'+D().canais.map(function(x){ return '<button class="'+(x.id===c?'on':'')+'" onclick="atual().canal=\''+x.id+'\';render()">'+esc(x.nome.replace(' (mercadinhos)',''))+(x.taxa?'<small>taxa '+SG.pct(x.taxa,0)+'</small>':'')+'</button>'; }).join('')+'</div>';
   var M={c:0,nc:0,p:0,np:0,m:0,nm:0};
-  var rows=SG.produtosAtivos().filter(function(p){ return p.receita; }).map(function(p){ var x=SG.precificar(p.id,t,c); if(!x) return '';
+  /* sempre ordenado pela margem (a menor primeiro; sem preço de tabela no fim) */
+  var rows=SG.produtosAtivos().filter(function(p){ return p.receita; }).map(function(p){ return {p:p, x:SG.precificar(p.id,t,c)}; }).filter(function(o){ return o.x; })
+    .sort(function(A,B){ var ma=A.x.tabela!=null&&!A.x.custo.semFicha?A.x.margem:9, mb=B.x.tabela!=null&&!B.x.custo.semFicha?B.x.margem:9; return ma-mb; }).map(function(o){ var p=o.p, x=o.x;
     var ok=x.tabela!=null&&!x.custo.semFicha; M.c+=x.custo.total; M.nc++; if(x.tabela!=null){ M.p+=x.tabela; M.np++; } if(ok){ M.m+=x.margem; M.nm++; }
     return '<tr class="lk" onclick="simAbre(\''+p.id+'\',\''+t+'\',\''+c+'\')"><td>'+esc(p.nome)+'</td><td>'+SG.brl(x.custo.total)+'</td><td>'+(x.tabela!=null?SG.brl(x.tabela):'—')+'</td><td class="'+(ok?(x.margem>=alvo-0.005?'pos':x.margem>0?'amb':'neg'):'')+'">'+(ok?SG.pct(x.margem,0):'—')+'</td></tr>'; }).join('');
   h+='<table class="mini"><tr><th>Sabor</th><th>Custo</th><th>Preço</th><th>Margem</th></tr>'+rows
