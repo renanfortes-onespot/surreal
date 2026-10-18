@@ -13,12 +13,12 @@
 <link rel="icon" href="img/icone-192.png">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.SG_BUILD='20261018151946';</script>
-<script src="shared/versao.js?v=20261018151946"></script>
-<script src="shared/config.js?v=20261018151946"></script>
-<script src="shared/seed.js?v=20261018151946"></script>
-<script src="shared/core.js?v=20261018151946"></script>
-<script src="shared/remote.js?v=20261018151946"></script>
+<script>window.SG_BUILD='20261018152356';</script>
+<script src="shared/versao.js?v=20261018152356"></script>
+<script src="shared/config.js?v=20261018152356"></script>
+<script src="shared/seed.js?v=20261018152356"></script>
+<script src="shared/core.js?v=20261018152356"></script>
+<script src="shared/remote.js?v=20261018152356"></script>
 <style>
 /* ============================================================
    SURREAL · gelato artesanal — app (PWA)
@@ -767,7 +767,7 @@ TELAS.caixa = function(a){
   var ent=c.entradas+c.aportes+Math.max(0,c.acertos), sai=c.saidas+c.retiradas+Math.max(0,-c.acertos);
   var subE='pedidos pagos'+(c.aportes?' · aportes '+SG.brl0(c.aportes):'')+(c.receber?' · a receber '+SG.brl0(c.receber):''), subS='compras '+SG.brl0(c.compras)+' · despesas '+SG.brl0(c.despesas)+(c.retiradas?' · retiradas '+SG.brl0(c.retiradas):'');
   if(a.per==='mes') h+='<div class="res res3"><div class="n"><span>Entrou</span><b class="pos">'+SG.brl0(ent)+'</b></div><div class="n"><span>Saiu</span><b class="neg">'+SG.brl0(sai)+'</b></div><div class="n"><span>Saldo do mês</span><b class="'+(ent-sai>=0?'pos':'neg')+'">'+SG.brl0(ent-sai)+'</b></div></div><div class="nota2" style="margin:-8px 2px 14px">Entrou: '+subE+' · Saiu: '+subS+'</div>';
-  else h+='<div class="res"><div class="n"><span>Entrou</span><b class="pos">'+SG.brl0(ent)+'</b><small>'+subE+'</small></div><div class="n"><span>Saiu</span><b class="neg">'+SG.brl0(sai)+'</b><small>'+subS+'</small></div></div>';
+  else h+='<div class="res res3" style="grid-template-columns:1fr 1fr"><div class="n"><span>Entrou</span><b class="pos">'+SG.brl0(ent)+'</b></div><div class="n"><span>Saiu</span><b class="neg">'+SG.brl0(sai)+'</b></div></div><div class="nota2" style="margin:-8px 2px 14px">Entrou: '+subE+' · Saiu: '+subS+'</div>';
   h+='<div class="tri"><button class="btn sec2" onclick="abre(\'compraNova\',{form:1})">+ Compra</button><button class="btn sec2" onclick="abre(\'despesaNova\',{form:1})">+ Despesa</button><button class="btn sec2" onclick="abre(\'socioForm\',{form:1})">+ Retirada</button></div>';
   h+='<div class="sec">Lançamentos<span class="cont">'+ex.length+'</span></div>';
   h+= (ex.slice(0,n).map(liExtrato).join('') || vazio('Sem lançamentos neste período.')) + (ex.length>n?'<button class="btn sec2" onclick="atual().n='+(n+60)+';render()">Ver mais</button>':'');
