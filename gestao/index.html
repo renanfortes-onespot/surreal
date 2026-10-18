@@ -10,14 +10,14 @@
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.SG_BUILD='20261018160117';</script>
-<script src="../shared/versao.js?v=20261018160117"></script>
-<script src="../shared/config.js?v=20261018160117"></script>
-<script src="../shared/seed.js?v=20261018160117"></script>
-<script src="../shared/core.js?v=20261018160117"></script>
+<script>window.SG_BUILD='20261018160659';</script>
+<script src="../shared/versao.js?v=20261018160659"></script>
+<script src="../shared/config.js?v=20261018160659"></script>
+<script src="../shared/seed.js?v=20261018160659"></script>
+<script src="../shared/core.js?v=20261018160659"></script>
 <script src="../assets/excel-export.js"></script>
 <script src="../assets/pdf-export.js"></script>
-<script src="../shared/remote.js?v=20261018160117"></script>
+<script src="../shared/remote.js?v=20261018160659"></script>
 <style>
 /* ============================================================
    SURREAL — Painel de gestão (PC). OneSpot · 16/10/2026
@@ -117,6 +117,9 @@ body.claro .ms-panel{box-shadow:0 18px 44px rgba(15,23,42,.20),0 3px 10px rgba(1
 .hl{font-size:9.5px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.9px;}
 .hv{font-size:clamp(30px,4.8vh,46px);font-weight:800;line-height:1;margin:6px 0 4px;letter-spacing:-1px;}
 .hd{display:flex;gap:22px;margin-left:auto;flex-wrap:wrap;align-items:flex-end;}
+/* hero empilhado: indicadores logo abaixo do valor grande, alinhados à esquerda */
+.hero.col{flex-direction:column;align-items:flex-start;gap:10px;}
+.hero.col .hd{margin-left:0;gap:28px;}
 .hd div{font-size:9px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.7px;}
 .hd b{display:block;font-size:14px;font-weight:800;color:var(--txt);margin-top:3px;letter-spacing:0;text-transform:none;}
 .kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;flex:0 0 auto;min-height:clamp(108px,15vh,150px);}
@@ -570,7 +573,7 @@ VIEWS.vendasA=function(){
   function soma(ls, k, t){ ls.forEach(function(x){ var n=dim[1](x), o=A[n]=A[n]||{n:n,m:{rec:0,potes:0,lucro:0},y:{rec:0,potes:0,lucro:0}}; o[k].rec+=x.rec; o[k].potes+=x.potes; o[k].lucro+=x.lucro; t.rec+=x.rec; t.potes+=x.potes; t.lucro+=x.lucro; }); }
   soma(linhasVenda(ms),'m',tm); soma(linhasVenda(ytd),'y',ty);
   var r=resumoF(ms);
-  var h='<div class="hero"><div><div class="hl">Faturamento · '+perTxt()+'</div><div class="hv">'+SG.brl(r.faturamento)+'</div></div><div class="hd"><div>Potes<b>'+r.potes+'</b></div><div>Pedidos<b>'+r.pedidos+'</b></div><div>Ticket médio<b>'+SG.brl(r.ticket)+'</b></div><div>Lucro<b class="'+(r.lucro>=0?'cg':'cr')+'">'+SG.brl(r.lucro)+'</b></div><div>Faturamento no ano<b>'+SG.brl(ty.rec)+'</b></div></div></div>';
+  var h='<div class="hero col"><div><div class="hl">Faturamento · '+perTxt()+'</div><div class="hv">'+SG.brl(r.faturamento)+'</div></div><div class="hd"><div>Potes<b>'+r.potes+'</b></div><div>Pedidos<b>'+r.pedidos+'</b></div><div>Ticket médio<b>'+SG.brl(r.ticket)+'</b></div><div>Lucro<b class="'+(r.lucro>=0?'cg':'cr')+'">'+SG.brl(r.lucro)+'</b></div><div>Faturamento no ano<b>'+SG.brl(ty.rec)+'</b></div></div></div>';
   var mg=function(o){ return o.rec?o.lucro/o.rec:null; };
   var cols=[
     {t:dim[0],f:function(o){return esc(o.n);},s:function(o){return o.n;},cls:'conta'},
