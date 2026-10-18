@@ -13,12 +13,12 @@
 <link rel="icon" href="img/icone-192.png">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.SG_BUILD='20261018160659';</script>
-<script src="shared/versao.js?v=20261018160659"></script>
-<script src="shared/config.js?v=20261018160659"></script>
-<script src="shared/seed.js?v=20261018160659"></script>
-<script src="shared/core.js?v=20261018160659"></script>
-<script src="shared/remote.js?v=20261018160659"></script>
+<script>window.SG_BUILD='20261018160826';</script>
+<script src="shared/versao.js?v=20261018160826"></script>
+<script src="shared/config.js?v=20261018160826"></script>
+<script src="shared/seed.js?v=20261018160826"></script>
+<script src="shared/core.js?v=20261018160826"></script>
+<script src="shared/remote.js?v=20261018160826"></script>
 <style>
 /* ============================================================
    SURREAL · gelato artesanal — app (PWA)
@@ -807,9 +807,9 @@ TELAS.dre = function(a){
   var h='<div class="saldo"><div class="rot">Resultado · '+perNome(a)+'</div><div class="val '+(o.res>=0?'pos':'neg')+'">'+SG.brl(o.res)+'</div><div class="aviso">margem <b>'+(o.rec?SG.pct(o.res/o.rec,1):'—')+'</b> · '+o.potes+' potes vendidos · '+o.lotes+' lotes produzidos'+(ano?'<br>No ano: '+SG.brl(ano.res):'')+'</div></div>';
   h+=perSel(a);
   var L=[['Receita bruta (pedidos)',o.rec,'tot','rec'],['(−) Taxas de canal',-o.taxa,'','taxa'],['= Receita líquida',o.liq,'tot'],['(−) Insumos usados na produção',-o.ins,'','ins'],['(−) Embalagens usadas',-o.emb,'','emb'],['(−) Kit de entrega',-o.kit,'','kit'],['= Lucro bruto',o.bruto,'tot cor'],['(−) Despesas',-o.despT,'','desp']];
-  Object.keys(o.desp).sort().forEach(function(k){ L.push([k,-o.desp[k],'sub','desp']); });
+  Object.keys(o.desp).sort().forEach(function(k){ L.push([k,-o.desp[k],'sub','desp',k]); });
   L.push(['= Resultado',o.res,'tot cor']);
-  h+='<div class="dl">'+L.map(function(l){ if(Math.abs(l[1])<0.005) l[1]=0; var cor=l[2].indexOf('cor')>=0?(l[1]>=0?'pos':'neg'):''; return '<div class="r '+l[2]+(l[3]?' tap':'')+'"'+(l[3]?' onclick="abre(\'dreDet\',{l:\''+l[3]+'\',per:\''+a.per+'\',ym:\''+a.ym+'\'})"':'')+'><span>'+esc(l[0])+'</span><b class="'+cor+'">'+SG.brl(l[1])+'</b><small>'+pc(l[1])+'</small></div>'; }).join('')+'</div>';
+  h+='<div class="dl">'+L.map(function(l){ if(Math.abs(l[1])<0.005) l[1]=0; var cor=l[2].indexOf('cor')>=0?(l[1]>=0?'pos':'neg'):''; return '<div class="r '+l[2]+(l[3]?' tap':'')+'"'+(l[3]?' onclick="abre(\'dreDet\',{l:\''+l[3]+'\''+(l[4]?',pk:\''+esc(l[4])+'\'':'')+',per:\''+a.per+'\',ym:\''+a.ym+'\'})"':'')+'><span>'+esc(l[0])+'</span><b class="'+cor+'">'+SG.brl(l[1])+'</b><small>'+pc(l[1])+'</small></div>'; }).join('')+'</div>';
   h+=vazio('Compra de insumo não entra aqui: ele só vira custo quando é usado numa produção. Retiradas e aportes dos sócios também ficam de fora. Toque numa linha para ver o detalhe.');
   return h;
 };
@@ -825,10 +825,10 @@ TELAS.dreDet = function(a){
       Object.keys(c).forEach(function(id){ var i=SG.insumo(id), emb=i&&i.tipo==='embalagem'; if((a.l==='emb')===!!emb) val+=c[id]*SG.custoInsumo(id).valor; });
       if(!val) return; tot+=val; var r=SG.receita(p.receita); l.push({d:p.data, h:li({ic:'pote', t:esc(r?r.nome:p.receita), s:SG.dataBR(p.data)+' · '+SG.num((p.kg||0)*1000,0)+' g de mistura', v:SG.brl(val)})}); });
   } else {
-    D().despesas.filter(function(d){ return inP(d.data); }).forEach(function(d){ tot+=+d.valor||0; l.push({d:d.data, h:li({ic:'recibo', t:esc(d.desc), s:SG.dataBR(d.data)+' · '+esc(d.categoria), v:SG.brl(d.valor)})}); });
+    D().despesas.filter(function(d){ return inP(d.data) && (!a.pk || SG.pacoteDespesa(d)===a.pk); }).forEach(function(d){ tot+=+d.valor||0; l.push({d:d.data, h:li({ic:'recibo', t:esc(d.desc), s:SG.dataBR(d.data)+' · '+esc(d.categoria), v:SG.brl(d.valor)})}); });
   }
   l.sort(function(x,y){ return x.d<y.d?1:-1; });
-  return cab('dre', T[a.l], (ym?SG.nomeMes(ym)+' de '+ym.slice(0,4):'todo o período')+' · total '+SG.brl(tot)) + (l.map(function(x){return x.h;}).join('') || vazio('Nada neste período.'));
+  return cab('dre', a.pk?'Despesas · '+esc(a.pk):T[a.l], (ym?SG.nomeMes(ym)+' de '+ym.slice(0,4):'todo o período')+' · total '+SG.brl(tot)) + (l.map(function(x){return x.h;}).join('') || vazio('Nada neste período.'));
 };
 
 /* RESUMO GERENCIAL */
