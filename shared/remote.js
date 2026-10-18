@@ -57,7 +57,7 @@
   function json(x) { return JSON.stringify(x); }
 
   function guardaCache() {
-    try { localStorage.setItem(CACHE, JSON.stringify({ uid: perfil && perfil.id, D: SG.D, snap: snap, ultimo: ultimo })); } catch (e) {}
+    try { localStorage.setItem(CACHE, JSON.stringify({ uid: perfil && perfil.id, cols: COLS.join(','), D: SG.D, snap: snap, ultimo: ultimo })); } catch (e) {}
   }
 
   /* ── subir alterações ── */
@@ -67,6 +67,8 @@
     Object.keys(atual).forEach(function (k) { var j = json(atual[k].dados); if (snap[k] !== j) sobe.push({ k: k, row: { colecao: atual[k].colecao, id: atual[k].id, dados: atual[k].dados, apagado: false }, j: j }); });
     Object.keys(snap).forEach(function (k) {
       if (atual[k]) return; var p = k.split('\u0001');
+      // nunca apaga no servidor uma coleção que este aparelho nem carregou
+      if (COLS.indexOf(p[0]) >= 0 && !Array.isArray(SG.D[p[0]])) return;
       sobe.push({ k: k, row: { colecao: p[0], id: p[1], dados: JSON.parse(snap[k]), apagado: true }, j: null });
     });
     return sobe;
@@ -120,7 +122,7 @@
       if (j === loc) { if (j == null) delete snap[k]; else snap[k] = j; return; }
       mudou = true;
       if (COLS.indexOf(r.colecao) >= 0) {
-        var a = D[r.colecao], i = -1;
+        var a = D[r.colecao] || (D[r.colecao] = []), i = -1;
         for (var x = 0; x < a.length; x++) if (String(a[x].id) === r.id) { i = x; break; }
         if (r.apagado) { if (i >= 0) a.splice(i, 1); }
         else if (i >= 0) a[i] = r.dados; else a.push(r.dados);
@@ -160,7 +162,9 @@
   function abrir(user, cb) {
     return carregaPerfil(user).then(function () {
       var c = null; try { c = JSON.parse(localStorage.getItem(CACHE) || 'null'); } catch (e) {}
-      if (c && c.uid === perfil.id && c.D && c.D.config) {
+      /* cache feito com outra lista de coleções (coleção nova no app): baixa tudo de novo,
+         senão o que chegou enquanto o app antigo ignorava a coleção some daqui */
+      if (c && c.uid === perfil.id && c.D && c.D.config && c.cols === COLS.join(',')) {
         // abre na hora com o que já estava no aparelho; atualiza em seguida
         snap = c.snap || {}; ultimo = c.ultimo || null; SG.usar(c.D);
         cb.pronto(perfil);
