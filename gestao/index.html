@@ -10,14 +10,14 @@
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.SG_BUILD='20261018163035';</script>
-<script src="../shared/versao.js?v=20261018163035"></script>
-<script src="../shared/config.js?v=20261018163035"></script>
-<script src="../shared/seed.js?v=20261018163035"></script>
-<script src="../shared/core.js?v=20261018163035"></script>
+<script>window.SG_BUILD='20261018163916';</script>
+<script src="../shared/versao.js?v=20261018163916"></script>
+<script src="../shared/config.js?v=20261018163916"></script>
+<script src="../shared/seed.js?v=20261018163916"></script>
+<script src="../shared/core.js?v=20261018163916"></script>
 <script src="../assets/excel-export.js"></script>
 <script src="../assets/pdf-export.js"></script>
-<script src="../shared/remote.js?v=20261018163035"></script>
+<script src="../shared/remote.js?v=20261018163916"></script>
 <style>
 /* ============================================================
    SURREAL — Painel de gestão (PC). OneSpot · 16/10/2026
@@ -633,7 +633,7 @@ function rotPer(){ return F.per.size===1?SG.nomeMes(ymV()):'Período'; }
 VIEWS.dre=function(){
   var ms=perMeses(), ym=ymV(), ano=ym.slice(0,4), ytd=anoMeses(ym).filter(function(m){return m<=ym;});
   var A=dreMeses(ms), Y=dreMeses(ytd);
-  sub('Competência: venda na data do pedido · insumo vira custo só quando é usado na produção · '+perTxt());
+  sub('Competência: venda na data do pedido · custo dos potes entra quando o pote é vendido · '+perTxt());
   var cats={}, fins={}; [A,Y].forEach(function(o){ Object.keys(o.desp).forEach(function(k){cats[k]=1;}); Object.keys(o.finD).forEach(function(k){fins[k]=1;}); });
   var pks=SG.PACOTES_OBZ.filter(function(k){ return cats[k]; }).concat(Object.keys(cats).filter(function(k){ return SG.PACOTES_OBZ.indexOf(k)<0; }));
   var rg=SG.regime(), nImp=rg.tipo==='mei'?'Impostos sobre a venda (DAS · ICMS/ISS)':rg.tipo==='simples'?'Impostos sobre a venda (Simples)':'Impostos sobre a venda (PIS/COFINS/ICMS-ISS)';
@@ -645,8 +645,8 @@ VIEWS.dre=function(){
       {n:'Taxas de canal (iFood)', f:function(o){return -o.taxa;}, de:'ded', det:'taxa'},
     {n:'= Receita líquida', f:function(o){return o.liq;}, tot:1},
     {n:'(−) Custo dos produtos (CMV)', f:function(o){return -o.cmv;}, grp:'cmv'},
-      {n:'Insumos usados na produção', f:function(o){return -o.ins;}, de:'cmv', det:'ins'},
-      {n:'Embalagens usadas (pote, lacre, adesivo)', f:function(o){return -o.emb;}, de:'cmv', det:'emb'},
+      {n:'Insumos dos potes vendidos (gelato + cobertura)', f:function(o){return -o.ins;}, de:'cmv', det:'ins'},
+      {n:'Embalagens dos potes vendidos (pote, lacre, adesivo)', f:function(o){return -o.emb;}, de:'cmv', det:'emb'},
     {n:'= Lucro bruto', f:function(o){return o.bruto;}, tot:1, cor:1},
     {n:'(−) Despesas variáveis de venda', f:function(o){return -o.kit;}, grp:'var'},
       {n:'Kit de entrega (pedidos entregues)', f:function(o){return -o.kit;}, de:'var', det:'kit'},
@@ -666,7 +666,7 @@ VIEWS.dre=function(){
   var h='<div class="hero"><div><div class="hl">Resultado · '+perTxt()+'</div><div class="hv '+(A.res>=0?'cg':'cr')+'">'+SG.brl(A.res)+'</div><div class="tsub">'+A.lotes+' lotes produzidos · '+SG.num(A.kg,1)+' kg · '+A.potes+' potes vendidos</div></div>'
     + '<div class="hd"><div>Receita<b>'+SG.brl(A.rec)+'</b></div><div>Lucro bruto<b class="'+(A.bruto>=0?'cg':'cr')+'">'+SG.brl(A.bruto)+'</b></div><div>Margem líquida<b class="'+corMg(A.rec?A.res/A.rec:null)+'">'+(A.rec?SG.pct(A.res/A.rec,1):'—')+'</b></div><div>Resultado no ano<b class="'+(Y.res>=0?'cg':'cr')+'">'+SG.brl(Y.res)+'</b></div></div></div>';
   h+='<div class="split"><div class="card tsec"><div class="thead-row"><div class="ttit">DRE</div><div class="tsub">YTD = janeiro a '+SG.nomeMes(ym)+' de '+ano+'</div></div><div class="twrap">'+tabelaPY(L,A,Y,rotPer())+'</div>'
-    + '<div class="nota">Compra de insumo NÃO entra aqui: só vira custo quando o insumo é usado num lote de produção (valor ao custo da última compra). Meses sem produção lançada mostram custo zero — o diário de produção da planilha começa em setembro.</div></div>';
+    + '<div class="nota">Custo dos produtos = cada pote vendido pela ficha técnica, com o preço da última compra até a data da venda (pacote ÷ quantidade). O que foi produzido e não vendido fica no estoque.'+(A.semCusto?' <b>'+A.semCusto+' item(ns) sem custo</b> (repasse do iFood sem sabor ou produto sem ficha).':'')+'</div></div>';
   h+='<div class="pilha">'+gcard('gDre','Resultado · Mensal', ano+' · competência', legQ('Resultado do mês'))+'<div class="card tsec"><div class="thead-row"><div class="ttit">OBZ · orçado × realizado</div><div class="tsub">'+perTxt()+' · orçado = valor mensal × '+ms.length+(ms.length>1?' meses':' mês')+'</div></div><div class="twrap">'+obzTab(A,ms.length)+'</div></div></div></div>';
   $('view').innerHTML=h;
   var an=anoMeses(ym), res=an.map(function(m){ var o=dreMeses([m]); return (o.rec||o.cprod||o.despT)?+o.res.toFixed(2):null; });

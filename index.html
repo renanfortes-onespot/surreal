@@ -13,12 +13,12 @@
 <link rel="icon" href="img/icone-192.png">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.SG_BUILD='20261018163035';</script>
-<script src="shared/versao.js?v=20261018163035"></script>
-<script src="shared/config.js?v=20261018163035"></script>
-<script src="shared/seed.js?v=20261018163035"></script>
-<script src="shared/core.js?v=20261018163035"></script>
-<script src="shared/remote.js?v=20261018163035"></script>
+<script>window.SG_BUILD='20261018163916';</script>
+<script src="shared/versao.js?v=20261018163916"></script>
+<script src="shared/config.js?v=20261018163916"></script>
+<script src="shared/seed.js?v=20261018163916"></script>
+<script src="shared/core.js?v=20261018163916"></script>
+<script src="shared/remote.js?v=20261018163916"></script>
 <style>
 /* ============================================================
    SURREAL · gelato artesanal — app (PWA)
@@ -814,7 +814,7 @@ TELAS.dre = function(a){
   var L=[['Receita bruta',o.bruta,'tot','rec'],
     ['(−) Deduções',-o.ded,'grp',null,'ded'], ['Descontos',-o.desc,'sub','desc',null,'ded'], [rg.tipo==='mei'?'Impostos (DAS · ICMS/ISS)':'Impostos sobre a venda',-o.imp,'sub','imp',null,'ded'], ['Taxas de canal (iFood)',-o.taxa,'sub','taxa',null,'ded'],
     ['= Receita líquida',o.liq,'tot'],
-    ['(−) Custo dos produtos',-o.cmv,'grp',null,'cmv'], ['Insumos usados',-o.ins,'sub','ins',null,'cmv'], ['Embalagens usadas',-o.emb,'sub','emb',null,'cmv'],
+    ['(−) Custo dos produtos',-o.cmv,'grp',null,'cmv'], ['Insumos dos potes vendidos',-o.ins,'sub','ins',null,'cmv'], ['Embalagens dos potes vendidos',-o.emb,'sub','emb',null,'cmv'],
     ['= Lucro bruto',o.bruto,'tot cor'],
     ['(−) Variáveis de venda',-o.kit,'grp',null,'var'], ['Kit de entrega',-o.kit,'sub','kit',null,'var'],
     ['= Margem de contribuição',o.mc,'tot cor'],
@@ -829,7 +829,7 @@ TELAS.dre = function(a){
     var v=Math.abs(l[1])<0.005?0:l[1], cor=l[2].indexOf('cor')>=0?(v>=0?'pos':'neg'):'', grp=l[2]==='grp';
     var on=grp?"atual().ab['"+l[4]+"']=!atual().ab['"+l[4]+"'];render()":l[3]?"abre('dreDet',{l:'"+l[3]+"'"+(l[6]?",pk:'"+esc(l[6])+"'":'')+",per:'"+a.per+"',ym:'"+a.ym+"'})":null;
     return '<div class="r '+(grp?'tot grp':l[2])+(on?' tap':'')+'"'+(on?' onclick="'+on+'"':'')+'><span>'+(grp?'<i class="seta">'+(ab[l[4]]?'▾':'▸')+'</i>':'')+esc(l[0])+'</span><b class="'+cor+'">'+SG.brl(v)+'</b><small>'+pc(v)+'</small></div>'; }).join('')+'</div>';
-  h+='<div class="nota2" style="margin:-8px 2px 12px">Toque no ▸ para abrir o grupo e na linha para ver os lançamentos'+(o.retiradas?' · retiradas dos sócios '+SG.brl0(o.retiradas)+' (fora do resultado)':'')+'</div>';
+  h+='<div class="nota2" style="margin:-8px 2px 12px">Toque no ▸ para abrir o grupo e na linha para ver os lançamentos · custo entra quando o pote é vendido'+(o.semCusto?' · '+o.semCusto+' item(ns) sem custo (repasse iFood/sem ficha)':'')+(o.retiradas?' · retiradas dos sócios '+SG.brl0(o.retiradas)+' (fora do resultado)':'')+'</div>';
   return h;
 };
 TELAS.dreDet = function(a){
