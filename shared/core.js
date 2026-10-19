@@ -133,7 +133,8 @@
       else sem.push(nome);
     });
     delete pilha[rid];
-    var rendG = (r.rendKg || peso / 1000 || 1) * 1000; if (rendG > peso && peso) rendG = peso;   // render mais do que pesa não existe
+    /* % sobre o peso dos ingredientes (como a planilha); só concentra quando a receita perde água de propósito (coar, reduzir) */
+    var rendG = peso; if (r.concentra && r.rendKg && r.rendKg * 1000 < peso) rendG = r.rendKg * 1000;
     tot.st = tot.acu + tot.gor + tot.sngl + tot.os; tot.agua = Math.max(0, rendG - tot.st);
     var pct = {}; ['acu', 'gor', 'sngl', 'os', 'st', 'agua'].forEach(function (k) { pct[k] = rendG ? tot[k] / rendG : 0; });
     pct.pod = rendG ? 1000 * tot.pod / rendG : 0; pct.pac = rendG ? 1000 * tot.pac / rendG : 0;
