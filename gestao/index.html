@@ -10,15 +10,15 @@
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.SG_BUILD='20261019185140';</script>
-<script src="../shared/versao.js?v=20261019185140"></script>
-<script src="../shared/config.js?v=20261019185140"></script>
-<script src="../shared/seed.js?v=20261019185140"></script>
-<script src="../shared/biblioteca.js?v=20261019185140"></script>
-<script src="../shared/core.js?v=20261019185140"></script>
+<script>window.SG_BUILD='20261019185531';</script>
+<script src="../shared/versao.js?v=20261019185531"></script>
+<script src="../shared/config.js?v=20261019185531"></script>
+<script src="../shared/seed.js?v=20261019185531"></script>
+<script src="../shared/biblioteca.js?v=20261019185531"></script>
+<script src="../shared/core.js?v=20261019185531"></script>
 <script src="../assets/excel-export.js"></script>
 <script src="../assets/pdf-export.js"></script>
-<script src="../shared/remote.js?v=20261019185140"></script>
+<script src="../shared/remote.js?v=20261019185531"></script>
 <style>
 /* ============================================================
    SURREAL — Painel de gestão (PC). OneSpot · 16/10/2026
@@ -252,8 +252,10 @@ input[type=range]{accent-color:var(--acc2);}
 .lin .nm small{display:block;font-size:10.5px;color:var(--txt3);}
 .lin .v{font-weight:700;white-space:nowrap;text-align:right;}
 /* ficha da receita: dados em cima, tabela de balanceamento embaixo (padrão da planilha do curso) */
-.rf-top{display:grid;grid-template-columns:1.5fr 1.1fr 1.2fr .55fr 1fr 1.3fr;gap:10px;flex:0 0 auto;margin-bottom:10px;}
-.m-card.wiz.rf{width:min(1240px,98vw);height:min(94vh,900px);}
+.rf-top{display:grid;grid-template-columns:1.5fr max-content 1.1fr 84px max-content 1.3fr;gap:10px;flex:0 0 auto;margin-bottom:10px;}
+.rf-top .seg{white-space:nowrap;} .rf-top .seg button{padding-left:12px;padding-right:12px;}
+.m-card.wiz.rf{width:min(1240px,98vw);height:auto;max-height:94vh;}
+.rf-tab{flex:0 1 auto;} .rf-tab .twrap{flex:0 1 auto;}
 .rf-tab table.dre{font-size:11px;} .rf-tab table.dre td{padding:6px 7px;} .rf-tab table.dre thead th{padding:7px 7px;font-size:8.5px;} .rf-tab .inp.sm{height:26px;padding:0 6px;font-size:11px;}
 .rf-top .fld{margin:0;}
 .rf-tab{flex:1;min-height:0;display:flex;flex-direction:column;}
@@ -261,8 +263,9 @@ input[type=range]{accent-color:var(--acc2);}
 .rf-tab .tsub b{color:var(--txt);font-weight:700;}
 .rf-tab .dir .inp{height:30px;padding:0 8px;font-size:11.5px;}
 table.dre td.bal-n{color:var(--txt);}
-table.dre tr.pct td{font-weight:700;color:var(--txt);background:var(--cabec);position:sticky;bottom:31px;z-index:1;border-top:1px solid var(--card-brd);}
-table.dre tr.stat td{padding-top:6px;padding-bottom:6px;position:sticky;bottom:0;background:var(--cabec);z-index:1;}
+table.dre tr.pct td{font-weight:700;color:var(--txt);background:var(--cabec);}
+table.dre tr.stat td{padding-top:6px;padding-bottom:8px;background:var(--cabec);}
+.rf-tab table.dre tr.total td{position:static;}
 .bs{display:inline-block;font-size:9.5px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;padding:2px 7px;border-radius:999px;}
 .bs.ok{background:rgba(61,212,122,.14);color:var(--verde);} .bs.baixo{background:rgba(245,166,35,.16);color:var(--ambar);} .bs.alto{background:rgba(244,84,74,.14);color:var(--vermelho);} .bs.sem{background:var(--hover);color:var(--txt3);}
 .sec2{font-size:9.5px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.8px;padding:12px 2px 4px;}
