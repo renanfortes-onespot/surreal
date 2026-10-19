@@ -10,15 +10,15 @@
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.SG_BUILD='20261019183718';</script>
-<script src="../shared/versao.js?v=20261019183718"></script>
-<script src="../shared/config.js?v=20261019183718"></script>
-<script src="../shared/seed.js?v=20261019183718"></script>
-<script src="../shared/biblioteca.js?v=20261019183718"></script>
-<script src="../shared/core.js?v=20261019183718"></script>
+<script>window.SG_BUILD='20261019184256';</script>
+<script src="../shared/versao.js?v=20261019184256"></script>
+<script src="../shared/config.js?v=20261019184256"></script>
+<script src="../shared/seed.js?v=20261019184256"></script>
+<script src="../shared/biblioteca.js?v=20261019184256"></script>
+<script src="../shared/core.js?v=20261019184256"></script>
 <script src="../assets/excel-export.js"></script>
 <script src="../assets/pdf-export.js"></script>
-<script src="../shared/remote.js?v=20261019183718"></script>
+<script src="../shared/remote.js?v=20261019184256"></script>
 <style>
 /* ============================================================
    SURREAL — Painel de gestão (PC). OneSpot · 16/10/2026
@@ -1267,17 +1267,17 @@ function rfCalc(){
   var tot=comp.reduce(function(s,c){return s+c.custo;},0), fx=b.faixa, C=SG.BAL_COLS;
   var pc=function(k,v){ return k==='pod'||k==='pac'?SG.num(v,0):SG.pct(v,1); };
   var fxTxt=function(k){ return fx?(k==='pod'||k==='pac'?SG.num(fx.min[k],0)+'–'+SG.num(fx.max[k],0):SG.pct(fx.min[k],0)+'–'+SG.pct(fx.max[k],0)):''; };
-  var h='<table class="dre"><thead><tr><th>Ingrediente</th><th class="num">g</th>'+C.map(function(c){return '<th class="num" title="'+(fx?'faixa '+fxTxt(c[0]):'')+'">'+c[1]+(fx?'<br><span style="font-weight:500;letter-spacing:0;text-transform:none">'+fxTxt(c[0])+'</span>':'')+'</th>';}).join('')+'<th class="num">Custo</th><th></th></tr></thead><tbody>';
-  if(!RF.itens.length) h+='<tr><td colspan="12" class="muted" style="padding:14px">Sem ingredientes. Adicione embaixo.</td></tr>';
-  b.itens.forEach(function(l,i){ var c=comp.filter(function(x){return x.item===l.item;})[0]||{};
-    h+='<tr><td class="conta">'+esc(l.nome)+(l.sem?' <span class="bs sem" title="Cadastre a composição no insumo (biblioteca)">sem composição</span>':'')+(l.item.receita?' <span class="mut">sub-receita</span>':'')+'</td>'
+  var h='<table class="dre"><thead><tr><th>Ingrediente</th><th class="num">g</th>'+C.map(function(c){return '<th class="num" title="'+(fx?'faixa '+fxTxt(c[0]):'')+'">'+c[1]+(fx?'<br><span style="font-weight:500;letter-spacing:0;text-transform:none">'+fxTxt(c[0])+'</span>':'')+'</th>';}).join('')+'<th class="num">Custo</th><th class="c" title="Entra no balanço? Desmarque para ingrediente que só conta no custo (ex.: café em infusão, que não fica na mistura)">Balanço</th><th></th></tr></thead><tbody>';
+  if(!RF.itens.length) h+='<tr><td colspan="13" class="muted" style="padding:14px">Sem ingredientes. Adicione embaixo.</td></tr>';
+  RF.itens.forEach(function(it,i){ var c=comp.filter(function(x){return x.item===it;})[0]||{}, l=b.itens.filter(function(x){return x.item===it;})[0]||{item:it,nome:c.nome||'?',g:+it.g||0,sem:false,fora:true};
+    h+='<tr'+(it.fora?' style="opacity:.55"':'')+'><td class="conta">'+esc(l.nome)+(it.fora?' <span class="mut">só custo</span>':'')+(l.sem?' <span class="bs sem" title="Cadastre a composição no insumo (biblioteca)">sem composição</span>':'')+(l.item.receita?' <span class="mut">sub-receita</span>':'')+'</td>'
       + '<td class="num"><input class="inp num sm" style="width:60px" value="'+nv(l.g,1)+'" onchange="RF.itens['+i+'].g=numIn(this.value)||0;rfCalc()"></td>'
-      + C.map(function(cc){ var k=cc[0]; return '<td class="num'+(l.sem?'':' bal-n')+'">'+(l.sem?'—':(k==='pod'||k==='pac'?SG.num(l[k]*1,1):SG.num(l[k],1)))+'</td>'; }).join('')
-      + '<td class="num">'+SG.brl(c.custo||0)+'</td><td><button class="x-btn" title="Remover" onclick="RF.itens.splice('+i+',1);rfCalc()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button></td></tr>'; });
+      + C.map(function(cc){ var k=cc[0]; return '<td class="num'+(l.sem||it.fora?'':' bal-n')+'">'+(it.fora||l.sem?'—':(k==='pod'||k==='pac'?SG.num(l[k]*1,1):SG.num(l[k],1)))+'</td>'; }).join('')
+      + '<td class="num">'+SG.brl(c.custo||0)+'</td><td class="c"><input type="checkbox" '+(it.fora?'':'checked')+' onchange="RF.itens['+i+'].fora=!this.checked;rfCalc()" title="Entra no balanço"></td><td><button class="x-btn" title="Remover" onclick="RF.itens.splice('+i+',1);rfCalc()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button></td></tr>'; });
   if(RF.itens.length){
-    h+='<tr class="total" style="position:static"><td>Total (g)</td><td class="num">'+SG.num(b.peso,0)+'</td>'+C.map(function(cc){ var k=cc[0]; return '<td class="num">'+(k==='pod'||k==='pac'?SG.num(b.tot[k],0):SG.num(b.tot[k],0))+'</td>'; }).join('')+'<td class="num">'+SG.brl(tot)+'</td><td></td></tr>';
-    h+='<tr class="pct"><td>% da mistura · POD e PAC por kg</td><td class="num">'+(b.rendG<b.peso?'rende '+SG.num(b.rendG,0):'')+'</td>'+C.map(function(cc){ return '<td class="num">'+pc(cc[0],b.pct[cc[0]])+'</td>'; }).join('')+'<td class="num">'+SG.brl(ck)+'/kg</td><td></td></tr>';
-    h+='<tr class="stat"><td>Status · '+esc(SG.BAL_TIPOS[b.tipo])+'</td><td class="num">'+(fx?(b.ok?'<span class="bs ok">Ok</span>':b.sem.length?'<span class="bs sem">incompleto</span>':'<span class="bs baixo">Revisar</span>'):'')+'</td>'+C.map(function(cc){ var st=b.status[cc[0]]; return '<td class="num">'+(st?'<span class="bs '+st+'">'+(st==='ok'?'ok':st)+'</span>':'')+'</td>'; }).join('')+'<td></td><td></td></tr>';
+    h+='<tr class="total" style="position:static"><td>Total (g)</td><td class="num">'+SG.num(b.peso,0)+'</td>'+C.map(function(cc){ var k=cc[0]; return '<td class="num">'+(k==='pod'||k==='pac'?SG.num(b.tot[k],0):SG.num(b.tot[k],0))+'</td>'; }).join('')+'<td class="num">'+SG.brl(tot)+'</td><td></td><td></td></tr>';
+    h+='<tr class="pct"><td>% da mistura · POD e PAC por kg</td><td class="num">'+(b.rendG<b.peso?'rende '+SG.num(b.rendG,0):'')+'</td>'+C.map(function(cc){ return '<td class="num">'+pc(cc[0],b.pct[cc[0]])+'</td>'; }).join('')+'<td class="num">'+SG.brl(ck)+'/kg</td><td></td><td></td></tr>';
+    h+='<tr class="stat"><td>Status · '+esc(SG.BAL_TIPOS[b.tipo])+'</td><td class="num">'+(fx?(b.ok?'<span class="bs ok">Ok</span>':b.sem.length?'<span class="bs sem">incompleto</span>':'<span class="bs baixo">Revisar</span>'):'')+'</td>'+C.map(function(cc){ var st=b.status[cc[0]]; return '<td class="num">'+(st?'<span class="bs '+st+'">'+(st==='ok'?'ok':st)+'</span>':'')+'</td>'; }).join('')+'<td></td><td></td><td></td></tr>';
   }
   h+='</tbody></table>';
   $('rfIt').innerHTML=h;

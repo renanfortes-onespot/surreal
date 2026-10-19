@@ -123,6 +123,7 @@
     pilha = pilha || {}; if (pilha[rid]) return null; pilha[rid] = 1;
     var itens = [], tot = { acu: 0, gor: 0, sngl: 0, os: 0, pod: 0, pac: 0 }, peso = 0, sem = [];
     r.itens.forEach(function (it) {
+      if (it.fora) return;   // só custo (ex.: café em infusão): não entra no peso nem na composição
       var g = +it.g || 0, c = null, nome;
       if (it.insumo) { var i = insumo(it.insumo); nome = i ? i.nome : it.insumo; c = compInsumo(it.insumo); }
       else { var sb = receita(it.receita), b = balanco(it.receita, pilha); nome = sb ? sb.nome : it.receita; if (b) c = b.porG; if (b && b.sem.length) sem = sem.concat(b.sem); }
