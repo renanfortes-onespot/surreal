@@ -10,15 +10,15 @@
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.SG_BUILD='20261019185638';</script>
-<script src="../shared/versao.js?v=20261019185638"></script>
-<script src="../shared/config.js?v=20261019185638"></script>
-<script src="../shared/seed.js?v=20261019185638"></script>
-<script src="../shared/biblioteca.js?v=20261019185638"></script>
-<script src="../shared/core.js?v=20261019185638"></script>
+<script>window.SG_BUILD='20261019190236';</script>
+<script src="../shared/versao.js?v=20261019190236"></script>
+<script src="../shared/config.js?v=20261019190236"></script>
+<script src="../shared/seed.js?v=20261019190236"></script>
+<script src="../shared/biblioteca.js?v=20261019190236"></script>
+<script src="../shared/core.js?v=20261019190236"></script>
 <script src="../assets/excel-export.js"></script>
 <script src="../assets/pdf-export.js"></script>
-<script src="../shared/remote.js?v=20261019185638"></script>
+<script src="../shared/remote.js?v=20261019190236"></script>
 <style>
 /* ============================================================
    SURREAL — Painel de gestão (PC). OneSpot · 16/10/2026
@@ -256,7 +256,9 @@ input[type=range]{accent-color:var(--acc2);}
 .rf-top .seg{white-space:nowrap;} .rf-top .seg button{padding-left:12px;padding-right:12px;}
 .m-card.wiz.rf{width:min(1240px,98vw);height:auto;max-height:94vh;}
 .rf-tab{flex:0 1 auto;} .rf-tab .twrap{flex:0 1 auto;}
-.rf-tab table.dre{font-size:11px;} .rf-tab table.dre td{padding:6px 7px;} .rf-tab table.dre thead th{padding:7px 7px;font-size:8.5px;} .rf-tab .inp.sm{height:26px;padding:0 6px;font-size:11px;}
+.rf-tab table.dre{font-size:11px;table-layout:fixed;width:100%;}
+.rf-tab table.dre th:first-child{width:19%;} .rf-tab table.dre th:nth-child(2){width:7%;} .rf-tab table.dre th:nth-child(n+3):nth-child(-n+10){width:7.3%;} .rf-tab table.dre th:nth-child(11){width:7.5%;} .rf-tab table.dre th:nth-child(12){width:6.5%;} .rf-tab table.dre th:nth-child(13){width:3.5%;}
+.rf-tab table.dre td{overflow:hidden;text-overflow:ellipsis;} .rf-tab table.dre td{padding:6px 7px;} .rf-tab table.dre thead th{padding:7px 7px;font-size:8.5px;} .rf-tab .inp.sm{height:26px;padding:0 6px;font-size:11px;}
 .rf-top .fld{margin:0;}
 .rf-tab{flex:1;min-height:0;display:flex;flex-direction:column;}
 .rf-tab .twrap{flex:1;}
@@ -1275,13 +1277,13 @@ function rfCalc(){
       + '<td class="num">'+SG.brl(c.custo||0)+'</td><td class="c"><input type="checkbox" '+(it.fora?'':'checked')+' onchange="RF.itens['+i+'].fora=!this.checked;rfCalc()" title="Entra no balanço"></td><td><button class="x-btn" title="Remover" onclick="RF.itens.splice('+i+',1);rfCalc()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button></td></tr>'; });
   if(RF.itens.length){
     h+='<tr class="total" style="position:static"><td>Total (g)</td><td class="num">'+SG.num(b.peso,0)+'</td>'+C.map(function(cc){ var k=cc[0]; return '<td class="num">'+(k==='pod'||k==='pac'?SG.num(b.tot[k],0):SG.num(b.tot[k],0))+'</td>'; }).join('')+'<td class="num">'+SG.brl(tot)+'</td><td></td><td></td></tr>';
-    h+='<tr class="pct"><td>% da mistura · POD e PAC por kg</td><td class="num">'+(b.rendG<b.peso?'rende '+SG.num(b.rendG,0):'')+'</td>'+C.map(function(cc){ return '<td class="num">'+pc(cc[0],b.pct[cc[0]])+'</td>'; }).join('')+'<td class="num">'+SG.brl(ck)+'/kg</td><td></td><td></td></tr>';
-    h+='<tr class="stat"><td>Status · '+esc(SG.BAL_TIPOS[b.tipo])+'</td><td class="num">'+(fx?(b.ok?'<span class="bs ok">Ok</span>':b.sem.length?'<span class="bs sem">incompleto</span>':'<span class="bs baixo">Revisar</span>'):'')+'</td>'+C.map(function(cc){ var st=b.status[cc[0]]; return '<td class="num">'+(st?'<span class="bs '+st+'">'+(st==='ok'?'ok':st)+'</span>':'')+'</td>'; }).join('')+'<td></td><td></td><td></td></tr>';
+    var cs=function(k){ var st=b.status[k]; return st==='ok'?'cg':st==='baixo'?'amb':st==='alto'?'cr':''; };
+    h+='<tr class="pct"><td>% da mistura · POD e PAC por kg</td><td class="num">'+(b.rendG<b.peso?'rende '+SG.num(b.rendG,0):'')+'</td>'+C.map(function(cc){ var st=b.status[cc[0]]; return '<td class="num"><span class="'+cs(cc[0])+'" title="'+(st?(st==='ok'?'dentro da faixa':st==='baixo'?'abaixo da faixa':'acima da faixa'):'')+'">'+pc(cc[0],b.pct[cc[0]])+'</span></td>'; }).join('')+'<td class="num">'+SG.brl(ck)+'/kg</td><td></td><td></td></tr>';
   }
   h+='</tbody></table>';
   $('rfIt').innerHTML=h;
   var sem=b.sem.length?' · <span class="cr">sem composição: '+esc(b.sem.join(', '))+'</span>':'';
-  $('rfSub').innerHTML=RF.itens.length?'<b>'+SG.num(b.temp,1)+' °C</b> de serviço · sólidos <b>'+SG.pct(b.pct.st,1)+'</b> · POD <b>'+SG.num(b.pct.pod,0)+'</b> · PAC <b>'+SG.num(b.pct.pac,0)+'</b> · custo <b>'+SG.brl(ck)+'/kg</b> · '+SG.num(b.peso,0)+' g'+(b.rendG<b.peso?' (rende '+SG.num(b.rendG,0)+' g)':'')+sem:'Adicione os ingredientes em gramas · o balanço aparece aqui';
+  $('rfSub').innerHTML=RF.itens.length?'<b>'+SG.num(b.temp,1)+' °C</b> de serviço · sólidos <b>'+SG.pct(b.pct.st,1)+'</b> · POD <b>'+SG.num(b.pct.pod,0)+'</b> · PAC <b>'+SG.num(b.pct.pac,0)+'</b> · custo <b>'+SG.brl(ck)+'/kg</b> · '+SG.num(b.peso,0)+' g'+(b.rendG<b.peso?' (rende '+SG.num(b.rendG,0)+' g)':'')+(fx?(b.ok?' · <span class="cg">balanço ok</span>':b.sem.length?'':' · <span class="cr">revisar: '+C.filter(function(c){return b.status[c[0]]&&b.status[c[0]]!=='ok';}).map(function(c){return c[1].toLowerCase()+' '+(b.status[c[0]]==='alto'?'acima':'abaixo');}).join(', ')+'</span>'):'')+sem:'Adicione os ingredientes em gramas · o balanço aparece aqui';
 }
 function salvaReceita(){ RF.nome=($('rfNome').value||'').trim(); RF.obs=$('rfObs').value; RF.bal=$('rfBal').value; delete RF._balManual; if(!RF.nome){ $('rfErro').textContent='Dê um nome à receita.'; return; }
   if(RF.id) D().receitas=D().receitas.map(function(x){return x.id===RF.id?RF:x;}); else { RF.id=SG.novoId('r'); D().receitas.push(RF); }
