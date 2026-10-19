@@ -10,15 +10,15 @@
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.SG_BUILD='20261019190959';</script>
-<script src="../shared/versao.js?v=20261019190959"></script>
-<script src="../shared/config.js?v=20261019190959"></script>
-<script src="../shared/seed.js?v=20261019190959"></script>
-<script src="../shared/biblioteca.js?v=20261019190959"></script>
-<script src="../shared/core.js?v=20261019190959"></script>
+<script>window.SG_BUILD='20261019192045';</script>
+<script src="../shared/versao.js?v=20261019192045"></script>
+<script src="../shared/config.js?v=20261019192045"></script>
+<script src="../shared/seed.js?v=20261019192045"></script>
+<script src="../shared/biblioteca.js?v=20261019192045"></script>
+<script src="../shared/core.js?v=20261019192045"></script>
 <script src="../assets/excel-export.js"></script>
 <script src="../assets/pdf-export.js"></script>
-<script src="../shared/remote.js?v=20261019190959"></script>
+<script src="../shared/remote.js?v=20261019192045"></script>
 <style>
 /* ============================================================
    SURREAL — Painel de gestão (PC). OneSpot · 16/10/2026
@@ -263,7 +263,7 @@ input[type=range]{accent-color:var(--acc2);}
 .rf-top .fld{margin:0;}
 .rf-tab{flex:1;min-height:0;display:flex;flex-direction:column;}
 .rf-tab .twrap{flex:1;}
-.rf-tab .tsub{font-size:12px;font-weight:500;color:var(--txt2);} .rf-tab .tsub b{color:var(--txt);font-weight:700;font-size:14px;}
+table.dre tr.tmp td{border-top:1px solid var(--card-brd);}
 .rf-tab .dir .inp{height:30px;padding:0 8px;font-size:11.5px;}
 table.dre td.bal-n{color:var(--txt);}
 table.dre tr.pct td{font-weight:700;color:var(--txt);background:var(--cabec);}
@@ -1291,11 +1291,11 @@ function rfCalc(){
     var cs=function(k){ var st=b.status[k]; return st==='ok'?'cg':st==='baixo'?'amb':st==='alto'?'cr':''; };
     h+='<tr class="pct"><td>% da mistura · POD e PAC por kg</td><td class="num">'+(b.rendG<b.peso?'rende '+SG.num(b.rendG,0):'')+'</td>'+C.map(function(cc){ var st=b.status[cc[0]]; return '<td class="num"><span class="'+cs(cc[0])+'" title="'+(st?(st==='ok'?'dentro da faixa':st==='baixo'?'abaixo da faixa':'acima da faixa'):'')+'">'+pc(cc[0],b.pct[cc[0]])+'</span></td>'; }).join('')+'<td class="num">'+SG.brl(ck)+'/kg</td><td></td><td></td></tr>';
     h+='<tr class="stat"><td>Status · '+esc(SG.BAL_TIPOS[b.tipo])+'</td><td class="num">'+(fx?(b.sem.length?'<span class="mut">incompleto</span>':b.ok?'<span class="cg">ok</span>':'<span class="cr">revisar</span>'):'')+'</td>'+C.map(function(cc){ var st=b.status[cc[0]]; return '<td class="num">'+(st?'<span class="'+cs(cc[0])+'">'+st+'</span>':'')+'</td>'; }).join('')+'<td></td><td></td><td></td></tr>';
+    h+='<tr class="stat tmp"><td>Temperatura de serviço · −PAC ÷ 25</td><td></td>'+C.map(function(cc){ return '<td class="num">'+(cc[0]==='pac'?'<b style="color:var(--txt);font-size:12px;text-transform:none;letter-spacing:0">'+SG.num(b.temp,1)+' °C</b>':'')+'</td>'; }).join('')+'<td></td><td></td><td></td></tr>';
   }
   h+='</tbody></table>';
   $('rfIt').innerHTML=h;
-  var sem=b.sem.length?' · <span class="cr">sem composição: '+esc(b.sem.join(', '))+'</span>':'';
-  $('rfSub').innerHTML=RF.itens.length?'<b>'+SG.num(b.temp,1)+' °C</b> de serviço · sólidos <b>'+SG.pct(b.pct.st,1)+'</b> · POD <b>'+SG.num(b.pct.pod,0)+'</b> · PAC <b>'+SG.num(b.pct.pac,0)+'</b> · custo <b>'+SG.brl(ck)+'/kg</b> · '+SG.num(b.peso,0)+' g'+(b.rendG<b.peso?' (rende '+SG.num(b.rendG,0)+' g)':'')+(fx?(b.ok?' · <span class="cg">balanço ok</span>':b.sem.length?'':' · <span class="cr">revisar: '+C.filter(function(c){return b.status[c[0]]&&b.status[c[0]]!=='ok';}).map(function(c){return c[1].toLowerCase()+' '+(b.status[c[0]]==='alto'?'acima':'abaixo');}).join(', ')+'</span>'):'')+sem:'Adicione os ingredientes em gramas · o balanço aparece aqui';
+  $('rfSub').innerHTML='Gramas × composição por 100 g de cada insumo · faixas do tipo no cabeçalho das colunas'+(b.sem.length?' · <span class="cr">sem composição: '+esc(b.sem.join(', '))+'</span>':'');
 }
 function salvaReceita(){ RF.nome=($('rfNome').value||'').trim(); RF.obs=$('rfObs').value; RF.bal=$('rfBal').value; delete RF._balManual; if(!RF.nome){ $('rfErro').textContent='Dê um nome à receita.'; return; }
   if(RF.id) D().receitas=D().receitas.map(function(x){return x.id===RF.id?RF:x;}); else { RF.id=SG.novoId('r'); D().receitas.push(RF); }
