@@ -13,12 +13,13 @@
 <link rel="icon" href="img/icone-192.png">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.SG_BUILD='20261019105737';</script>
-<script src="shared/versao.js?v=20261019105737"></script>
-<script src="shared/config.js?v=20261019105737"></script>
-<script src="shared/seed.js?v=20261019105737"></script>
-<script src="shared/core.js?v=20261019105737"></script>
-<script src="shared/remote.js?v=20261019105737"></script>
+<script>window.SG_BUILD='20261019123302';</script>
+<script src="shared/versao.js?v=20261019123302"></script>
+<script src="shared/config.js?v=20261019123302"></script>
+<script src="shared/seed.js?v=20261019123302"></script>
+<script src="shared/biblioteca.js?v=20261019123302"></script>
+<script src="shared/core.js?v=20261019123302"></script>
+<script src="shared/remote.js?v=20261019123302"></script>
 <style>
 /* ============================================================
    SURREAL · gelato artesanal — app (PWA)
@@ -1080,6 +1081,16 @@ TELAS.ficha = function(a){
   var h=cab('frasco',esc(r.nome), SG.brl(SG.custoReceitaKg(r.id))+' por kg · '+SG.num(SG.pesoReceita(r.id),0)+' g de ingredientes');
   if(r.obs) h+='<div class="vazio">'+esc(r.obs)+'</div>';
   h+='<table class="mini"><tr><th>Ingrediente</th><th>g/kg</th><th>R$/kg</th><th>Custo</th><th>%</th></tr>'+comp.map(function(c){ return '<tr><td>'+esc(c.nome)+(c.origem==='manual'?' <span class="tag">planilha</span>':c.origem==='estimado'?' <span class="tag am">estimado</span>':'')+'</td><td>'+SG.num(c.g,1)+'</td><td>'+SG.brl(c.custoKg)+'</td><td>'+SG.brl(c.custo)+'</td><td>'+SG.pct(tot?c.custo/tot:0,0)+'</td></tr>'; }).join('')+'<tr class="tot"><td>Total</td><td>'+SG.num(comp.reduce(function(x,c){return x+c.g;},0),1)+'</td><td></td><td>'+SG.brl(tot)+'</td><td>100%</td></tr></table>';
+  /* balanceamento (planilha do curso): % da mistura, POD/PAC por kg, temperatura de serviço e status por faixa */
+  var b=SG.balanco(r.id);
+  if(b&&r.itens.length){
+    var fx=b.faixa, cls=function(k){ var st=b.status[k]; return st==='ok'?'pos':st==='baixo'?'amb':st==='alto'?'neg':''; };
+    h+='<div class="sec" style="margin-top:4px">Balanceamento · '+esc(SG.BAL_TIPOS[b.tipo])+'<span class="cont">'+(b.sem.length?'incompleto':fx?(b.ok?'<span class="pos">Ok</span>':'<span class="amb">Revisar</span>'):'')+'</span></div>';
+    h+='<div class="res res3"><div class="n"><span>Temperatura de serviço</span><b>'+SG.num(b.temp,1)+' °C</b></div><div class="n"><span>Sólidos totais</span><b class="'+cls('st')+'">'+SG.pct(b.pct.st,1)+'</b></div><div class="n"><span>POD · PAC</span><b style="font-size:14px">'+SG.num(b.pct.pod,0)+' · '+SG.num(b.pct.pac,0)+'</b></div></div>';
+    h+='<table class="mini"><tr><th>Componente</th><th>na mistura</th><th>faixa</th><th>status</th></tr>'+SG.BAL_COLS.map(function(c){ var k=c[0], p=k==='pod'||k==='pac', st=b.status[k];
+      return '<tr><td>'+c[1]+'</td><td>'+(p?SG.num(b.pct[k],0):SG.pct(b.pct[k],1))+'</td><td>'+(fx?(p?SG.num(fx.min[k],0)+'–'+SG.num(fx.max[k],0):SG.pct(fx.min[k],0)+'–'+SG.pct(fx.max[k],0)):'—')+'</td><td class="'+cls(k)+'">'+(st?(st==='ok'?'ok':st):'—')+'</td></tr>'; }).join('')+'</table>';
+    if(b.sem.length) h+='<div class="aviso2">'+ic('alerta')+'<div>Sem composição: <b>'+esc(b.sem.join(', '))+'</b>. Cadastre no painel do PC (Insumos → biblioteca) para o balanço ficar completo.</div></div>';
+  }
   h+='<div class="vazio">Para editar a receita, use o painel completo no computador.</div>';
   return h;
 };

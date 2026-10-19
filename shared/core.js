@@ -108,6 +108,41 @@
     }).sort(function (a, b) { return b.custo - a.custo; });
   }
 
+  /* ───────────── balanceamento (planilha do curso) ─────────────
+     Cada insumo tem composição por fração de 100 g (comp: acu, gor, sngl, os, pod, pac, prot).
+     Receita: gramas × fração = gramas de cada componente; % sobre o peso que a receita RENDE
+     (coar o iogurte concentra os sólidos). POD e PAC por kg da mistura. Temperatura de serviço
+     = −PAC/25 (convenção da planilha). Sub-receita entra com a composição calculada dela. */
+  var BAL_COLS = [['acu', 'Açúcares'], ['gor', 'Gorduras'], ['sngl', 'SNGL'], ['os', 'Outros sólidos'], ['st', 'Sólidos totais'], ['agua', 'Água'], ['pod', 'POD'], ['pac', 'PAC']];
+  var BAL_TIPOS = { leite: 'Gelato de leite', fruta: 'Gelato de leite com fruta', sorbet: 'Sorbet', choc_agua: 'Chocolate (base de água)', vegana: 'Base vegana', none: 'Sem faixa (cobertura / base)' };
+  function faixasBal() { return D.config.balanco || (window.SG_BIB && SG_BIB.faixas) || {}; }
+  function compInsumo(id) { var i = insumo(id); return i && i.comp ? i.comp : null; }
+  function balTipo(r) { return r.bal || (r.tipo === 'sabor' ? 'leite' : 'none'); }
+  function balanco(rid, pilha) {
+    var r = receita(rid); if (!r) return null;
+    pilha = pilha || {}; if (pilha[rid]) return null; pilha[rid] = 1;
+    var itens = [], tot = { acu: 0, gor: 0, sngl: 0, os: 0, pod: 0, pac: 0 }, peso = 0, sem = [];
+    r.itens.forEach(function (it) {
+      var g = +it.g || 0, c = null, nome;
+      if (it.insumo) { var i = insumo(it.insumo); nome = i ? i.nome : it.insumo; c = compInsumo(it.insumo); }
+      else { var sb = receita(it.receita), b = balanco(it.receita, pilha); nome = sb ? sb.nome : it.receita; if (b) c = b.porG; if (b && b.sem.length) sem = sem.concat(b.sem); }
+      peso += g;
+      var l = { item: it, nome: nome, g: g, sem: !c };
+      itens.push(l);
+      if (c) { ['acu', 'gor', 'sngl', 'os', 'pod', 'pac'].forEach(function (k) { l[k] = g * (+c[k] || 0); tot[k] += l[k]; }); l.st = l.acu + l.gor + l.sngl + l.os; l.agua = g - l.st; }
+      else sem.push(nome);
+    });
+    delete pilha[rid];
+    var rendG = (r.rendKg || peso / 1000 || 1) * 1000; if (rendG > peso && peso) rendG = peso;   // render mais do que pesa não existe
+    tot.st = tot.acu + tot.gor + tot.sngl + tot.os; tot.agua = Math.max(0, rendG - tot.st);
+    var pct = {}; ['acu', 'gor', 'sngl', 'os', 'st', 'agua'].forEach(function (k) { pct[k] = rendG ? tot[k] / rendG : 0; });
+    pct.pod = rendG ? 1000 * tot.pod / rendG : 0; pct.pac = rendG ? 1000 * tot.pac / rendG : 0;
+    var porG = { acu: pct.acu, gor: pct.gor, sngl: pct.sngl, os: pct.os, pod: pct.pod / 1000, pac: pct.pac / 1000 };
+    var tipo = balTipo(r), fx = faixasBal()[tipo], status = {}, ok = true;
+    BAL_COLS.forEach(function (c) { var k = c[0]; if (!fx) { status[k] = ''; return; } var v = pct[k]; status[k] = v < fx.min[k] - 1e-9 ? 'baixo' : v > fx.max[k] + 1e-9 ? 'alto' : 'ok'; if (status[k] !== 'ok') ok = false; });
+    return { receita: r, tipo: tipo, faixa: fx || null, itens: itens, peso: peso, rendG: rendG, tot: tot, pct: pct, porG: porG, temp: -pct.pac / 25, status: status, ok: ok && !sem.length, sem: sem };
+  }
+
   /* ───────────── indiretos ───────────── */
   /* ───────────── OBZ: custos fixos do mês por pacote (orçamento base zero) ─────────────
      Substitui os "custos indiretos rateados por kg": fixo fica como fixo do mês (não entra no
@@ -497,7 +532,7 @@
     get D() { return D; },
     brl: brl, brl0: brl0, pct: pct, num: num, hoje: hoje, dataBR: dataBR, dataCurta: dataCurta, nomeMes: nomeMes, mesAtual: mesAtual, addMes: addMes, MES3: MES3,
     insumo: insumo, receita: receita, produto: produto, tamanho: tamanho, canal: canal, cliente: cliente,
-    ultimaCompra: ultimaCompra, custoInsumo: custoInsumo, custoReceitaKg: custoReceitaKg, pesoReceita: pesoReceita, composicao: composicao,
+    ultimaCompra: ultimaCompra, custoInsumo: custoInsumo, custoReceitaKg: custoReceitaKg, pesoReceita: pesoReceita, composicao: composicao, balanco: balanco, compInsumo: compInsumo, faixasBal: faixasBal, balTipo: balTipo, BAL_COLS: BAL_COLS, BAL_TIPOS: BAL_TIPOS,
     indiretosMes: indiretosMes, indiretoKg: indiretoKg, contasOBZ: contasOBZ, contaOBZ: contaOBZ, pacoteDespesa: pacoteDespesa, obzPorPacote: obzPorPacote, PACOTES_OBZ: PACOTES_OBZ, custoPote: custoPote, taxaCanal: taxaCanal,
     precoTabela: precoTabela, definirPreco: definirPreco, precificar: precificar, metaPotes: metaPotes,
     totalVenda: totalVenda, potesVenda: potesVenda, resultadoVenda: resultadoVenda, vendasMes: vendasMes, nomeItem: nomeItem, nomeCliente: nomeCliente,

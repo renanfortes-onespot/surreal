@@ -10,14 +10,15 @@
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.SG_BUILD='20261019105737';</script>
-<script src="../shared/versao.js?v=20261019105737"></script>
-<script src="../shared/config.js?v=20261019105737"></script>
-<script src="../shared/seed.js?v=20261019105737"></script>
-<script src="../shared/core.js?v=20261019105737"></script>
+<script>window.SG_BUILD='20261019123302';</script>
+<script src="../shared/versao.js?v=20261019123302"></script>
+<script src="../shared/config.js?v=20261019123302"></script>
+<script src="../shared/seed.js?v=20261019123302"></script>
+<script src="../shared/biblioteca.js?v=20261019123302"></script>
+<script src="../shared/core.js?v=20261019123302"></script>
 <script src="../assets/excel-export.js"></script>
 <script src="../assets/pdf-export.js"></script>
-<script src="../shared/remote.js?v=20261019105737"></script>
+<script src="../shared/remote.js?v=20261019123302"></script>
 <style>
 /* ============================================================
    SURREAL — Painel de gestão (PC). OneSpot · 16/10/2026
@@ -250,6 +251,21 @@ input[type=range]{accent-color:var(--acc2);}
 .lin .nm b{display:block;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .lin .nm small{display:block;font-size:10.5px;color:var(--txt3);}
 .lin .v{font-weight:700;white-space:nowrap;text-align:right;}
+/* ficha da receita: dados em cima, tabela de balanceamento embaixo (padrão da planilha do curso) */
+.rf-top{display:grid;grid-template-columns:1.6fr 1.3fr .7fr 1.2fr;gap:10px;flex:0 0 auto;margin-bottom:8px;}
+.rf-top .fld{margin:0;}
+.rf-mk{display:flex;gap:8px;flex:0 0 auto;margin-bottom:8px;}
+.rf-mk div{flex:1;background:var(--side);border:1px solid var(--card-brd);border-radius:9px;padding:7px 10px;}
+.rf-mk small{display:block;font-size:9.5px;color:var(--txt3);text-transform:uppercase;letter-spacing:.5px;}
+.rf-mk b{display:block;font-size:14px;color:var(--txt);margin-top:2px;}
+.rf-tab{flex:1;min-height:0;display:flex;flex-direction:column;}
+.rf-tab .twrap{flex:1;}
+table.dre td.bal-n{color:var(--txt);}
+table.dre tr.pct td{font-weight:700;color:var(--txt);background:var(--cabec);position:sticky;bottom:31px;z-index:1;border-top:1px solid var(--card-brd);}
+table.dre tr.stat td{padding-top:6px;padding-bottom:6px;position:sticky;bottom:0;background:var(--cabec);z-index:1;}
+.bs{display:inline-block;font-size:9.5px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;padding:2px 7px;border-radius:999px;}
+.bs.ok{background:rgba(61,212,122,.14);color:var(--verde);} .bs.baixo{background:rgba(245,166,35,.16);color:var(--ambar);} .bs.alto{background:rgba(244,84,74,.14);color:var(--vermelho);} .bs.sem{background:var(--hover);color:var(--txt3);}
+.rf-pe{display:flex;gap:8px;align-items:center;padding:8px 0 0;flex:0 0 auto;}
 .sec2{font-size:9.5px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.8px;padding:12px 2px 4px;}
 .step{display:inline-flex;align-items:center;border:1px solid var(--card-brd);border-radius:7px;}
 .step button{width:24px;height:26px;border:0;background:none;color:var(--txt);font-size:15px;cursor:pointer;}
@@ -1206,7 +1222,7 @@ function salvaContagem(){
 /* FICHAS TÉCNICAS */
 var TIPOS_R={sabor:'Sabor', cobertura:'Cobertura / calda', base:'Base'};
 VIEWS.fichas=function(){
-  sub('Receitas em gramas por kg · custo com o preço da última compra de cada insumo');
+  sub('Receitas em gramas · balanceamento pela composição dos insumos (açúcares, gorduras, SNGL, POD, PAC) · custo com o preço da última compra');
   var ls=D().receitas.filter(function(r){return fOk('tipR',r.tipo)&&qOk('fic',[r.nome,TIPOS_R[r.tipo]]);});
   function usos(r){ return D().produtos.filter(function(p){return p.receita===r.id||p.cobertura===r.id;}).length + D().receitas.filter(function(x){return x.itens.some(function(i){return i.receita===r.id;});}).length; }
   $('view').innerHTML=cadastro(ls.length+' receitas · clique na receita para ver e editar os ingredientes', busca('fic','Receita…'), btNovo('Nova receita','abrirReceita(null)'),
@@ -1216,6 +1232,7 @@ VIEWS.fichas=function(){
       {t:'Ingredientes',f:function(r){return r.itens.length||'<span class="st am">sem ficha</span>';},v:function(r){return r.itens.length;},cls:'num'},
       {t:'Peso da receita',f:function(r){return SG.num(SG.pesoReceita(r.id),0)+' g';},v:function(r){return SG.pesoReceita(r.id);},cls:'num'},
       {t:'Custo por kg',f:function(r){return '<b style="color:var(--txt)">'+SG.brl(SG.custoReceitaKg(r.id))+'</b>';},v:function(r){return SG.custoReceitaKg(r.id);},cls:'num'},
+      {t:'Balanço',f:function(r){ var b=SG.balanco(r.id); if(!b||!r.itens.length) return '—'; if(b.sem.length) return '<span class="bs sem" title="'+esc(b.sem.join(', '))+'">sem composição</span>'; if(!b.faixa) return '<span class="mut">'+SG.num(-b.temp,1).replace('-','−')+' °C</span>'; return (b.ok?'<span class="bs ok">ok</span>':'<span class="bs baixo">revisar</span>')+' <span class="mut">'+SG.num(b.temp,1)+' °C</span>'; },s:function(r){ var b=SG.balanco(r.id); return b&&!b.sem.length&&b.faixa?(b.ok?'a':'b'):'c'; }},
       {t:'Usada em',f:function(r){var n=usos(r);return n?n+(n>1?' itens':' item'):'—';},v:usos,cls:'num'},
     ], ls, null, function(r){ return "abrirReceita('"+r.id+"')"; }));
 };
@@ -1223,29 +1240,46 @@ var RF=null;
 function abrirReceita(id){
   var r=id?SG.receita(id):null;
   RF=r?JSON.parse(JSON.stringify(r)):{id:null,nome:'',tipo:'sabor',rendKg:1,itens:[],obs:''};
-  var dados='<div class="fld"><label>Nome</label><input class="inp" id="rfNome" value="'+esc(RF.nome)+'" placeholder="Ex.: Pistache"></div>'
-    + '<div class="fld"><label>Tipo</label>'+segH('rfTipo',[['sabor','Sabor'],['cobertura','Cobertura / calda'],['base','Base']],RF.tipo,'rfTipoSet')+'</div>'
-    + '<div class="frow"><div class="fld"><label>Rende (g)</label><input class="inp num" id="rfRend" value="'+nv(RF.rendKg*1000,0)+'" oninput="RF.rendKg=(numIn(this.value)||1000)/1000;rfCalc()"><div class="fdica">menos que o peso dos ingredientes se perde no preparo</div></div><div></div></div>'
-    + '<div class="fld"><label>Observações</label><textarea class="inp" id="rfObs">'+esc(RF.obs||'')+'</textarea></div><div class="mk" id="rfMk"></div><div class="erro" id="rfErro"></div>';
+  if(!RF.bal) RF.bal=SG.balTipo(RF);
+  var top='<div class="rf-top"><div class="fld"><label>Nome</label><input class="inp" id="rfNome" value="'+esc(RF.nome)+'" placeholder="Ex.: Pistache"></div>'
+    + '<div class="fld"><label>Tipo</label>'+segH('rfTipo',[['sabor','Sabor'],['cobertura','Cobertura'],['base','Base']],RF.tipo,'rfTipoSet')+'</div>'
+    + '<div class="fld"><label>Rende (g)</label><input class="inp num" id="rfRend" value="'+nv(RF.rendKg*1000,0)+'" oninput="RF.rendKg=(numIn(this.value)||1000)/1000;rfCalc()" title="Menos que o peso dos ingredientes quando perde água (coar, reduzir)"></div>'
+    + '<div class="fld"><label>Balanceamento</label><select class="inp" id="rfBal" onchange="RF.bal=this.value;RF._balManual=1;rfCalc()">'+Object.keys(SG.BAL_TIPOS).map(function(k){return '<option value="'+k+'"'+(k===RF.bal?' selected':'')+'>'+SG.BAL_TIPOS[k]+'</option>';}).join('')+'</select></div></div>'
+    + '<div class="rf-mk" id="rfMk"></div>';
   var opIns=D().insumos.filter(function(i){return i.tipo==='ingrediente';}).slice().sort(function(a,b){return a.nome.localeCompare(b.nome);}), opRec=D().receitas.filter(function(x){return x.id!==id;});
-  var pe='<select class="inp" id="rfAdd" style="flex:1;min-width:180px"><optgroup label="Insumos">'+opIns.map(function(i){return '<option value="i:'+i.id+'">'+esc(i.nome)+'</option>';}).join('')+'</optgroup><optgroup label="Sub-receitas">'+opRec.map(function(x){return '<option value="r:'+x.id+'">'+esc(x.nome)+'</option>';}).join('')+'</optgroup></select><input class="inp num" id="rfG" placeholder="gramas" style="width:90px"><button class="btn pri sm" onclick="rfAdd()">'+ic('mais')+'Adicionar</button>';
-  abrirModal(r?'Ficha técnica · '+r.nome:'Nova receita', '<div class="wz-2col">'+col('Dados da receita','nome, tipo e rendimento',dados)+col('Ingredientes','gramas na receita · custo com o preço de hoje','<div id="rfIt"></div>',null,pe)+'</div>',
+  var pe='<div class="rf-pe"><select class="inp" id="rfAdd" style="flex:1;min-width:180px"><optgroup label="Insumos">'+opIns.map(function(i){return '<option value="i:'+i.id+'">'+esc(i.nome)+(i.comp?'':' · sem composição')+'</option>';}).join('')+'</optgroup><optgroup label="Sub-receitas">'+opRec.map(function(x){return '<option value="r:'+x.id+'">'+esc(x.nome)+'</option>';}).join('')+'</optgroup></select><input class="inp num" id="rfG" placeholder="gramas" style="width:90px" onkeydown="if(event.key===\'Enter\')rfAdd()"><button class="btn pri sm" onclick="rfAdd()">'+ic('mais')+'Adicionar</button>'
+    + '<textarea class="inp" id="rfObs" placeholder="Observações" style="flex:1.2;height:36px;min-height:36px;resize:none">'+esc(RF.obs||'')+'</textarea></div><div class="erro" id="rfErro"></div>';
+  abrirModal(r?'Ficha técnica · '+r.nome:'Nova receita', top+'<div class="rf-tab"><div class="twrap" id="rfIt"></div>'+pe+'</div>',
     footPad('salvaReceita()', r?"apagaReceita('"+r.id+"')":null), true);
   rfCalc();
 }
-function rfTipoSet(t){ RF.tipo=t; }
+function rfTipoSet(t){ RF.tipo=t; if(!RF._balManual){ RF.bal=t==='sabor'?'leite':'none'; $('rfBal').value=RF.bal; } rfCalc(); }
 function rfAdd(){ var v=$('rfAdd').value, g=numIn($('rfG').value); if(!g) return; RF.itens.push(v[0]==='i'?{insumo:v.slice(2),g:g}:{receita:v.slice(2),g:g}); $('rfG').value=''; rfCalc(); }
 function rfCalc(){
+  if($('rfBal')&&$('rfBal').value!==RF.bal) RF.bal=$('rfBal').value;
   var tmp=Object.assign({},RF,{id:'__rf'}); D().receitas.push(tmp);
-  var comp=SG.composicao('__rf'), ck=SG.custoReceitaKg('__rf'), peso=SG.pesoReceita('__rf'); D().receitas.pop();
-  var tot=comp.reduce(function(s,c){return s+c.custo;},0);
-  $('rfIt').innerHTML=RF.itens.length?RF.itens.map(function(it,i){ var c=comp.filter(function(x){return x.item===it;})[0]||{};
-    var orig=it.receita?'sub-receita':c.origem==='compra'?'última compra':c.origem==='estimado'?'estimado':c.custoKg?'planilha, até a 1ª compra':'sem compra lançada';
-    return '<div class="lin"><div class="nm"><b>'+esc(c.nome)+'</b><small>'+SG.brl(c.custoKg)+'/kg · '+orig+'</small></div><input class="inp num sm" style="width:80px" value="'+nv(it.g,1)+'" onchange="RF.itens['+i+'].g=numIn(this.value)||0;rfCalc()" title="gramas"><span class="mut" style="font-size:11px">g</span><div class="v" style="width:76px">'+SG.brl(c.custo)+'</div><div class="mut" style="width:38px;text-align:right;font-size:11px">'+SG.pct(tot?c.custo/tot:0,0)+'</div><button class="x-btn" title="Remover" onclick="RF.itens.splice('+i+',1);rfCalc()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button></div>'; }).join('')
-    :'<div class="muted" style="padding:10px 2px;font-size:12px">Sem ingredientes. Adicione embaixo.</div>';
-  $('rfMk').innerHTML='<div><small>Custo por kg</small><b>'+SG.brl(ck)+'</b></div><div><small>Peso dos ingredientes</small><b>'+SG.num(peso,0)+' g</b></div><div><small>Custo da receita</small><b>'+SG.brl(tot)+'</b></div>';
+  var comp=SG.composicao('__rf'), ck=SG.custoReceitaKg('__rf'), b=SG.balanco('__rf'); D().receitas.pop();
+  var tot=comp.reduce(function(s,c){return s+c.custo;},0), fx=b.faixa, C=SG.BAL_COLS;
+  var pc=function(k,v){ return k==='pod'||k==='pac'?SG.num(v,0):SG.pct(v,1); };
+  var fxTxt=function(k){ return fx?(k==='pod'||k==='pac'?SG.num(fx.min[k],0)+'–'+SG.num(fx.max[k],0):SG.pct(fx.min[k],0)+'–'+SG.pct(fx.max[k],0)):''; };
+  var h='<table class="dre"><thead><tr><th>Ingrediente</th><th class="num">g</th>'+C.map(function(c){return '<th class="num" title="'+(fx?'faixa '+fxTxt(c[0]):'')+'">'+c[1]+(fx?'<br><span style="font-weight:500;letter-spacing:0;text-transform:none">'+fxTxt(c[0])+'</span>':'')+'</th>';}).join('')+'<th class="num">Custo</th><th></th></tr></thead><tbody>';
+  if(!RF.itens.length) h+='<tr><td colspan="12" class="muted" style="padding:14px">Sem ingredientes. Adicione embaixo.</td></tr>';
+  b.itens.forEach(function(l,i){ var c=comp.filter(function(x){return x.item===l.item;})[0]||{};
+    h+='<tr><td class="conta">'+esc(l.nome)+(l.sem?' <span class="bs sem" title="Cadastre a composição no insumo (biblioteca)">sem composição</span>':'')+(l.item.receita?' <span class="mut">sub-receita</span>':'')+'</td>'
+      + '<td class="num"><input class="inp num sm" style="width:72px" value="'+nv(l.g,1)+'" onchange="RF.itens['+i+'].g=numIn(this.value)||0;rfCalc()"></td>'
+      + C.map(function(cc){ var k=cc[0]; return '<td class="num'+(l.sem?'':' bal-n')+'">'+(l.sem?'—':(k==='pod'||k==='pac'?SG.num(l[k]*1,1):SG.num(l[k],1)))+'</td>'; }).join('')
+      + '<td class="num">'+SG.brl(c.custo||0)+'</td><td><button class="x-btn" title="Remover" onclick="RF.itens.splice('+i+',1);rfCalc()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button></td></tr>'; });
+  if(RF.itens.length){
+    h+='<tr class="total" style="position:static"><td>Total (g)</td><td class="num">'+SG.num(b.peso,0)+'</td>'+C.map(function(cc){ var k=cc[0]; return '<td class="num">'+(k==='pod'||k==='pac'?SG.num(b.tot[k],0):SG.num(b.tot[k],0))+'</td>'; }).join('')+'<td class="num">'+SG.brl(tot)+'</td><td></td></tr>';
+    h+='<tr class="pct"><td>% da mistura · POD e PAC por kg</td><td class="num">'+(b.rendG<b.peso?'rende '+SG.num(b.rendG,0):'')+'</td>'+C.map(function(cc){ return '<td class="num">'+pc(cc[0],b.pct[cc[0]])+'</td>'; }).join('')+'<td class="num">'+SG.brl(ck)+'/kg</td><td></td></tr>';
+    h+='<tr class="stat"><td>Status · '+esc(SG.BAL_TIPOS[b.tipo])+'</td><td class="num">'+(fx?(b.ok?'<span class="bs ok">Ok</span>':b.sem.length?'<span class="bs sem">incompleto</span>':'<span class="bs baixo">Revisar</span>'):'')+'</td>'+C.map(function(cc){ var st=b.status[cc[0]]; return '<td class="num">'+(st?'<span class="bs '+st+'">'+(st==='ok'?'ok':st)+'</span>':'')+'</td>'; }).join('')+'<td></td><td></td></tr>';
+  }
+  h+='</tbody></table>';
+  $('rfIt').innerHTML=h;
+  $('rfMk').innerHTML='<div><small>Temperatura de serviço</small><b>'+(RF.itens.length?SG.num(b.temp,1)+' °C':'—')+'</b></div><div><small>Sólidos totais</small><b>'+(RF.itens.length?SG.pct(b.pct.st,1):'—')+'</b></div><div><small>POD · PAC por kg</small><b>'+(RF.itens.length?SG.num(b.pct.pod,0)+' · '+SG.num(b.pct.pac,0):'—')+'</b></div><div><small>Custo por kg</small><b>'+SG.brl(ck)+'</b></div><div><small>Peso · rende</small><b>'+SG.num(b.peso,0)+' g · '+SG.num(b.rendG,0)+' g</b></div>'
+    + (b.sem.length?'<div style="flex:1.6;border-color:rgba(245,166,35,.4)"><small>Sem composição</small><b style="font-size:11.5px;font-weight:600;color:var(--ambar)">'+esc(b.sem.join(', '))+' — cadastre no insumo</b></div>':'');
 }
-function salvaReceita(){ RF.nome=($('rfNome').value||'').trim(); RF.obs=$('rfObs').value; if(!RF.nome){ $('rfErro').textContent='Dê um nome à receita.'; return; }
+function salvaReceita(){ RF.nome=($('rfNome').value||'').trim(); RF.obs=$('rfObs').value; RF.bal=$('rfBal').value; delete RF._balManual; if(!RF.nome){ $('rfErro').textContent='Dê um nome à receita.'; return; }
   if(RF.id) D().receitas=D().receitas.map(function(x){return x.id===RF.id?RF:x;}); else { RF.id=SG.novoId('r'); D().receitas.push(RF); }
   SG.salvar(true); fecharModal(); toast('Ficha técnica salva'); }
 function apagaReceita(id){ var us=D().produtos.filter(function(p){return p.receita===id||p.cobertura===id;}); if(us.length){ alert('Usada em: '+us.map(function(p){return p.nome;}).join(', ')+'. Troque a receita desses produtos antes.'); return; } apagaReg('receitas',id,'Excluir esta receita?'); }
@@ -1263,6 +1297,7 @@ VIEWS.insumos=function(){
       {t:'Custo atual',f:function(i){return '<b style="color:var(--txt)">'+SG.brl(SG.custoInsumo(i.id).valor)+'</b> /'+(i.un==='un'?'un':'kg');},v:function(i){return SG.custoInsumo(i.id).valor;},cls:'num'},
       {t:'Origem do custo',f:function(i){var c=SG.custoInsumo(i.id);return c.origem==='compra'?'<span class="st vd">compra '+SG.dataBR(c.data)+'</span>':c.valor?'<span class="st am">planilha · até a 1ª compra</span>':'<span class="st vm">sem compra lançada</span>';},s:function(i){return SG.custoInsumo(i.id).origem;}},
       {t:'Estoque',f:function(i){var s=e.insumos[i.id];return s==null?'<span class="muted">—</span>':s<0?'<span class="amb" title="Usou mais do que as compras lançadas">sem compra</span>':'<span class="'+(i.min&&s<i.min?'cr':'')+'">'+SG.qtdFmt(s,i.un)+'</span>';},v:function(i){return e.insumos[i.id]||0;},cls:'num'},
+      {t:'Composição',f:function(i){ if(i.tipo!=='ingrediente') return '<span class="muted">—</span>'; return i.comp?'<span class="st vd">'+esc(i.bib||'própria')+'</span>':(usos(i)?'<span class="st am">falta</span>':'<span class="muted">—</span>'); },s:function(i){return i.comp?'a':'b';}},
       {t:'Usado em',f:function(i){var n=usos(i);return n?n+(n>1?' receitas':' receita'):'—';},v:usos,cls:'num'},
     ], ls, null, function(i){ return "abrirInsumo('"+i.id+"')"; }));
 };
@@ -1272,15 +1307,25 @@ function abrirInsumo(id){
   var dados='<div class="fld"><label>Nome</label><input class="inp" id="inNome" value="'+esc(i?i.nome:'')+'"></div>'
     + '<div class="frow"><div class="fld"><label>Tipo</label>'+segH('inTipo',[['ingrediente','Ingrediente'],['embalagem','Embalagem']],IF.tipo,'inTipoSet')+'</div><div class="fld"><label>Categoria</label><input class="inp" id="inCat" list="dlCat" value="'+esc(i?i.cat:'')+'"><datalist id="dlCat">'+Object.keys(cats).map(function(c){return '<option value="'+esc(c)+'">';}).join('')+'</datalist></div></div>'
     + '<div class="frow"><div class="fld"><label>Estoque mínimo</label><input class="inp num" id="inMin" value="'+(i&&i.min?nv(i.min*fU(i),0):'')+'" placeholder="ex.: 500"><div class="fdica">em gramas (embalagem: unidades)</div></div><div></div></div>'
+    + '<div class="sec2" style="padding-top:6px">Composição por 100 g · para o balanceamento</div>'
+    + '<div class="frow"><div class="fld" style="flex:1.6"><label>Biblioteca (preenche os campos)</label><input class="inp" id="inBib" list="dlBib" placeholder="Digite para buscar…" value="'+esc(i&&i.bib?i.bib:'')+'" onchange="inBibSet(this.value)"><datalist id="dlBib">'+((window.SG_BIB&&SG_BIB.ingredientes)||[]).map(function(b){return '<option value="'+esc(b.n)+'">';}).join('')+'</datalist></div><div class="fld"><label>&nbsp;</label><button class="btn sm" onclick="inBibLimpa()">Limpar</button></div></div>'
+    + '<div class="frow f4">'+[['acu','Açúcares (g)'],['gor','Gorduras (g)'],['sngl','SNGL (g)'],['os','Outros sólidos (g)']].map(function(c){return '<div class="fld"><label>'+c[1]+'</label><input class="inp num" id="inC_'+c[0]+'" value="'+(i&&i.comp?nv(i.comp[c[0]]*100,1):'')+'" oninput="inCompTot()"></div>';}).join('')+'</div>'
+    + '<div class="frow f4">'+[['pod','POD (sacarose = 100)'],['pac','PAC (sacarose = 100)'],['prot','Proteína (g)']].map(function(c){return '<div class="fld"><label>'+c[1]+'</label><input class="inp num" id="inC_'+c[0]+'" value="'+(i&&i.comp?nv(i.comp[c[0]]*100,1):'')+'"></div>';}).join('')+'<div class="fld"><label>Sólidos · água</label><div class="inp" id="inCompTot" style="display:flex;align-items:center;color:var(--txt2)"></div></div></div>'
     + (i?'<div class="mk"><div><small>Custo em uso</small><b>'+SG.brl(SG.custoInsumo(i.id).valor)+'</b></div><div><small>Origem</small><b>'+(SG.custoInsumo(i.id).origem==='compra'?'Última compra':SG.custoInsumo(i.id).valor?'Planilha (até a 1ª compra)':'Sem compra')+'</b></div><div><small>Estoque</small><b>'+SG.qtdFmt(SG.estoque().insumos[i.id],i.un)+'</b></div></div>':'')+'<div class="erro" id="inErro"></div>';
   var hist=i?D().compras.filter(function(c){return c.insumo===i.id;}).sort(function(a,b){return a.data<b.data?1:-1;}).map(function(c){ return '<div class="lin"><div class="nm"><b>'+SG.dataBR(c.data)+'</b><small>'+SG.qtdFmt(c.qtd,i.un)+' por '+SG.brl(c.valor)+'</small></div><div class="v">'+SG.brl(c.valor/c.qtd)+'/'+(i.un==='un'?'un':'kg')+'</div></div>'; }).join(''):'';
   var rec=i?D().receitas.filter(function(r){return r.itens.some(function(x){return x.insumo===i.id;});}).map(function(r){ var g=r.itens.filter(function(x){return x.insumo===i.id;})[0].g; return '<div class="lin"><div class="nm"><b>'+esc(r.nome)+'</b></div><div class="v">'+SG.num(g,1)+' g/kg</div></div>'; }).join(''):'';
-  abrirModal(i?'Insumo · '+i.nome:'Novo insumo', '<div class="wz-2col">'+col('Dados do insumo','nome, tipo e mínimo · o custo vem das compras',dados)+col('Histórico','compras e receitas que usam este insumo','<div class="sec2">Compras</div>'+(hist||'<div class="muted" style="font-size:12px">Nenhuma compra registrada.</div>')+'<div class="sec2">Usado nas receitas</div>'+(rec||'<div class="muted" style="font-size:12px">Nenhuma receita.</div>'))+'</div>',
+  abrirModal(i?'Insumo · '+i.nome:'Novo insumo', '<div class="wz-2col">'+col('Dados do insumo','nome, tipo, mínimo e composição · o custo vem das compras',dados)+col('Histórico','compras e receitas que usam este insumo','<div class="sec2">Compras</div>'+(hist||'<div class="muted" style="font-size:12px">Nenhuma compra registrada.</div>')+'<div class="sec2">Usado nas receitas</div>'+(rec||'<div class="muted" style="font-size:12px">Nenhuma receita.</div>'))+'</div>',
     footPad("salvaInsumo("+(i?"'"+i.id+"'":'null')+")", i?"apagaInsumo('"+i.id+"')":null), true);
+  inCompTot();
 }
 function inTipoSet(t){ window.IF.tipo=t; }
+var COMP_K=['acu','gor','sngl','os','pod','pac','prot'];
+function inBibSet(nome){ var b=((window.SG_BIB&&SG_BIB.ingredientes)||[]).filter(function(x){return x.n===nome;})[0]; if(!b) return; COMP_K.forEach(function(k){ $('inC_'+k).value=nv((b[k]||0)*100,1); }); inCompTot(); }
+function inBibLimpa(){ $('inBib').value=''; COMP_K.forEach(function(k){ $('inC_'+k).value=''; }); inCompTot(); }
+function inCompLe(){ var c={}, tem=false; COMP_K.forEach(function(k){ var v=numIn($('inC_'+k).value); if(v!=null) tem=true; c[k]=(v||0)/100; }); return tem?c:null; }
+function inCompTot(){ var c=inCompLe(), e=$('inCompTot'); if(!e) return; if(!c){ e.textContent='—'; return; } var st=c.acu+c.gor+c.sngl+c.os; e.innerHTML=SG.pct(st,1)+' · '+SG.pct(1-st,1)+(st>1.0001?' <span class="cr">(passa de 100%)</span>':''); }
 function salvaInsumo(id){ var n=($('inNome').value||'').trim(); if(!n){ $('inErro').textContent='Informe o nome.'; return; }
-  var o={nome:n, tipo:window.IF.tipo, un:window.IF.tipo==='embalagem'?'un':'kg', cat:($('inCat').value||'Outros').trim(), custoManual:id?(SG.insumo(id).custoManual||0):0, min:(numIn($('inMin').value)||0)/(window.IF.tipo==='embalagem'?1:1000), estimado:false};
+  var o={nome:n, tipo:window.IF.tipo, un:window.IF.tipo==='embalagem'?'un':'kg', cat:($('inCat').value||'Outros').trim(), custoManual:id?(SG.insumo(id).custoManual||0):0, min:(numIn($('inMin').value)||0)/(window.IF.tipo==='embalagem'?1:1000), estimado:false, comp:inCompLe(), bib:($('inBib').value||'').trim()||null};
   if(id) Object.assign(SG.insumo(id),o); else D().insumos.push(Object.assign({id:SG.novoId('i')},o));
   SG.salvar(true); fecharModal(); toast('Insumo salvo'); }
 function apagaInsumo(id){ var us=D().receitas.filter(function(r){return r.itens.some(function(x){return x.insumo===id;});}); if(us.length){ alert('Usado em: '+us.map(function(r){return r.nome;}).join(', ')+'. Tire das receitas antes.'); return; } apagaReg('insumos',id,'Excluir este insumo?'); }
@@ -1373,7 +1418,7 @@ VIEWS.parametros=function(){
   function bloco(tit, subt, tab, bt){ return '<div class="card tsec" style="flex:1 1 auto"><div class="thead-row"><div class="ttit">'+tit+'</div><div class="tsub">'+subt+'</div><div class="dir">'+(bt||'')+'</div></div><div class="twrap">'+tab+'</div></div>'; }
   var metas=[{k:'margemAlvo',n:'Margem desejada',v:SG.pct(c.margemAlvo,0),d:'sobre o preço de venda'},{k:'regime',n:'Regime tributário',v:(function(r){ return r.tipo==='mei'?'MEI · DAS '+SG.brl(SG.dasMensal())+'/mês':r.tipo==='simples'?'Simples · '+SG.pct(c.imposto,2):'Presumido · '+SG.pct(c.imposto,2)+' + IR '+SG.pct(r.aliqIR,2); })(SG.regime()),d:'impostos do DRE e do preço'},{k:'metaLucroMes',n:'Meta de lucro do mês',v:SG.brl(c.metaLucroMes),d:'usada no Resumo e no Simulador'},{k:'diasVendaMes',n:'Dias de venda por mês',v:c.diasVendaMes,d:'para potes por dia'}];
   /* uma tabela só, com toggles: Preço e metas · Orçamento OBZ · Canais · Tamanhos · Dados */
-  var T=V.par||'metas', TT=[['metas','Preço e metas'],['obz','Orçamento OBZ'],['can','Canais de venda'],['tam','Tamanhos de pote'],['dados','Dados']];
+  var T=V.par||'metas', TT=[['metas','Preço e metas'],['obz','Orçamento OBZ'],['bal','Balanceamento'],['can','Canais de venda'],['tam','Tamanhos de pote'],['dados','Dados']];
   var dims='<div class="dims">'+TT.map(function(o){ return '<button class="dimb'+(o[0]===T?' on':'')+'" onclick="V.par=\''+o[0]+'\';render()">'+o[1]+'</button>'; }).join('')+'</div>';
   var subt='', bt='', tab='';
   if(T==='metas'){ subt='margem, regime tributário e metas · clique na linha para editar';
@@ -1381,6 +1426,10 @@ VIEWS.parametros=function(){
   else if(T==='obz'){ subt='custos fixos do mês · total '+SG.brl(SG.indiretosMes())+'/mês · '+SG.PACOTES_OBZ.map(function(pc){return pc+' '+SG.brl0(SG.obzPorPacote()[pc]||0);}).join(' · ');
     bt=btNovo('Nova conta','abrirConta(null)');
     tab=tabela('tObz',[{t:'Pacote',f:function(x){return esc(x.pacote);},s:function(x){return SG.PACOTES_OBZ.indexOf(x.pacote)+x.nome;}},{t:'Conta',f:function(x){return esc(x.nome);},cls:'conta'},{t:'Orçado por mês',f:function(x){return x.valor?'<b style="color:var(--txt)">'+SG.brl(x.valor)+'</b>':'<span class="muted">R$ 0,00</span>';},v:function(x){return x.valor;},cls:'num'}], SG.contasOBZ().slice().sort(function(a,b){return (SG.PACOTES_OBZ.indexOf(a.pacote)-SG.PACOTES_OBZ.indexOf(b.pacote))||a.nome.localeCompare(b.nome);}), ['Total','',SG.brl(SG.indiretosMes())], function(x){ return "abrirConta('"+x.id+"')"; }); }
+  else if(T==='bal'){ subt='faixas de tolerância por tipo de receita (planilha do curso) · % da mistura; POD e PAC por kg · clique para editar';
+    var fx=SG.faixasBal(), rows=Object.keys(SG.BAL_TIPOS).filter(function(k){return fx[k];}).map(function(k){ return Object.assign({k:k,nome:SG.BAL_TIPOS[k]},fx[k]); });
+    var cf=function(k,o){ return k==='pod'||k==='pac'?SG.num(o.min[k],0)+' – '+SG.num(o.max[k],0):SG.pct(o.min[k],1)+' – '+SG.pct(o.max[k],1); };
+    tab=tabela('tBal',[{t:'Tipo de receita',f:function(o){return esc(o.nome);},cls:'conta'}].concat(SG.BAL_COLS.map(function(c){ return {t:c[1],f:function(o){return cf(c[0],o);},cls:'num'}; })), rows, null, function(o){ return "abrirFaixa('"+o.k+"')"; }); }
   else if(T==='can'){ subt='taxa sobre o preço e kit de entrega · clique para editar';
     tab=tabela('tCan',[{t:'Canal',f:function(x){return esc(x.nome);},cls:'conta'},{t:'Taxa',f:function(x){return SG.pct(x.taxa,1);},cls:'num'},{t:'Kit entrega',f:function(x){return x.kitEntrega?'<span class="st vd">sim</span>':'<span class="st cz">não</span>';}}], D().canais, null, function(x){ return "abrirCanal('"+x.id+"')"; }); }
   else if(T==='tam'){ subt='gramas de gelato e pote usado · inativo = só simulação · clique para editar';
@@ -1417,6 +1466,14 @@ function salvaRegime(){
   var das=SG.contaOBZ('das'); if(das) das.valor = r.tipo==='mei' ? SG.dasMensal() : 0;
   SG.salvar(true); fecharModal(); toast('Regime salvo'); render();
 }
+/* FAIXAS DE BALANCEAMENTO — mínimo e máximo por tipo de receita */
+function abrirFaixa(k){ var fx=SG.faixasBal()[k];
+  var b='<div class="nota" style="margin:0 0 10px">Açúcares, gorduras, SNGL, outros sólidos, sólidos totais e água em % da mistura · POD e PAC por kg de mistura (sacarose = 100 por 100 g).</div>'
+    + SG.BAL_COLS.map(function(c){ var p=c[0]==='pod'||c[0]==='pac'; return '<div class="frow"><div class="fld"><label>'+c[1]+' · mínimo'+(p?'':' (%)')+'</label><input class="inp num" id="fxMin_'+c[0]+'" value="'+nv(p?fx.min[c[0]]:fx.min[c[0]]*100,p?0:1)+'"></div><div class="fld"><label>'+c[1]+' · máximo'+(p?'':' (%)')+'</label><input class="inp num" id="fxMax_'+c[0]+'" value="'+nv(p?fx.max[c[0]]:fx.max[c[0]]*100,p?0:1)+'"></div></div>'; }).join('');
+  abrirModal('Faixas · '+SG.BAL_TIPOS[k], b, '<button class="btn" onclick="fecharModal()">Cancelar</button><button class="btn pri" onclick="salvaFaixa(\''+k+'\')">Salvar</button>'); }
+function salvaFaixa(k){ var c=D().config; if(!c.balanco) c.balanco=JSON.parse(JSON.stringify(SG.faixasBal())); var fx=c.balanco[k];
+  SG.BAL_COLS.forEach(function(cc){ var p=cc[0]==='pod'||cc[0]==='pac', mn=numIn($('fxMin_'+cc[0]).value)||0, mx=numIn($('fxMax_'+cc[0]).value)||0; fx.min[cc[0]]=p?mn:mn/100; fx.max[cc[0]]=p?mx:mx/100; });
+  SG.salvar(true); fecharModal(); toast('Faixas salvas'); render(); }
 function abrirConta(id){ var x=id?SG.contaOBZ(id):null, usos=id?D().despesas.filter(function(d){return d.conta===id;}).length:0;
   abrirModal(x?'Conta OBZ · '+x.nome:'Nova conta OBZ', '<div class="frow"><div class="fld"><label>Pacote</label><select class="inp" id="ozP">'+SG.PACOTES_OBZ.map(function(p){return '<option'+(x&&x.pacote===p?' selected':'')+'>'+p+'</option>';}).join('')+'</select></div><div class="fld"><label>Conta</label><input class="inp" id="ozN" value="'+esc(x?x.nome:'')+'" placeholder="Ex.: Aluguel"></div></div>'
     + '<div class="frow"><div class="fld"><label>Orçado por mês (R$)</label><input class="inp num" id="ozV" value="'+(x?nv(x.valor):'')+'"></div><div></div></div>'+(usos?'<div class="nota">'+usos+' despesas lançadas nesta conta.</div>':''),
