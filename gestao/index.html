@@ -10,14 +10,14 @@
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.SG_BUILD='20261018172252';</script>
-<script src="../shared/versao.js?v=20261018172252"></script>
-<script src="../shared/config.js?v=20261018172252"></script>
-<script src="../shared/seed.js?v=20261018172252"></script>
-<script src="../shared/core.js?v=20261018172252"></script>
+<script>window.SG_BUILD='20261019105737';</script>
+<script src="../shared/versao.js?v=20261019105737"></script>
+<script src="../shared/config.js?v=20261019105737"></script>
+<script src="../shared/seed.js?v=20261019105737"></script>
+<script src="../shared/core.js?v=20261019105737"></script>
 <script src="../assets/excel-export.js"></script>
 <script src="../assets/pdf-export.js"></script>
-<script src="../shared/remote.js?v=20261018172252"></script>
+<script src="../shared/remote.js?v=20261019105737"></script>
 <style>
 /* ============================================================
    SURREAL — Painel de gestão (PC). OneSpot · 16/10/2026
@@ -350,6 +350,8 @@ var MENU=[
 var TIT={}; MENU.forEach(function(s){ s[1].forEach(function(m){ TIT[m[0]]=m[1]; }); });
 var V={view:'resumo', ym:SG.mesAtual(), fPed:'todos', fCan:'', q:{}, dim:'sabor', est:'potes'};
 try{ var _v=localStorage.getItem('sg_view'); if(_v&&TIT[_v]) V.view=_v; }catch(e){}
+/* link direto: /gestao/#dre abre naquela visão */
+try{ var _h=location.hash.slice(1); if(_h&&TIT[_h]){ V.view=_h; history.replaceState(null,'',location.pathname); } }catch(e){}
 function side(){
   var baixo=SG.estoqueBaixo().length, abertos=D().vendas.filter(function(v){return !v.pago||!v.entregue;}).length, u=eu();
   var ini=(u.nome||'?').split(' ').map(function(x){return x[0];}).slice(0,2).join('').toUpperCase();

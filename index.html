@@ -13,12 +13,12 @@
 <link rel="icon" href="img/icone-192.png">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.SG_BUILD='20261018172252';</script>
-<script src="shared/versao.js?v=20261018172252"></script>
-<script src="shared/config.js?v=20261018172252"></script>
-<script src="shared/seed.js?v=20261018172252"></script>
-<script src="shared/core.js?v=20261018172252"></script>
-<script src="shared/remote.js?v=20261018172252"></script>
+<script>window.SG_BUILD='20261019105737';</script>
+<script src="shared/versao.js?v=20261019105737"></script>
+<script src="shared/config.js?v=20261019105737"></script>
+<script src="shared/seed.js?v=20261019105737"></script>
+<script src="shared/core.js?v=20261019105737"></script>
+<script src="shared/remote.js?v=20261019105737"></script>
 <style>
 /* ============================================================
    SURREAL · gelato artesanal — app (PWA)
@@ -1098,7 +1098,8 @@ function editaPrecoM(pid,cid,tid){ var x=SG.precificar(pid,tid,cid); var v=promp
 
 /* ── início ── */
 function iniciaApp(){ restauraTela(); appIni=true; topo(); render();
-(function(){ var h=location.hash.slice(1), m={producao:'producaoNova', compra:'compraNova', despesa:'despesaNova'}; if(h==='pedido') novoPedido(); else if(m[h]) abre(m[h],{form:1}); if(h) history.replaceState(null,'',location.pathname); })(); }
+/* links diretos: #pedido (novo), #producao, #compra, #despesa, ou o nome de uma aba/tela (#caixa, #dre, #estoque, #simular, #resumo…) */
+(function(){ var h=location.hash.slice(1), m={producao:'producaoNova', compra:'compraNova', despesa:'despesaNova'}; if(h==='pedido') novoPedido(); else if(m[h]) abre(m[h],{form:1}); else if(h&&ABAS.some(function(a){return a[0]===h;})) aba(h); else if(h&&TELAS[h]) { pilha=[{tela:'mais'}]; abre(h); } if(h) history.replaceState(null,'',location.pathname); })(); }
 
 /* ── instalar o app (Android/PC: prompt nativo; iPhone: passo a passo) ── */
 var pedidoInstalar = null;
