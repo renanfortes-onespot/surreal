@@ -10,15 +10,15 @@
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.SG_BUILD='20261019184531';</script>
-<script src="../shared/versao.js?v=20261019184531"></script>
-<script src="../shared/config.js?v=20261019184531"></script>
-<script src="../shared/seed.js?v=20261019184531"></script>
-<script src="../shared/biblioteca.js?v=20261019184531"></script>
-<script src="../shared/core.js?v=20261019184531"></script>
+<script>window.SG_BUILD='20261019185140';</script>
+<script src="../shared/versao.js?v=20261019185140"></script>
+<script src="../shared/config.js?v=20261019185140"></script>
+<script src="../shared/seed.js?v=20261019185140"></script>
+<script src="../shared/biblioteca.js?v=20261019185140"></script>
+<script src="../shared/core.js?v=20261019185140"></script>
 <script src="../assets/excel-export.js"></script>
 <script src="../assets/pdf-export.js"></script>
-<script src="../shared/remote.js?v=20261019184531"></script>
+<script src="../shared/remote.js?v=20261019185140"></script>
 <style>
 /* ============================================================
    SURREAL — Painel de gestão (PC). OneSpot · 16/10/2026
@@ -252,22 +252,19 @@ input[type=range]{accent-color:var(--acc2);}
 .lin .nm small{display:block;font-size:10.5px;color:var(--txt3);}
 .lin .v{font-weight:700;white-space:nowrap;text-align:right;}
 /* ficha da receita: dados em cima, tabela de balanceamento embaixo (padrão da planilha do curso) */
-.rf-top{display:grid;grid-template-columns:1.5fr 1.1fr .6fr 1.1fr 1.1fr;gap:10px;flex:0 0 auto;margin-bottom:8px;}
+.rf-top{display:grid;grid-template-columns:1.5fr 1.1fr 1.2fr .55fr 1fr 1.3fr;gap:10px;flex:0 0 auto;margin-bottom:10px;}
 .m-card.wiz.rf{width:min(1240px,98vw);height:min(94vh,900px);}
 .rf-tab table.dre{font-size:11px;} .rf-tab table.dre td{padding:6px 7px;} .rf-tab table.dre thead th{padding:7px 7px;font-size:8.5px;} .rf-tab .inp.sm{height:26px;padding:0 6px;font-size:11px;}
 .rf-top .fld{margin:0;}
-.rf-mk{display:flex;gap:8px;flex:0 0 auto;margin-bottom:8px;}
-.rf-mk div{flex:1;background:var(--side);border:1px solid var(--card-brd);border-radius:9px;padding:7px 10px;}
-.rf-mk small{display:block;font-size:9.5px;color:var(--txt3);text-transform:uppercase;letter-spacing:.5px;}
-.rf-mk b{display:block;font-size:14px;color:var(--txt);margin-top:2px;}
 .rf-tab{flex:1;min-height:0;display:flex;flex-direction:column;}
 .rf-tab .twrap{flex:1;}
+.rf-tab .tsub b{color:var(--txt);font-weight:700;}
+.rf-tab .dir .inp{height:30px;padding:0 8px;font-size:11.5px;}
 table.dre td.bal-n{color:var(--txt);}
 table.dre tr.pct td{font-weight:700;color:var(--txt);background:var(--cabec);position:sticky;bottom:31px;z-index:1;border-top:1px solid var(--card-brd);}
 table.dre tr.stat td{padding-top:6px;padding-bottom:6px;position:sticky;bottom:0;background:var(--cabec);z-index:1;}
 .bs{display:inline-block;font-size:9.5px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;padding:2px 7px;border-radius:999px;}
 .bs.ok{background:rgba(61,212,122,.14);color:var(--verde);} .bs.baixo{background:rgba(245,166,35,.16);color:var(--ambar);} .bs.alto{background:rgba(244,84,74,.14);color:var(--vermelho);} .bs.sem{background:var(--hover);color:var(--txt3);}
-.rf-pe{display:flex;gap:8px;align-items:center;padding:8px 0 0;flex:0 0 auto;}
 .sec2{font-size:9.5px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.8px;padding:12px 2px 4px;}
 .step{display:inline-flex;align-items:center;border:1px solid var(--card-brd);border-radius:7px;}
 .step button{width:24px;height:26px;border:0;background:none;color:var(--txt);font-size:15px;cursor:pointer;}
@@ -1245,14 +1242,13 @@ function abrirReceita(id){
   if(!RF.bal) RF.bal=SG.balTipo(RF);
   var top='<div class="rf-top"><div class="fld"><label>Nome</label><input class="inp" id="rfNome" value="'+esc(RF.nome)+'" placeholder="Ex.: Pistache"></div>'
     + '<div class="fld"><label>Tipo</label>'+segH('rfTipo',[['sabor','Sabor'],['cobertura','Cobertura'],['base','Base']],RF.tipo,'rfTipoSet')+'</div>'
+    + '<div class="fld"><label>Balanceamento</label><select class="inp" id="rfBal" onchange="RF.bal=this.value;RF._balManual=1;rfCalc()">'+Object.keys(SG.BAL_TIPOS).map(function(k){return '<option value="'+k+'"'+(k===RF.bal?' selected':'')+'>'+SG.BAL_TIPOS[k]+'</option>';}).join('')+'</select></div>'
     + '<div class="fld"><label>Rende (g)</label><input class="inp num" id="rfRend" value="'+nv(RF.rendKg*1000,0)+'" oninput="RF.rendKg=(numIn(this.value)||1000)/1000;rfCalc()" title="Menos que o peso dos ingredientes quando perde água (coar, reduzir)"></div>'
     + '<div class="fld"><label>Balanço sobre</label>'+segH('rfConc',[['0','Peso total'],['1','Rendimento']],RF.concentra?'1':'0','rfConcSet')+'</div>'
-    + '<div class="fld"><label>Balanceamento</label><select class="inp" id="rfBal" onchange="RF.bal=this.value;RF._balManual=1;rfCalc()">'+Object.keys(SG.BAL_TIPOS).map(function(k){return '<option value="'+k+'"'+(k===RF.bal?' selected':'')+'>'+SG.BAL_TIPOS[k]+'</option>';}).join('')+'</select></div></div>'
-    + '<div class="rf-mk" id="rfMk"></div>';
+    + '<div class="fld"><label>Observações</label><input class="inp" id="rfObs" value="'+esc(RF.obs||'')+'" placeholder="Opcional"></div></div>';
   var opIns=D().insumos.filter(function(i){return i.tipo==='ingrediente';}).slice().sort(function(a,b){return a.nome.localeCompare(b.nome);}), opRec=D().receitas.filter(function(x){return x.id!==id;});
-  var pe='<div class="rf-pe"><select class="inp" id="rfAdd" style="flex:1;min-width:180px"><optgroup label="Insumos">'+opIns.map(function(i){return '<option value="i:'+i.id+'">'+esc(i.nome)+(i.comp?'':' · sem composição')+'</option>';}).join('')+'</optgroup><optgroup label="Sub-receitas">'+opRec.map(function(x){return '<option value="r:'+x.id+'">'+esc(x.nome)+'</option>';}).join('')+'</optgroup></select><input class="inp num" id="rfG" placeholder="gramas" style="width:90px" onkeydown="if(event.key===\'Enter\')rfAdd()"><button class="btn pri sm" onclick="rfAdd()">'+ic('mais')+'Adicionar</button>'
-    + '<textarea class="inp" id="rfObs" placeholder="Observações" style="flex:1.2;height:36px;min-height:36px;resize:none">'+esc(RF.obs||'')+'</textarea></div><div class="erro" id="rfErro"></div>';
-  abrirModal(r?'Receita · '+r.nome:'Nova receita', top+'<div class="rf-tab"><div class="twrap" id="rfIt"></div>'+pe+'</div>',
+  var pe='<div class="thead-row"><div class="tsub" id="rfSub"></div><div class="dir"><select class="inp" id="rfAdd" style="width:230px"><optgroup label="Insumos">'+opIns.map(function(i){return '<option value="i:'+i.id+'">'+esc(i.nome)+(i.comp?'':' · sem composição')+'</option>';}).join('')+'</optgroup><optgroup label="Sub-receitas">'+opRec.map(function(x){return '<option value="r:'+x.id+'">'+esc(x.nome)+'</option>';}).join('')+'</optgroup></select><input class="inp num" id="rfG" placeholder="gramas" style="width:80px" onkeydown="if(event.key===\'Enter\')rfAdd()"><button class="btn pri sm" onclick="rfAdd()">'+ic('mais')+'Adicionar</button></div></div>';
+  abrirModal(r?'Receita · '+r.nome:'Nova receita', top+'<div class="card tsec rf-tab">'+pe+'<div class="twrap" id="rfIt"></div><div class="erro" id="rfErro"></div></div>',
     footPad('salvaReceita()', r?"apagaReceita('"+r.id+"')":null), true);
   $('mcard').classList.add('rf');
   rfCalc();
@@ -1281,8 +1277,8 @@ function rfCalc(){
   }
   h+='</tbody></table>';
   $('rfIt').innerHTML=h;
-  $('rfMk').innerHTML='<div><small>Temperatura de serviço</small><b>'+(RF.itens.length?SG.num(b.temp,1)+' °C':'—')+'</b></div><div><small>Sólidos totais</small><b>'+(RF.itens.length?SG.pct(b.pct.st,1):'—')+'</b></div><div><small>POD · PAC por kg</small><b>'+(RF.itens.length?SG.num(b.pct.pod,0)+' · '+SG.num(b.pct.pac,0):'—')+'</b></div><div><small>Custo por kg</small><b>'+SG.brl(ck)+'</b></div><div><small>Peso · rende</small><b>'+SG.num(b.peso,0)+' g · '+SG.num(b.rendG,0)+' g</b></div>'
-    + (b.sem.length?'<div style="flex:1.6;border-color:rgba(245,166,35,.4)"><small>Sem composição</small><b style="font-size:11.5px;font-weight:600;color:var(--ambar)">'+esc(b.sem.join(', '))+' — cadastre no insumo</b></div>':'');
+  var sem=b.sem.length?' · <span class="cr">sem composição: '+esc(b.sem.join(', '))+'</span>':'';
+  $('rfSub').innerHTML=RF.itens.length?'<b>'+SG.num(b.temp,1)+' °C</b> de serviço · sólidos <b>'+SG.pct(b.pct.st,1)+'</b> · POD <b>'+SG.num(b.pct.pod,0)+'</b> · PAC <b>'+SG.num(b.pct.pac,0)+'</b> · custo <b>'+SG.brl(ck)+'/kg</b> · '+SG.num(b.peso,0)+' g'+(b.rendG<b.peso?' (rende '+SG.num(b.rendG,0)+' g)':'')+sem:'Adicione os ingredientes em gramas · o balanço aparece aqui';
 }
 function salvaReceita(){ RF.nome=($('rfNome').value||'').trim(); RF.obs=$('rfObs').value; RF.bal=$('rfBal').value; delete RF._balManual; if(!RF.nome){ $('rfErro').textContent='Dê um nome à receita.'; return; }
   if(RF.id) D().receitas=D().receitas.map(function(x){return x.id===RF.id?RF:x;}); else { RF.id=SG.novoId('r'); D().receitas.push(RF); }
