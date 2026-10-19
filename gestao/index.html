@@ -10,15 +10,15 @@
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.SG_BUILD='20261019183454';</script>
-<script src="../shared/versao.js?v=20261019183454"></script>
-<script src="../shared/config.js?v=20261019183454"></script>
-<script src="../shared/seed.js?v=20261019183454"></script>
-<script src="../shared/biblioteca.js?v=20261019183454"></script>
-<script src="../shared/core.js?v=20261019183454"></script>
+<script>window.SG_BUILD='20261019183718';</script>
+<script src="../shared/versao.js?v=20261019183718"></script>
+<script src="../shared/config.js?v=20261019183718"></script>
+<script src="../shared/seed.js?v=20261019183718"></script>
+<script src="../shared/biblioteca.js?v=20261019183718"></script>
+<script src="../shared/core.js?v=20261019183718"></script>
 <script src="../assets/excel-export.js"></script>
 <script src="../assets/pdf-export.js"></script>
-<script src="../shared/remote.js?v=20261019183454"></script>
+<script src="../shared/remote.js?v=20261019183718"></script>
 <style>
 /* ============================================================
    SURREAL — Painel de gestão (PC). OneSpot · 16/10/2026
@@ -363,7 +363,7 @@ function eu(){ if(SGR.ativo&&SGR.perfil) return SGR.perfil; var id=null; try{id=
 /* ════════ navegação ════════ */
 var MENU=[
   ['Visões',[['resumo','Resumo Gerencial','resumo'],['vendasA','Vendas','vendas'],['dre','DRE','fin'],['caixa','Caixa','caixa'],['simulador','Simulador de preço (DRE)','sim'],['cenarios','Simular todos os sabores','grade']]],
-  ['Gestão à Vista',[['lancamentos','Lançamentos','lista'],['pedidos','Pedidos','vendas'],['producao','Produção','prod'],['saidas','Compras e despesas','compra'],['estoque','Estoque','estoque'],['fichas','Fichas técnicas','ficha'],['insumos','Insumos','insumo'],['produtos','Produtos e preços','tag'],['clientes','Clientes','clientes'],['parametros','Parâmetros','config']]],
+  ['Gestão à Vista',[['lancamentos','Lançamentos','lista'],['pedidos','Pedidos','vendas'],['producao','Produção','prod'],['saidas','Compras e despesas','compra'],['estoque','Estoque','estoque'],['fichas','Receitas','ficha'],['insumos','Insumos','insumo'],['produtos','Produtos e preços','tag'],['clientes','Clientes','clientes'],['parametros','Parâmetros','config']]],
 ];
 var TIT={}; MENU.forEach(function(s){ s[1].forEach(function(m){ TIT[m[0]]=m[1]; }); });
 var V={view:'resumo', ym:SG.mesAtual(), fPed:'todos', fCan:'', q:{}, dim:'sabor', est:'potes'};
@@ -1252,7 +1252,7 @@ function abrirReceita(id){
   var opIns=D().insumos.filter(function(i){return i.tipo==='ingrediente';}).slice().sort(function(a,b){return a.nome.localeCompare(b.nome);}), opRec=D().receitas.filter(function(x){return x.id!==id;});
   var pe='<div class="rf-pe"><select class="inp" id="rfAdd" style="flex:1;min-width:180px"><optgroup label="Insumos">'+opIns.map(function(i){return '<option value="i:'+i.id+'">'+esc(i.nome)+(i.comp?'':' · sem composição')+'</option>';}).join('')+'</optgroup><optgroup label="Sub-receitas">'+opRec.map(function(x){return '<option value="r:'+x.id+'">'+esc(x.nome)+'</option>';}).join('')+'</optgroup></select><input class="inp num" id="rfG" placeholder="gramas" style="width:90px" onkeydown="if(event.key===\'Enter\')rfAdd()"><button class="btn pri sm" onclick="rfAdd()">'+ic('mais')+'Adicionar</button>'
     + '<textarea class="inp" id="rfObs" placeholder="Observações" style="flex:1.2;height:36px;min-height:36px;resize:none">'+esc(RF.obs||'')+'</textarea></div><div class="erro" id="rfErro"></div>';
-  abrirModal(r?'Ficha técnica · '+r.nome:'Nova receita', top+'<div class="rf-tab"><div class="twrap" id="rfIt"></div>'+pe+'</div>',
+  abrirModal(r?'Receita · '+r.nome:'Nova receita', top+'<div class="rf-tab"><div class="twrap" id="rfIt"></div>'+pe+'</div>',
     footPad('salvaReceita()', r?"apagaReceita('"+r.id+"')":null), true);
   $('mcard').classList.add('rf');
   rfCalc();
@@ -1286,7 +1286,7 @@ function rfCalc(){
 }
 function salvaReceita(){ RF.nome=($('rfNome').value||'').trim(); RF.obs=$('rfObs').value; RF.bal=$('rfBal').value; delete RF._balManual; if(!RF.nome){ $('rfErro').textContent='Dê um nome à receita.'; return; }
   if(RF.id) D().receitas=D().receitas.map(function(x){return x.id===RF.id?RF:x;}); else { RF.id=SG.novoId('r'); D().receitas.push(RF); }
-  SG.salvar(true); fecharModal(); toast('Ficha técnica salva'); }
+  SG.salvar(true); fecharModal(); toast('Receita salva'); }
 function apagaReceita(id){ var us=D().produtos.filter(function(p){return p.receita===id||p.cobertura===id;}); if(us.length){ alert('Usada em: '+us.map(function(p){return p.nome;}).join(', ')+'. Troque a receita desses produtos antes.'); return; } apagaReg('receitas',id,'Excluir esta receita?'); }
 
 /* INSUMOS */

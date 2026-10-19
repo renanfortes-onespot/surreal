@@ -13,13 +13,13 @@
 <link rel="icon" href="img/icone-192.png">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.SG_BUILD='20261019183454';</script>
-<script src="shared/versao.js?v=20261019183454"></script>
-<script src="shared/config.js?v=20261019183454"></script>
-<script src="shared/seed.js?v=20261019183454"></script>
-<script src="shared/biblioteca.js?v=20261019183454"></script>
-<script src="shared/core.js?v=20261019183454"></script>
-<script src="shared/remote.js?v=20261019183454"></script>
+<script>window.SG_BUILD='20261019183718';</script>
+<script src="shared/versao.js?v=20261019183718"></script>
+<script src="shared/config.js?v=20261019183718"></script>
+<script src="shared/seed.js?v=20261019183718"></script>
+<script src="shared/biblioteca.js?v=20261019183718"></script>
+<script src="shared/core.js?v=20261019183718"></script>
+<script src="shared/remote.js?v=20261019183718"></script>
 <style>
 /* ============================================================
    SURREAL · gelato artesanal — app (PWA)
@@ -1031,7 +1031,7 @@ TELAS.mais = function(){
   h += li({ic:'moeda', t:'Retirada / aporte dos sócios', s:'Dinheiro de vocês · fora do DRE', on:"abre('socioForm',{form:1})"});
   h += li({ic:'pote', t:'Produção', s:'Lotes produzidos', on:"abre('producoes')"});
   h += li({ic:'pessoas', t:'Clientes', s:D().clientes.length+' cadastrados', on:"abre('clientes')"});
-  h += li({ic:'frasco', t:'Fichas técnicas', s:'Custo por kg de cada receita', on:"abre('fichas')"});
+  h += li({ic:'frasco', t:'Receitas', s:'Ficha técnica e balanceamento de cada receita', on:"abre('fichas')"});
   h += li({ic:'conta', t:'Tabela de preços', s:'Preço por sabor, tamanho e canal', on:"abre('tabela')"});
   h += li({ic:'engr', t:'Parâmetros', s:'Metas, regime (DAS), orçamento OBZ, canais e tamanhos', on:"abre('parametros')"});
   if(!instalado()) h += li({ic:'baixar', cor:'ac', t:'Baixar o app no celular', s:'Ícone na tela de início, abre em tela cheia', on:'instalar()'});
@@ -1071,7 +1071,7 @@ TELAS.clientes = function(a){
 };
 TELAS.fichas = function(){
   var tipos={sabor:'Sabores', cobertura:'Coberturas e caldas', base:'Bases'};
-  var h=cab('frasco','Fichas técnicas','Custo por kg com o preço da última compra');
+  var h=cab('frasco','Receitas','Custo por kg e balanceamento · toque para ver a ficha');
   Object.keys(tipos).forEach(function(t){ var rs=D().receitas.filter(function(r){return r.tipo===t;}); if(!rs.length) return;
     h+='<div class="sec" style="margin-top:10px">'+tipos[t]+'</div>' + rs.map(function(r){ var ck=SG.custoReceitaKg(r.id); return li({ic:'frasco', cor:r.itens.length?'':'am', t:esc(r.nome), s:r.itens.length?r.itens.length+' ingredientes':'sem ficha — cadastre no painel', v:SG.brl(ck), vs:'por kg', on:"abre('ficha',{id:'"+r.id+"'})"}); }).join(''); });
   return h;
