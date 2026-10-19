@@ -10,15 +10,15 @@
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.SG_BUILD='20261019190236';</script>
-<script src="../shared/versao.js?v=20261019190236"></script>
-<script src="../shared/config.js?v=20261019190236"></script>
-<script src="../shared/seed.js?v=20261019190236"></script>
-<script src="../shared/biblioteca.js?v=20261019190236"></script>
-<script src="../shared/core.js?v=20261019190236"></script>
+<script>window.SG_BUILD='20261019190843';</script>
+<script src="../shared/versao.js?v=20261019190843"></script>
+<script src="../shared/config.js?v=20261019190843"></script>
+<script src="../shared/seed.js?v=20261019190843"></script>
+<script src="../shared/biblioteca.js?v=20261019190843"></script>
+<script src="../shared/core.js?v=20261019190843"></script>
 <script src="../assets/excel-export.js"></script>
 <script src="../assets/pdf-export.js"></script>
-<script src="../shared/remote.js?v=20261019190236"></script>
+<script src="../shared/remote.js?v=20261019190843"></script>
 <style>
 /* ============================================================
    SURREAL — Painel de gestão (PC). OneSpot · 16/10/2026
@@ -253,11 +253,12 @@ input[type=range]{accent-color:var(--acc2);}
 .lin .v{font-weight:700;white-space:nowrap;text-align:right;}
 /* ficha da receita: dados em cima, tabela de balanceamento embaixo (padrão da planilha do curso) */
 .rf-top{display:grid;grid-template-columns:1.5fr max-content 1.1fr 84px max-content 1.3fr;gap:10px;flex:0 0 auto;margin-bottom:10px;}
+.rf-acoes{display:flex;align-items:center;gap:8px;flex:0 0 auto;margin-bottom:10px;}
 .rf-top .seg{white-space:nowrap;} .rf-top .seg button{padding-left:12px;padding-right:12px;}
 .m-card.wiz.rf{width:min(1240px,98vw);height:auto;max-height:94vh;}
-.rf-tab{flex:0 1 auto;} .rf-tab .twrap{flex:0 1 auto;}
+.rf-tab{flex:1 1 auto;} .rf-tab .twrap{flex:1 1 auto;}
 .rf-tab table.dre{font-size:11px;table-layout:fixed;width:100%;}
-.rf-tab table.dre th:first-child{width:19%;} .rf-tab table.dre th:nth-child(2){width:7%;} .rf-tab table.dre th:nth-child(n+3):nth-child(-n+10){width:7.3%;} .rf-tab table.dre th:nth-child(11){width:7.5%;} .rf-tab table.dre th:nth-child(12){width:6.5%;} .rf-tab table.dre th:nth-child(13){width:3.5%;}
+.rf-tab table.dre th:first-child{width:18%;} .rf-tab table.dre th:nth-child(2){width:7%;} .rf-tab table.dre th:nth-child(n+3):nth-child(-n+10){width:7.3%;} .rf-tab table.dre th:nth-child(11){width:8.5%;} .rf-tab table.dre th:nth-child(12){width:6.5%;} .rf-tab table.dre th:nth-child(13){width:3.5%;}
 .rf-tab table.dre td{overflow:hidden;text-overflow:ellipsis;} .rf-tab table.dre td{padding:6px 7px;} .rf-tab table.dre thead th{padding:7px 7px;font-size:8.5px;} .rf-tab .inp.sm{height:26px;padding:0 6px;font-size:11px;}
 .rf-top .fld{margin:0;}
 .rf-tab{flex:1;min-height:0;display:flex;flex-direction:column;}
@@ -354,6 +355,7 @@ var I={
   ok:'<path d="M5 12l5 5 9-10"/>',
   caixa:'<rect x="2" y="6" width="20" height="13" rx="2"/><path d="M2 10h20M6 15h4"/>',
   lista:'<path d="M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01"/>',
+  volta:'<path d="M15 18l-6-6 6-6"/>',
 };
 function ic(n){ return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">'+I[n]+'</svg>'; }
 function aplicaTema(){ var c=false; try{c=localStorage.getItem('sg_tema')==='claro';}catch(e){} document.body.classList.toggle('claro',c); }
@@ -1226,6 +1228,7 @@ function salvaContagem(){
 /* FICHAS TÉCNICAS */
 var TIPOS_R={sabor:'Sabor', cobertura:'Cobertura / calda', base:'Base'};
 VIEWS.fichas=function(){
+  if(V.rec){ fichaReceita(); return; }
   sub('Receitas em gramas · balanceamento pela composição dos insumos (açúcares, gorduras, SNGL, POD, PAC) · custo com o preço da última compra');
   var ls=D().receitas.filter(function(r){return fOk('tipR',r.tipo)&&qOk('fic',[r.nome,TIPOS_R[r.tipo]]);});
   function usos(r){ return D().produtos.filter(function(p){return p.receita===r.id||p.cobertura===r.id;}).length + D().receitas.filter(function(x){return x.itens.some(function(i){return i.receita===r.id;});}).length; }
@@ -1245,6 +1248,15 @@ function abrirReceita(id){
   var r=id?SG.receita(id):null;
   RF=r?JSON.parse(JSON.stringify(r)):{id:null,nome:'',tipo:'sabor',rendKg:1,itens:[],obs:''};
   if(!RF.bal) RF.bal=SG.balTipo(RF);
+  V.rec=id||'novo'; V.view='fichas'; render(); $('view').scrollTop=0;
+}
+function fecharReceita(){ V.rec=null; render(); }
+/* ficha da receita, dentro da visão Receitas (no lugar da lista) */
+function fichaReceita(){
+  var id=V.rec==='novo'?null:V.rec, r=id?SG.receita(id):null;
+  if(id&&!r){ V.rec=null; render(); return; }
+  if(!RF||(RF.id||null)!==id){ RF=r?JSON.parse(JSON.stringify(r)):{id:null,nome:'',tipo:'sabor',rendKg:1,itens:[],obs:''}; if(!RF.bal) RF.bal=SG.balTipo(RF); }
+  sub((r?'Receita · '+r.nome:'Nova receita')+' · edite e clique em Salvar');
   var top='<div class="rf-top"><div class="fld"><label>Nome</label><input class="inp" id="rfNome" value="'+esc(RF.nome)+'" placeholder="Ex.: Pistache"></div>'
     + '<div class="fld"><label>Tipo</label>'+segH('rfTipo',[['sabor','Sabor'],['cobertura','Cobertura'],['base','Base']],RF.tipo,'rfTipoSet')+'</div>'
     + '<div class="fld"><label>Balanceamento</label><select class="inp" id="rfBal" onchange="RF.bal=this.value;RF._balManual=1;rfCalc()">'+Object.keys(SG.BAL_TIPOS).map(function(k){return '<option value="'+k+'"'+(k===RF.bal?' selected':'')+'>'+SG.BAL_TIPOS[k]+'</option>';}).join('')+'</select></div>'
@@ -1253,9 +1265,8 @@ function abrirReceita(id){
     + '<div class="fld"><label>Observações</label><input class="inp" id="rfObs" value="'+esc(RF.obs||'')+'" placeholder="Opcional"></div></div>';
   var opIns=D().insumos.filter(function(i){return i.tipo==='ingrediente';}).slice().sort(function(a,b){return a.nome.localeCompare(b.nome);}), opRec=D().receitas.filter(function(x){return x.id!==id;});
   var pe='<div class="thead-row"><div class="tsub" id="rfSub"></div><div class="dir"><select class="inp" id="rfAdd" style="width:230px"><optgroup label="Insumos">'+opIns.map(function(i){return '<option value="i:'+i.id+'">'+esc(i.nome)+(i.comp?'':' · sem composição')+'</option>';}).join('')+'</optgroup><optgroup label="Sub-receitas">'+opRec.map(function(x){return '<option value="r:'+x.id+'">'+esc(x.nome)+'</option>';}).join('')+'</optgroup></select><input class="inp num" id="rfG" placeholder="gramas" style="width:80px" onkeydown="if(event.key===\'Enter\')rfAdd()"><button class="btn pri sm" onclick="rfAdd()">'+ic('mais')+'Adicionar</button></div></div>';
-  abrirModal(r?'Receita · '+r.nome:'Nova receita', top+'<div class="card tsec rf-tab">'+pe+'<div class="twrap" id="rfIt"></div><div class="erro" id="rfErro"></div></div>',
-    footPad('salvaReceita()', r?"apagaReceita('"+r.id+"')":null), true);
-  $('mcard').classList.add('rf');
+  var acoes='<div class="rf-acoes"><button class="btn sm" onclick="fecharReceita()">'+ic('volta')+'Voltar</button><span style="flex:1"></span>'+(r?'<button class="btn warn sm" onclick="apagaReceita(\''+r.id+'\')">Excluir</button>':'')+'<button class="btn sm" onclick="fecharReceita()">Cancelar</button><button class="btn pri sm" onclick="salvaReceita()">Salvar</button></div>';
+  $('view').innerHTML=acoes+top+'<div class="card tsec rf-tab">'+pe+'<div class="twrap" id="rfIt"></div><div class="erro" id="rfErro"></div></div>';
   rfCalc();
 }
 function rfConcSet(v){ RF.concentra=v==='1'; rfCalc(); }
@@ -1287,8 +1298,8 @@ function rfCalc(){
 }
 function salvaReceita(){ RF.nome=($('rfNome').value||'').trim(); RF.obs=$('rfObs').value; RF.bal=$('rfBal').value; delete RF._balManual; if(!RF.nome){ $('rfErro').textContent='Dê um nome à receita.'; return; }
   if(RF.id) D().receitas=D().receitas.map(function(x){return x.id===RF.id?RF:x;}); else { RF.id=SG.novoId('r'); D().receitas.push(RF); }
-  SG.salvar(true); fecharModal(); toast('Receita salva'); }
-function apagaReceita(id){ var us=D().produtos.filter(function(p){return p.receita===id||p.cobertura===id;}); if(us.length){ alert('Usada em: '+us.map(function(p){return p.nome;}).join(', ')+'. Troque a receita desses produtos antes.'); return; } apagaReg('receitas',id,'Excluir esta receita?'); }
+  SG.salvar(true); V.rec=null; render(); toast('Receita salva'); }
+function apagaReceita(id){ var us=D().produtos.filter(function(p){return p.receita===id||p.cobertura===id;}); if(us.length){ alert('Usada em: '+us.map(function(p){return p.nome;}).join(', ')+'. Troque a receita desses produtos antes.'); return; } if(apagaReg('receitas',id,'Excluir esta receita?')){ V.rec=null; render(); } }
 
 /* INSUMOS */
 VIEWS.insumos=function(){
