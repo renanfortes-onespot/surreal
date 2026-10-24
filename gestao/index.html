@@ -10,15 +10,15 @@
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.SG_BUILD='20261019192045';</script>
-<script src="../shared/versao.js?v=20261019192045"></script>
-<script src="../shared/config.js?v=20261019192045"></script>
-<script src="../shared/seed.js?v=20261019192045"></script>
-<script src="../shared/biblioteca.js?v=20261019192045"></script>
-<script src="../shared/core.js?v=20261019192045"></script>
+<script>window.SG_BUILD='20261024190219';</script>
+<script src="../shared/versao.js?v=20261024190219"></script>
+<script src="../shared/config.js?v=20261024190219"></script>
+<script src="../shared/seed.js?v=20261024190219"></script>
+<script src="../shared/biblioteca.js?v=20261024190219"></script>
+<script src="../shared/core.js?v=20261024190219"></script>
 <script src="../assets/excel-export.js"></script>
 <script src="../assets/pdf-export.js"></script>
-<script src="../shared/remote.js?v=20261019192045"></script>
+<script src="../shared/remote.js?v=20261024190219"></script>
 <style>
 /* ============================================================
    SURREAL — Painel de gestão (PC). OneSpot · 16/10/2026
@@ -174,6 +174,17 @@ table.dre.sim th,table.dre.sim td{padding-left:6px;padding-right:6px;}
 .dre-g table.dre td{padding:8px 16px;}
 .dre-g table.dre th{padding:10px 16px;}
 .pilha > .kpi{flex:1 1 0;min-height:0;}
+.ponte{display:flex;align-items:stretch;gap:4px;flex:0 0 auto;}
+.ponte .pcard{flex:1 1 0;padding:12px 12px;}
+.ponte .pcard .kv{font-size:20px;}
+.ponte .pcard.fim{border-color:var(--acc2);}
+.ponte .pseta{flex:0 0 auto;align-self:center;font-size:18px;font-weight:800;color:var(--txt4);}
+.pbar{height:5px;border-radius:3px;background:var(--linha);margin-top:8px;overflow:hidden;}
+.pbar i{display:block;height:100%;background:var(--acc2);border-radius:3px;} .pbar i.neg{background:var(--vermelho);} .pbar i.pos{background:var(--verde);}
+.pmg{font-size:11px;font-weight:700;color:var(--txt2);margin-top:6px;}
+.ponte .km{padding-top:4px;} .ponte .km b{color:var(--txt);}
+table.dre.dmes{font-size:11px;} table.dre.dmes td,table.dre.dmes th{padding:7px 7px;} table.dre.dmes td.conta{min-width:200px;}
+table.dre.dmes th.sel{color:var(--acc2);} table.dre.dmes td.sel{background:rgba(91,155,255,.07);}
 #tSim td.conta{white-space:nowrap;} #tSim th,#tSim td{padding-left:8px;padding-right:8px;} #tSim td.conta .cl{max-width:190px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 table.dre.sim th:first-child,table.dre.sim td:first-child{padding-left:10px;}
 table.dre th .ar{opacity:.6;margin-left:4px;color:var(--acc2);}
@@ -366,7 +377,7 @@ function eu(){ if(SGR.ativo&&SGR.perfil) return SGR.perfil; var id=null; try{id=
 
 /* ════════ navegação ════════ */
 var MENU=[
-  ['Visões',[['resumo','Resumo Gerencial','resumo'],['vendasA','Vendas','vendas'],['dre','DRE','fin'],['caixa','Caixa','caixa'],['simulador','Simulador de preço (DRE)','sim'],['cenarios','Simular todos os sabores','grade']]],
+  ['Visões',[['resumo','Resumo Gerencial','resumo'],['vendasA','Vendas','vendas'],['dreG','DRE gerencial','fin'],['dre','DRE mês a mês','lista'],['caixa','Caixa','caixa'],['simulador','Simulador de preço (DRE)','sim'],['cenarios','Simular todos os sabores','grade']]],
   ['Gestão à Vista',[['lancamentos','Lançamentos','lista'],['pedidos','Pedidos','vendas'],['producao','Produção','prod'],['saidas','Compras e despesas','compra'],['estoque','Estoque','estoque'],['fichas','Receitas','ficha'],['insumos','Insumos','insumo'],['produtos','Produtos e preços','tag'],['clientes','Clientes','clientes'],['parametros','Parâmetros','config']]],
 ];
 var TIT={}; MENU.forEach(function(s){ s[1].forEach(function(m){ TIT[m[0]]=m[1]; }); });
@@ -655,15 +666,12 @@ function dreDetPC(l, pk){
 }
 function rotPer(){ return F.per.size===1?SG.nomeMes(ymV()):'Período'; }
 
-/* DRE — competência */
-VIEWS.dre=function(){
-  var ms=perMeses(), ym=ymV(), ano=ym.slice(0,4), ytd=anoMeses(ym).filter(function(m){return m<=ym;});
-  var A=dreMeses(ms), Y=dreMeses(ytd);
-  sub('Competência: venda na data do pedido · custo dos potes entra quando o pote é vendido · '+perTxt());
-  var cats={}, fins={}; [A,Y].forEach(function(o){ Object.keys(o.desp).forEach(function(k){cats[k]=1;}); Object.keys(o.finD).forEach(function(k){fins[k]=1;}); });
+/* DRE — linhas (mesma estrutura nas duas visões). objs = DREs usados para descobrir os pacotes e contas financeiras */
+function dreLinhas(objs){
+  var cats={}, fins={}; objs.forEach(function(o){ Object.keys(o.desp).forEach(function(k){cats[k]=1;}); Object.keys(o.finD).forEach(function(k){fins[k]=1;}); });
   var pks=SG.PACOTES_OBZ.filter(function(k){ return cats[k]; }).concat(Object.keys(cats).filter(function(k){ return SG.PACOTES_OBZ.indexOf(k)<0; }));
   var rg=SG.regime(), nImp=rg.tipo==='mei'?'Impostos sobre a venda (DAS · ICMS/ISS)':rg.tipo==='simples'?'Impostos sobre a venda (Simples)':'Impostos sobre a venda (PIS/COFINS/ICMS-ISS)';
-  var L=[
+  return [
     {n:'Receita bruta (pedidos)', f:function(o){return o.bruta;}, tot:1, det:'rec'},
     {n:'(−) Deduções', f:function(o){return -o.ded;}, grp:'ded'},
       {n:'Descontos', f:function(o){return -o.desc;}, de:'ded', det:'desc'},
@@ -689,14 +697,75 @@ VIEWS.dre=function(){
     {n:'= Lucro líquido', f:function(o){return o.res;}, tot:1, cor:1},
     {n:'Retiradas dos sócios (informativo, fora do resultado)', f:function(o){return -o.retiradas;}, semPct:1, info:1},
    ]);
-  var h='<div class="hero"><div><div class="hl">Resultado · '+perTxt()+'</div><div class="hv '+(A.res>=0?'cg':'cr')+'">'+SG.brl(A.res)+'</div><div class="tsub">'+A.lotes+' lotes produzidos · '+SG.num(A.kg,1)+' kg · '+A.potes+' potes vendidos</div></div>'
-    + '<div class="hd"><div>Receita<b>'+SG.brl(A.rec)+'</b></div><div>Lucro bruto<b class="'+(A.bruto>=0?'cg':'cr')+'">'+SG.brl(A.bruto)+'</b></div><div>Margem líquida<b class="'+corMg(A.rec?A.res/A.rec:null)+'">'+(A.rec?SG.pct(A.res/A.rec,1):'—')+'</b></div><div>Resultado no ano<b class="'+(Y.res>=0?'cg':'cr')+'">'+SG.brl(Y.res)+'</b></div></div></div>';
-  h+='<div class="split"><div class="card tsec"><div class="thead-row"><div class="ttit">DRE</div><div class="tsub">YTD = janeiro a '+SG.nomeMes(ym)+' de '+ano+'</div></div><div class="twrap">'+tabelaPY(L,A,Y,rotPer())+'</div>'
-    + '<div class="nota">Custo dos produtos = cada pote vendido pela ficha técnica, com o preço da última compra até a data da venda (pacote ÷ quantidade). O que foi produzido e não vendido fica no estoque.'+(A.semCusto?' <b>'+A.semCusto+' item(ns) sem custo</b> (repasse do iFood sem sabor ou produto sem ficha).':'')+'</div></div>';
-  h+='<div class="pilha">'+gcard('gDre','Resultado · Mensal', ano+' · competência', legQ('Resultado do mês'))+'<div class="card tsec" style="flex:1 1 0;min-height:0"><div class="thead-row"><div class="ttit">Top 5 gastos</div><div class="tsub">'+perTxt()+' · % sobre o total de gastos do DRE ('+SG.brl(SG.gastosDRE(ms).total)+')</div></div><div class="twrap">'+top10Gastos(ms)+'</div></div></div></div>';
+}
+function dreTemDado(o){ return !!(o.rec||o.cmv||o.despT||o.fin); }
+
+/* DRE GERENCIAL — leitura executiva: ponte da receita ao lucro + evolução no ano da linha escolhida */
+var DRE_SERIE={
+  rec:['Receita bruta',function(o){return o.bruta;}], liq:['Receita líquida',function(o){return o.liq;}], cmv:['CMV',function(o){return o.cmv;}],
+  bruto:['Lucro bruto',function(o){return o.bruto;},1], mc:['Margem de contribuição',function(o){return o.mc;},1], desp:['Despesas operacionais',function(o){return o.despT;}],
+  oper:['Resultado operacional',function(o){return o.oper;},1], res:['Lucro líquido',function(o){return o.res;},1]
+};
+VIEWS.dreG=function(){
+  var ms=perMeses(), ym=ymV(), ano=ym.slice(0,4), A=dreMeses(ms), r=A.rec;
+  sub('Competência · da receita ao lucro · '+perTxt());
+  var pc=function(v){ return r?SG.pct(Math.abs(v)/r,1)+' da receita':'—'; };
+  var ponte=[
+    ['Receita bruta', A.bruta, 0, A.potes+' potes vendidos'],
+    ['Deduções', A.ded, 1, 'Receita líquida <b>'+SG.brl(A.liq)+'</b>'],
+    ['CMV', A.cmv, 1, 'Lucro bruto <b class="'+(A.bruto>=0?'cg':'cr')+'">'+SG.brl(A.bruto)+'</b>'],
+    ['Variáveis', A.kit, 1, 'Margem contrib. <b class="'+(A.mc>=0?'cg':'cr')+'">'+SG.brl(A.mc)+'</b>'],
+    ['Despesas oper.', A.despT, 1, 'Resultado oper. <b class="'+(A.oper>=0?'cg':'cr')+'">'+SG.brl(A.oper)+'</b>'],
+    ['Financeiro e IR', A.fin+A.ir, 1, 'LAIR <b class="'+(A.lair>=0?'cg':'cr')+'">'+SG.brl(A.lair)+'</b>'],
+    ['Lucro líquido', A.res, 2, 'Retiradas no período <b>'+SG.brl(A.retiradas)+'</b>']
+  ];
+  var h='<div class="ponte">'+ponte.map(function(p,i){
+    var v=p[1], w=r?Math.min(100,Math.abs(v)/r*100):0, cls=p[2]===2?(v>=0?'cg':'cr'):'';
+    var mg=p[2]===2?(r?'<span class="'+corMg(v/r)+'">'+SG.pct(v/r,1)+' margem líquida</span>':'—'):p[2]===0?(r?'100% · base':'—'):pc(v);
+    return (i?'<div class="pseta">'+(p[2]===2?'=':'−')+'</div>':'')
+      + '<div class="kpi pcard'+(p[2]===2?' fim':'')+'"><div class="kl">'+(p[2]===1?'(−) ':'')+p[0]+'</div><div class="kv '+cls+'">'+SG.brl(p[2]===1&&v?-v:v)+'</div>'
+      + '<div class="pbar"><i class="'+(p[2]===1?'neg':p[2]===2?(v>=0?'pos':'neg'):'')+'" style="width:'+w.toFixed(1)+'%"></i></div>'
+      + '<div class="pmg">'+mg+'</div><div class="km">'+p[3]+'</div></div>';
+  }).join('')+'</div>';
+  var k=DRE_SERIE[V.dreL]?V.dreL:'res', u=V.dreU==='pct'?'pct':'rs', S=DRE_SERIE[k];
+  var dims='<div class="dims">'+Object.keys(DRE_SERIE).map(function(x){ return '<button class="dimb'+(x===k?' on':'')+'" onclick="V.dreL=\''+x+'\';render()">'+DRE_SERIE[x][0]+'</button>'; }).join('')+'</div>';
+  var uni='<div class="dims"><button class="dimb'+(u==='rs'?' on':'')+'" onclick="V.dreU=\'rs\';render()">R$</button><button class="dimb'+(u==='pct'?' on':'')+'" onclick="V.dreU=\'pct\';render()">% receita</button></div>';
+  h+='<div class="split" style="grid-template-columns:minmax(0,1.5fr) minmax(0,1fr)"><div class="card gcard" style="min-height:0"><div style="display:flex;align-items:flex-start;gap:8px"><div class="gtit" style="flex:1">'+S[0]+' · Mensal</div>'+uni+'</div>'
+    + '<div class="gsub">'+ano+' · competência · escolha a linha do DRE</div><div style="margin:8px 0 2px">'+dims+'</div><div class="gcv"><canvas id="gDreG"></canvas></div></div>'
+    + '<div class="pilha"><div class="card tsec" style="flex:0 0 auto"><div class="thead-row"><div class="ttit">Top 5 gastos</div><div class="tsub">'+perTxt()+' · % sobre o total de gastos do DRE ('+SG.brl(SG.gastosDRE(ms).total)+')</div></div><div class="twrap">'+top10Gastos(ms)+'</div></div>'
+    + '<div class="card tsec" style="flex:1 1 auto;min-height:0"><div class="thead-row"><div class="ttit">Margens</div><div class="tsub">% da receita · período × ano '+ano+'</div></div><div class="twrap">'+margensDRE(A, dreMeses(anoMeses(ym)))+'</div></div></div></div>';
   $('view').innerHTML=h;
-  var an=anoMeses(ym), res=an.map(function(m){ var o=dreMeses([m]); return (o.rec||o.cprod||o.despT)?+o.res.toFixed(2):null; });
-  barras('gDre',{labels:an.map(function(m){return SG.MES3[+m.slice(5)-1];}), dados:res, nome:'Resultado', foco:F.per.size?an.map(function(m,i){return F.per.has(m)?i:-1;}).filter(function(i){return i>=0;}):null, cores:function(v,i,t){return v>=0?t.verde:t.vermelho;}});
+  var an=anoMeses(ym), dad=an.map(function(m){ var o=dreMeses([m]); if(!dreTemDado(o)) return null; var v=S[1](o); return u==='pct'?(o.rec?+(v/o.rec).toFixed(4):null):+v.toFixed(2); });
+  barras('gDreG',{labels:an.map(function(m){return SG.MES3[+m.slice(5)-1];}), dados:dad, nome:S[0], fmt:u==='pct'?function(v){return SG.pct(v,0);}:null,
+    foco:F.per.size?an.map(function(m,i){return F.per.has(m)?i:-1;}).filter(function(i){return i>=0;}):null,
+    cores:function(v,i,t){ return S[2]?(v>=0?t.verde:t.vermelho):t.neutro; }});
+};
+
+function margensDRE(A, Y){
+  var M=[['Margem bruta',function(o){return o.bruto;}],['Margem de contribuição',function(o){return o.mc;}],['Margem operacional',function(o){return o.oper;}],['Margem líquida',function(o){return o.res;}],['CMV',function(o){return -o.cmv;},1],['Despesas operacionais',function(o){return -o.despT;},1]];
+  var c=function(x,o){ if(!o.rec) return '—'; var m=x[1](o)/o.rec; return x[2]?SG.pct(-m,1):'<span class="'+corMg(m)+'">'+SG.pct(m,1)+'</span>'; };
+  return '<table class="dre"><thead><tr><th>Indicador</th><th class="num">Período</th><th class="num sep-l"><span class="ytd">Ano</span>Acumulado</th></tr></thead><tbody>'
+    + M.map(function(x){ return '<tr><td class="conta">'+x[0]+'</td><td class="num">'+c(x,A)+'</td><td class="num sep-l">'+c(x,Y)+'</td></tr>'; }).join('')+'</tbody></table>';
+}
+/* DRE — tabela: linhas do DRE × meses do ano + Ano. Clique no grupo abre/fecha; clique na linha abre o detalhe do período filtrado */
+VIEWS.dre=function(){
+  var ym=ymV(), ano=ym.slice(0,4), an=anoMeses(ym), M=an.map(function(m){ return dreMeses([m]); }), Y=dreMeses(an);
+  sub('Competência: venda na data do pedido · custo dos potes entra quando o pote é vendido · '+ano);
+  var L=dreLinhas(M.concat([Y])), tem=M.map(dreTemDado);
+  var fm=function(l,v){ if(v==null) return '<span class="muted">—</span>'; if(Math.abs(v)<0.005) return '<span class="muted">—</span>'; return l.cor?'<span class="'+(v>=0?'cg':'cr')+'">'+fmtR(v)+'</span>':fmtR(v); };
+  var thM=an.map(function(m,i){ return '<th class="num'+(F.per.has(m)?' sel':'')+'">'+SG.MES3[i]+'</th>'; }).join('');
+  var body=L.filter(function(l){ return !l.de || DREG[l.de]; }).map(function(l){
+    var sub2=l.sub||l.de, cls=[l.tot?'total':'', l.grp?'grp':'', (l.det||l.grp)?'clk':''].join(' ').trim();
+    var clk=l.grp?' onclick="DREG[\''+l.grp+'\']=!DREG[\''+l.grp+'\'];render()" title="Clique para abrir/fechar"':l.det?' onclick="dreDetPC(\''+l.det+'\''+(l.pk?',\''+esc(l.pk).replace(/'/g,'')+'\'':'')+')" title="Clique para ver o detalhe do período filtrado"':'';
+    var y=l.f(Y), py=l.semPct||!Y.rec?'—':l.cor?'<span class="'+corMg(y/Y.rec)+'">'+SG.pct(y/Y.rec,1)+'</span>':SG.pct(Math.abs(y)/Y.rec,1);
+    return '<tr'+(cls?' class="'+cls+'"':'')+(l.tot?' style="position:static"':'')+clk+'><td class="conta"'+(sub2?' style="padding-left:24px;font-weight:500;color:var(--txt2)"':l.info?' style="font-weight:500;color:var(--txt3);font-style:italic"':'')+'>'+(l.grp?'<span class="ar" style="margin:0 6px 0 0">'+(DREG[l.grp]?'▾':'▸')+'</span>':'')+esc(l.n)+'</td>'
+      + M.map(function(o,i){ return '<td class="num'+(F.per.has(an[i])?' sel':'')+'">'+(tem[i]?fm(l,l.f(o)):'<span class="muted">—</span>')+'</td>'; }).join('')
+      + '<td class="num sep-l"><b>'+fm(l,y)+'</b></td><td class="num">'+py+'</td></tr>';
+  }).join('');
+  var h='<div class="card tsec" style="flex:1 1 auto;min-height:0"><div class="thead-row"><div class="ttit">DRE · '+ano+'</div><div class="tsub">Mês a mês e acumulado do ano · clique em (−) para abrir o grupo e na linha para ver os lançamentos</div></div>'
+    + '<div class="twrap"><table class="dre dmes"><thead><tr><th>Linha</th>'+thM+'<th class="num sep-l"><span class="ytd">Ano</span>'+ano+'</th><th class="num">% receita</th></tr></thead><tbody>'+body+'</tbody></table></div>'
+    + '<div class="nota">Custo dos produtos = cada pote vendido pela ficha técnica, com o preço da última compra até a data da venda (pacote ÷ quantidade). O que foi produzido e não vendido fica no estoque.'+(Y.semCusto?' <b>'+Y.semCusto+' item(ns) sem custo</b> (repasse do iFood sem sabor ou produto sem ficha).':'')+'</div></div>';
+  $('view').innerHTML=h;
 };
 
 /* TOP 5 GASTOS — insumos, embalagens, contas, taxas e impostos do período, com % do total (tabela padrão) */
@@ -1535,7 +1604,7 @@ function ligaPdf(){ if(window._pdfWrap||!window.initPdfExport) return;
   initPdfExport({ btnContainer:'#pdf-slot', btnClass:'s-item', btnAoFim:true,
     title:'Surreal · gelato artesanal', subtitle:function(){ return $('tsub').textContent; }, fileBase:'surreal',
     main:function(){ return $('view'); }, marca:'Surreal · OneSpot', cor:'#2563EB', logo:function(){ return document.body.classList.contains('claro')?'../img/logo-navy.png':'../img/logo-branco.png'; },
-    views:function(){ return ['resumo','vendasA','dre','caixa','simulador','cenarios','lancamentos','estoque'].map(function(k){ return {label:TIT[k], ativar:function(){ vai(k); }}; }); },
+    views:function(){ return ['resumo','vendasA','dreG','dre','caixa','simulador','cenarios','lancamentos','estoque'].map(function(k){ return {label:TIT[k], ativar:function(){ vai(k); }}; }); },
     viewAtual:function(){ return V.view; }, irPara:function(k){ vai(k); },
     isLight:function(){ return document.body.classList.contains('claro'); }, setTheme:function(t){ if((t==='light')!==document.body.classList.contains('claro')) alternaTema(); } });
   window._pdfWrap=document.querySelector('#pdf-slot .pdf-wrap'); }
