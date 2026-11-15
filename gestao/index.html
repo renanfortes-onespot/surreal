@@ -10,15 +10,15 @@
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.SG_BUILD='20261115142130';</script>
-<script src="../shared/versao.js?v=20261115142130"></script>
-<script src="../shared/config.js?v=20261115142130"></script>
-<script src="../shared/seed.js?v=20261115142130"></script>
-<script src="../shared/biblioteca.js?v=20261115142130"></script>
-<script src="../shared/core.js?v=20261115142130"></script>
+<script>window.SG_BUILD='20261115142424';</script>
+<script src="../shared/versao.js?v=20261115142424"></script>
+<script src="../shared/config.js?v=20261115142424"></script>
+<script src="../shared/seed.js?v=20261115142424"></script>
+<script src="../shared/biblioteca.js?v=20261115142424"></script>
+<script src="../shared/core.js?v=20261115142424"></script>
 <script src="../assets/excel-export.js"></script>
 <script src="../assets/pdf-export.js"></script>
-<script src="../shared/remote.js?v=20261115142130"></script>
+<script src="../shared/remote.js?v=20261115142424"></script>
 <style>
 /* ============================================================
    SURREAL — Painel de gestão (PC). OneSpot · 16/10/2026
@@ -903,10 +903,10 @@ VIEWS.simulador=function(){
     + D_.map(function(r){ var v=r[1]; if(r[2]==='sec') return '<tr><td colspan="4" style="padding:12px 12px 4px;font-size:9.5px;font-weight:800;color:var(--acc2);text-transform:uppercase;letter-spacing:.8px;background:none">'+r[0]+'</td></tr>'; return '<tr'+(r[2]?' class="total" style="position:static"':'')+'><td class="conta">'+r[0]+'</td><td class="num">'+(r[3]?'<span class="'+(v>=0?'cg':'cr')+'">'+SG.brl(v)+'</span>':SG.brl(v))+'</td><td class="num">'+(r[3]?'<span class="'+corMg(T.rec?v/T.rec:null)+'">'+pc(v)+'</span>':pc(Math.abs(v)))+'</td><td class="num sep-l">'+pp(v)+'</td></tr>'; }).join('')
     + '</tbody></table>';
   var avisos=[]; S.L.forEach(function(r){ r.avisos.forEach(function(a){ if(avisos.indexOf(a)<0) avisos.push(a); }); });
-  h+='<div class="split" style="grid-template-columns:minmax(0,1fr) minmax(0,1fr)"><div class="card tsec"><div class="thead-row"><div class="ttit">Produtos simulados</div><div class="tsub">clique na linha para mudar preço e quantidade</div><div class="dir">'+(SIM.linhas.length?'<button class="btn sm" onclick="simLimpa()" title="Tira todas as linhas de uma vez">Limpar</button>':'')+'<button class="btn sm" onclick="simCarregaMes()" title="Usa os potes vendidos no mês, com o preço médio praticado">Carregar vendas de '+SG.nomeMes(SG.mesAtual())+'</button>'+btNovo('Adicionar produto','abrirSimLinha(null)')+'</div></div><div class="twrap">'+tabL+'</div>'
+  h+='<div class="split" style="grid-template-columns:minmax(0,1fr) minmax(0,1fr);flex:0 0 auto;align-items:stretch"><div class="card tsec" style="min-height:0"><div class="thead-row"><div class="ttit">Produtos simulados</div><div class="tsub">clique na linha para mudar preço e quantidade</div><div class="dir">'+(SIM.linhas.length?'<button class="btn sm" onclick="simLimpa()" title="Tira todas as linhas de uma vez">Limpar</button>':'')+'<button class="btn sm" onclick="simCarregaMes()" title="Usa os potes vendidos no mês, com o preço médio praticado">Carregar vendas de '+SG.nomeMes(SG.mesAtual())+'</button>'+btNovo('Adicionar produto','abrirSimLinha(null)')+'</div></div><div class="twrap">'+tabL+'</div>'
     + (avisos.length?'<div class="av2" style="margin-top:8px">'+avisos.map(esc).join(' · ')+'</div>':'')+'</div>'
-    + '<div class="card tsec"><div class="thead-row"><div class="ttit">DRE do mês simulado</div><div class="tsub">um mês vendendo as quantidades da esquerda ·</div><div class="tsub">margem colorida pela meta de '+SG.pct(D().config.margemAlvo,0)+'</div></div><div class="twrap" style="flex:0 0 auto">'+tabD+'</div>'
-    + '<div class="mk" style="margin-top:12px"><div title="OBZ do mês ÷ margem de contribuição por pote"><small>Ponto de equilíbrio</small><b>'+(indFixo?(pe?pe+' potes':'—'):'sem OBZ lançado')+'</b></div><div><small>Potes para a meta</small><b>'+(potesMeta?potesMeta:'—')+'</b></div><div><small>Lucro por pote (depois do OBZ)</small><b class="'+(T.lucro>=0?'cg':'cr')+'">'+pp(T.lucro)+'</b></div></div>'
+    + '<div class="card tsec" style="min-height:0"><div class="thead-row"><div class="ttit">DRE do mês simulado</div><div class="tsub">um mês vendendo as quantidades da esquerda ·</div><div class="tsub">margem colorida pela meta de '+SG.pct(D().config.margemAlvo,0)+'</div></div><div class="twrap" style="flex:0 0 auto;overflow:visible">'+tabD+'</div>'
+    + '<div class="mk" style="margin:12px 0 0;flex:0 0 auto"><div title="OBZ do mês ÷ margem de contribuição por pote"><small>Ponto de equilíbrio</small><b>'+(indFixo?(pe?pe+' potes':'—'):'sem OBZ lançado')+'</b></div><div><small>Potes para a meta</small><b>'+(potesMeta?potesMeta:'—')+'</b></div><div><small>Lucro por pote (depois do OBZ)</small><b class="'+(T.lucro>=0?'cg':'cr')+'">'+pp(T.lucro)+'</b></div></div>'
     + '<div class="nota">OBZ = orçamento de custos fixos do mês por pacote ('+SG.brl(indFixo)+'/mês, em Parâmetros). Ele não entra no custo do pote: sai do lucro do mês. Ponto de equilíbrio = OBZ ÷ margem de contribuição por pote. Mão de obra entra se vocês lançarem Pró-labore/Ajudante no pacote Pessoal.</div></div></div>';
   $('view').innerHTML=h;
 };
