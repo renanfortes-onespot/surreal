@@ -10,15 +10,15 @@
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.SG_BUILD='20261115143207';</script>
-<script src="../shared/versao.js?v=20261115143207"></script>
-<script src="../shared/config.js?v=20261115143207"></script>
-<script src="../shared/seed.js?v=20261115143207"></script>
-<script src="../shared/biblioteca.js?v=20261115143207"></script>
-<script src="../shared/core.js?v=20261115143207"></script>
+<script>window.SG_BUILD='20261115144539';</script>
+<script src="../shared/versao.js?v=20261115144539"></script>
+<script src="../shared/config.js?v=20261115144539"></script>
+<script src="../shared/seed.js?v=20261115144539"></script>
+<script src="../shared/biblioteca.js?v=20261115144539"></script>
+<script src="../shared/core.js?v=20261115144539"></script>
 <script src="../assets/excel-export.js"></script>
 <script src="../assets/pdf-export.js"></script>
-<script src="../shared/remote.js?v=20261115143207"></script>
+<script src="../shared/remote.js?v=20261115144539"></script>
 <style>
 /* ============================================================
    SURREAL — Painel de gestão (PC). OneSpot · 16/10/2026
@@ -82,6 +82,7 @@ body.claro .s-item svg{color:var(--acc);}
 .top h1{font-size:21px;font-weight:700;letter-spacing:-.3px;}
 .top .sub{font-size:11px;color:var(--txt3);font-weight:600;margin-top:2px;}
 .top .flt{display:flex;align-items:flex-end;gap:8px;flex-wrap:wrap;}
+.rfb{position:relative;width:300px}.rfb .inp{width:100%}.rfl{display:none;position:absolute;top:calc(100% + 4px);left:0;right:0;max-height:320px;overflow:auto;background:var(--pop);border:1px solid var(--card-brd);border-radius:10px;box-shadow:0 12px 32px rgba(0,0,0,.25);z-index:30;padding:4px}.rfl.on{display:block}.rfl .op{padding:7px 10px;border-radius:7px;cursor:pointer;display:flex;align-items:baseline;gap:8px}.rfl .op b{font-weight:600;font-size:12px}.rfl .op small{color:var(--txt3);font-size:10.5px}.rfl .op.on,.rfl .op:hover{background:var(--hover)}
 .bibg{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 18px}.bibl{padding:5px 0;cursor:pointer;align-items:center;gap:10px}.bibg .lin .v{display:none}.bibl input{width:15px;height:15px;accent-color:var(--acc);flex:0 0 auto;margin:0}.bibl.par .nm b{color:var(--txt2)}.bibl.par small{color:var(--ambar);display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.bibl .nm{min-width:0}
 .pendb{display:inline-flex;align-items:center;gap:6px;background:rgba(245,166,35,.12);border:1px solid rgba(245,166,35,.45);color:var(--ambar);border-radius:8px;padding:6px 10px;font-size:11px;font-weight:700;cursor:pointer;margin-right:4px;} .pendb svg{width:14px;height:14px;} .pendb:hover{background:rgba(245,166,35,.2);}
 .tlbl{display:flex;flex-direction:column;gap:3px;font-size:8.5px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.7px;}
@@ -1342,7 +1343,7 @@ function fichaReceita(){
     + '<div class="fld" id="rfCardBox"'+(RF.tipo==='sabor'?'':' style="visibility:hidden"')+'><label title="Ligado: o produto nasce e se atualiza junto com a receita">Vende no cardápio</label>'+segH('rfCard',[['1','Sim'],['0','Não']],rfVende()?'1':'0','rfCardSet')+'</div>'
     + '<div class="fld"><label>Observações</label><input class="inp" id="rfObs" value="'+esc(RF.obs||'')+'" placeholder="Opcional"></div></div>';
   var opIns=D().insumos.filter(function(i){return i.tipo==='ingrediente';}).slice().sort(function(a,b){return a.nome.localeCompare(b.nome);}), opRec=D().receitas.filter(function(x){return x.id!==id;});
-  var pe='<div class="thead-row"><div class="tsub" id="rfSub"></div><div class="dir"><select class="inp" id="rfAdd" style="width:230px"><optgroup label="Insumos">'+opIns.map(function(i){return '<option value="i:'+i.id+'">'+esc(i.nome)+(i.comp?'':' · sem composição')+'</option>';}).join('')+'</optgroup><optgroup label="Sub-receitas">'+opRec.map(function(x){return '<option value="r:'+x.id+'">'+esc(x.nome)+'</option>';}).join('')+'</optgroup></select><input class="inp num" id="rfG" placeholder="gramas" style="width:80px" onkeydown="if(event.key===\'Enter\')rfAdd()"><button class="btn pri sm" onclick="rfAdd()">'+ic('mais')+'Adicionar</button></div></div>';
+  var pe='<div class="thead-row"><div class="tsub" id="rfSub"></div><div class="dir"><div class="rfb"><input class="inp" id="rfQ" placeholder="Procurar ingrediente ou sub-receita…" autocomplete="off" oninput="rfBusca()" onfocus="rfBusca()" onkeydown="rfBuscaTecla(event)"><input type="hidden" id="rfAdd"><div class="rfl" id="rfL"></div></div><input class="inp num" id="rfG" placeholder="gramas" style="width:80px" onkeydown="if(event.key===\'Enter\')rfAdd()"><button class="btn pri sm" onclick="rfAdd()">'+ic('mais')+'Adicionar</button></div></div>';
   var acoes='<div class="rf-acoes"><button class="btn sm" onclick="fecharReceita()">'+ic('volta')+'Voltar</button>'+(r&&r.tipo==='sabor'?'<button class="btn sm" onclick="vai(\'produtos\')">'+ic('tag')+'Cardápio e preços</button><button class="btn sm" onclick="abrirProducao(null,\''+r.id+'\')">'+ic('prod')+'Produzir</button>':'')+'<span style="flex:1"></span>'+(r?'<button class="btn warn sm" onclick="apagaReceita(\''+r.id+'\')">Excluir</button>':'')+'<button class="btn sm" onclick="fecharReceita()">Cancelar</button><button class="btn pri sm" onclick="salvaReceita()">Salvar</button></div>';
   $('view').innerHTML=acoes+top+'<div class="card tsec rf-tab">'+pe+'<div class="twrap" id="rfIt"></div><div class="erro" id="rfErro"></div></div>';
   rfCalc();
@@ -1375,7 +1376,15 @@ function rfCardapio(r){
   return h;
 }
 function rfPreco(pid,cid,tid,v){ var P=D().precos; P[pid]=P[pid]||{}; P[pid][cid]=P[pid][cid]||{}; var n=numIn(v); if(n==null) delete P[pid][cid][tid]; else P[pid][cid][tid]=n; SG.salvar(true); var r=SG.receita(V.rec); if($('rfCard')&&r) $('rfCard').innerHTML=rfCardapio(r); }
-function rfAdd(){ var v=$('rfAdd').value, g=numIn($('rfG').value); if(!g) return; RF.itens.push(v[0]==='i'?{insumo:v.slice(2),g:g}:{receita:v.slice(2),g:g}); $('rfG').value=''; rfCalc(); }
+function normNome(s){ return String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().replace(/[^a-z0-9%]+/g,' ').trim(); }
+var RFB={ops:[],sel:-1};
+function rfOps(){ var id=RF.id, ins=D().insumos.filter(function(i){return i.tipo==='ingrediente';}).map(function(i){return {v:'i:'+i.id,n:i.nome,s:i.cat||'',sem:!i.comp};}), rec=D().receitas.filter(function(x){return x.id!==id;}).map(function(x){return {v:'r:'+x.id,n:x.nome,s:'sub-receita'};}); return ins.concat(rec); }
+function rfBusca(){ var q=normNome($('rfQ').value), ops=rfOps(); RFB.ops=(q?ops.filter(function(o){return normNome(o.n+' '+o.s).indexOf(q)>=0;}):ops).sort(function(a,b){ var qa=normNome(a.n).indexOf(q), qb=normNome(b.n).indexOf(q); return (qa<0)-(qb<0)||qa-qb||a.n.localeCompare(b.n); }).slice(0,40); RFB.sel=RFB.ops.length?0:-1; rfBuscaPinta(); }
+function rfBuscaPinta(){ var L=$('rfL'); if(!L) return; L.innerHTML=RFB.ops.map(function(o,k){ return '<div class="op'+(k===RFB.sel?' on':'')+'" onmousedown="rfEscolhe('+k+')"><b>'+esc(o.n)+'</b><small>'+esc(o.s)+(o.sem?' · <span class="amb">sem composição</span>':'')+'</small></div>'; }).join('')||'<div class="op mut">Nada encontrado</div>'; L.classList.toggle('on',!!$('rfQ').value||document.activeElement===$('rfQ')); }
+function rfEscolhe(k){ var o=RFB.ops[k]; if(!o) return; $('rfAdd').value=o.v; $('rfQ').value=o.n; $('rfL').classList.remove('on'); $('rfG').focus(); }
+function rfBuscaTecla(e){ if(e.key==='ArrowDown'){ RFB.sel=Math.min(RFB.ops.length-1,RFB.sel+1); rfBuscaPinta(); e.preventDefault(); } else if(e.key==='ArrowUp'){ RFB.sel=Math.max(0,RFB.sel-1); rfBuscaPinta(); e.preventDefault(); } else if(e.key==='Enter'){ rfEscolhe(RFB.sel); e.preventDefault(); } else if(e.key==='Escape'){ $('rfL').classList.remove('on'); } }
+document.addEventListener('click',function(e){ var L=$('rfL'); if(L&&!e.target.closest('.rfb')) L.classList.remove('on'); });
+function rfAdd(){ var v=$('rfAdd').value, g=numIn($('rfG').value); if(!v){ $('rfQ').focus(); return; } if(!g){ $('rfG').focus(); return; } RF.itens.push(v[0]==='i'?{insumo:v.slice(2),g:g}:{receita:v.slice(2),g:g}); $('rfG').value=''; $('rfQ').value=''; $('rfAdd').value=''; rfCalc(); $('rfQ').focus(); }
 function rfCalc(){
   if($('rfBal')&&$('rfBal').value!==RF.bal) RF.bal=$('rfBal').value;
   var tmp=Object.assign({},RF,{id:'__rf'}); D().receitas.push(tmp);
@@ -1422,11 +1431,24 @@ VIEWS.insumos=function(){
       {t:'Estoque',f:function(i){var s=e.insumos[i.id];return s==null?'<span class="muted">—</span>':s<0?'<span class="amb" title="Usou mais do que as compras lançadas">sem compra</span>':'<span class="'+(i.min&&s<i.min?'cr':'')+'">'+SG.qtdFmt(s,i.un)+'</span>';},v:function(i){return e.insumos[i.id]||0;},cls:'num'},
       {t:'Composição',f:function(i){ if(i.tipo!=='ingrediente') return '<span class="muted">—</span>'; return i.comp?'<span class="st vd">'+esc(i.bib||'própria')+'</span>':(usos(i)?'<span class="st am">falta</span>':'<span class="muted">—</span>'); },s:function(i){return i.comp?'a':'b';}},
       {t:'Usado em',f:function(i){var n=usos(i);return n?n+(n>1?' receitas':' receita'):'—';},v:usos,cls:'num'},
-    ], ls, null, function(i){ return "abrirInsumo('"+i.id+"')"; })), '<button class="btn sm" onclick="importarBiblioteca()">'+ic('lista')+'Importar da planilha do curso</button>';
+    ], ls, null, function(i){ return "abrirInsumo('"+i.id+"')"; })), '<button class="btn sm" onclick="juntarDuplicados()">'+ic('lista')+'Juntar duplicados</button>';
 };
 /* Importa a Tabela de ingredientes da planilha do curso (shared/biblioteca.js) como insumos:
    composição por 100 g, categoria e o 'Custo Kg' da planilha como preço estimado até a 1ª compra.
    Casa pelo nome (sem acento/caixa) ou pelo vínculo 'bib'; quem já existe só ganha a composição se não tiver. */
+/* junta insumos antigos com o equivalente da planilha (fica o nome da planilha) */
+function juntarDuplicados(){
+  var P=SG.bibDuplicados(); window.DUP=P;
+  if(!P.length){ abrirModal('Juntar duplicados','<div class="muted" style="font-size:12px">Nenhum insumo parecido com um item da planilha. Nada a juntar.</div>','<button class="btn" onclick="fecharModal()">Fechar</button>'); return; }
+  var lista=P.map(function(p,k){ p.k=k; return '<label class="lin bibl" style="gap:12px"><input type="checkbox" class="dupck" data-k="'+k+'" checked onchange="dupConta()"><div class="nm" style="flex:1"><b>'+esc(p.antigo.nome)+' <span class="mut" style="font-weight:400">→</span> '+esc(p.novo.nome)+'</b><small>'+(p.usos?p.usos+(p.usos>1?' receitas':' receita'):'nenhuma receita')+' · '+(p.compras?p.compras+(p.compras>1?' compras':' compra'):'sem compra')+(p.outros.length?' · <span class="amb">ou: '+p.outros.slice(0,3).map(function(o){return esc(o.nome);}).join(', ')+'</span>':'')+'</small></div>'
+      +(p.outros.length?'<select class="inp sm" style="width:auto;max-width:260px" onchange="dupTroca('+k+',this.value)"><option value="'+p.novo.id+'">'+esc(p.novo.nome)+'</option>'+p.outros.map(function(o){return '<option value="'+o.id+'">'+esc(o.nome)+'</option>';}).join('')+'</select>':'')+'</label>'; }).join('');
+  abrirModal('Juntar duplicados · fica o nome da planilha', '<div class="fdica" style="margin:0 0 10px">Receitas, compras, contagens e embalagens do insumo da esquerda passam para o da direita; o da esquerda é apagado. Se o da planilha ainda não tem preço ou mínimo, herda os do antigo. Desmarque o que não for a mesma coisa; quando houver mais de um candidato, escolha ao lado.</div>'+lista,
+    '<button class="btn" onclick="fecharModal()">Cancelar</button><button class="btn pri" id="dupOk" onclick="juntarDuplicadosOk()">Juntar</button>', true);
+  dupConta();
+}
+function dupConta(){ var n=document.querySelectorAll('.dupck:checked').length, b=$('dupOk'); if(b){ b.textContent='Juntar '+n+(n===1?' par':' pares'); b.disabled=!n; } }
+function dupTroca(k,id){ var p=window.DUP[k], all=[p.novo].concat(p.outros), n=all.filter(function(x){return x.id===id;})[0]; if(!n) return; p.outros=all.filter(function(x){return x!==n;}); p.novo=n; }
+function juntarDuplicadosOk(){ var sel=[]; document.querySelectorAll('.dupck:checked').forEach(function(e){ sel.push(window.DUP[+e.getAttribute('data-k')]); }); var n=SG.bibJuntar(sel); fecharModal(); toast(n+(n===1?' insumo juntado':' insumos juntados')); }
 function importarBiblioteca(){
   var P=SG.bibPlano(), cats={}; window.BIBP=P;
   P.novos.forEach(function(x){ (cats[x.b.cat]=cats[x.b.cat]||[]).push(x); });
