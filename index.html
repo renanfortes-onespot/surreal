@@ -13,13 +13,13 @@
 <link rel="icon" href="img/icone-192.png">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.SG_BUILD='20261115144539';</script>
-<script src="shared/versao.js?v=20261115144539"></script>
-<script src="shared/config.js?v=20261115144539"></script>
-<script src="shared/seed.js?v=20261115144539"></script>
-<script src="shared/biblioteca.js?v=20261115144539"></script>
-<script src="shared/core.js?v=20261115144539"></script>
-<script src="shared/remote.js?v=20261115144539"></script>
+<script>window.SG_BUILD='20261115145635';</script>
+<script src="shared/versao.js?v=20261115145635"></script>
+<script src="shared/config.js?v=20261115145635"></script>
+<script src="shared/seed.js?v=20261115145635"></script>
+<script src="shared/biblioteca.js?v=20261115145635"></script>
+<script src="shared/core.js?v=20261115145635"></script>
+<script src="shared/remote.js?v=20261115145635"></script>
 <style>
 /* ============================================================
    SURREAL · gelato artesanal — app (PWA)
@@ -145,6 +145,7 @@ body.claro .atalhos button i{color:var(--acc);}
 .campo select{appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23888' stroke-width='1.6' fill='none'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;padding-right:34px;}
 .campo input:focus,.campo select:focus,.campo textarea:focus{outline:none;border-color:var(--acc2);}
 .campo .dica{font-size:10.5px;color:var(--txt3);margin-top:6px;line-height:1.45;}
+.bsc{position:relative}.bsl{display:none;position:absolute;left:0;right:0;top:calc(100% + 4px);max-height:280px;overflow:auto;background:var(--card);border:1px solid var(--brd);border-radius:12px;box-shadow:0 14px 36px rgba(0,0,0,.35);z-index:40;padding:4px}.bsl.on{display:block}.bsl .op{padding:10px 12px;border-radius:9px;cursor:pointer}.bsl .op b{display:block;font-size:14px;font-weight:500}.bsl .op small{display:block;font-size:10.5px;color:var(--txt2);margin-top:2px}.bsl .op:active{background:var(--linha)}
 .lado{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
 .seg{display:flex;background:var(--linha);border:1px solid var(--brd);border-radius:12px;padding:4px;gap:4px;margin-bottom:14px;}
 .seg button{flex:1;border:0;background:none;color:var(--txt2);font-size:12px;font-weight:600;border-radius:9px;padding:10px 4px;cursor:pointer;min-height:40px;line-height:1.15;}
@@ -733,7 +734,8 @@ function ibOk(){ var a=atual(), r=SG.bibImportar(a.P||SG.bibPlano(), a.marc||{})
 TELAS.compraNova = function(a){
   var ins=D().insumos.slice().sort(function(a,b){return a.nome.localeCompare(b.nome);});
   var h = cab('carrinho','Registrar compra','Atualiza o custo do insumo e o estoque');
-  h += '<div class="campo"><label>Insumo</label><select id="coIns" onchange="coCalc()">'+opts(ins,(a&&a.ins)||'leite-integral')+'</select></div>';
+  var ini=SG.insumo((a&&a.ins)||'')||null;
+  h += '<div class="campo"><label>Insumo</label><div class="bsc"><input id="coQ" placeholder="Procurar insumo…" autocomplete="off" value="'+esc(ini?ini.nome:'')+'" oninput="bscFiltra(\'co\')" onfocus="bscFiltra(\'co\')"><input type="hidden" id="coIns" value="'+esc(ini?ini.id:'')+'"><div class="bsl" id="coL"></div></div></div>';
   h += '<div class="lado"><div class="campo"><label id="coQl">Quantidade (gramas)</label><input id="coQtd" inputmode="decimal" placeholder="ex.: 2000" oninput="coCalc()"></div><div class="campo"><label>Valor pago (R$)</label><input id="coVal" inputmode="decimal" placeholder="ex.: 35,90" oninput="coCalc()"></div></div>';
   h += '<div class="campo"><label>Data</label><input id="coData" type="date" value="'+SG.hoje()+'"></div>';
   h += '<div class="campo"><label>Linha do DRE</label><select id="coConta"><option value="">Custo dos produtos · entra no estoque</option>'+SG.PACOTES_OBZ.map(function(pc){ var l=SG.contasOBZ().filter(function(c){return c.pacote===pc;}); return l.length?'<optgroup label="'+pc+'">'+l.map(function(c){return '<option value="'+c.id+'">'+esc(c.nome)+'</option>';}).join('')+'</optgroup>':''; }).join('')+'</select><div class="dica">Padrão: vai para o estoque e vira custo quando usar. Escolhendo uma conta, vira despesa dessa linha e não entra no estoque.</div></div><div id="coOut"></div>';
@@ -741,14 +743,22 @@ TELAS.compraNova = function(a){
   return h;
 };
 TELAS.compraNova_depois = function(){ coCalc(); };
+/* busca com lista (insumos): bscFiltra(prefixo) lê #<p>Q, lista em #<p>L, grava id em #<p>Ins e chama <p>Pick */
+var BSC={};
+function bscNorm(s){ return String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase(); }
+BSC.co={ itens:function(){ return D().insumos.map(function(i){ return {id:i.id, n:i.nome, s:(i.cat||'')+(i.tipo==='embalagem'?' · embalagem':'')}; }); }, pick:function(){ coCalc(); } };
+function bscFiltra(p){ var q=bscNorm($(p+'Q').value), L=$(p+'L'), all=BSC[p].itens(); var ls=(q?all.filter(function(o){return bscNorm(o.n+' '+o.s).indexOf(q)>=0;}):all).sort(function(a,b){ var x=bscNorm(a.n).indexOf(q), y=bscNorm(b.n).indexOf(q); return (x<0)-(y<0)||x-y||a.n.localeCompare(b.n); }).slice(0,30);
+  L.innerHTML=ls.map(function(o){ return '<div class="op" onmousedown="bscPega(\''+p+'\',\''+o.id+'\')"><b>'+esc(o.n)+'</b><small>'+esc(o.s)+'</small></div>'; }).join('')||'<div class="op"><small>Nada encontrado</small></div>'; L.classList.add('on'); }
+function bscPega(p,id){ var o=BSC[p].itens().filter(function(x){return x.id===id;})[0]; if(!o) return; $(p+'Ins').value=id; $(p+'Q').value=o.n; $(p+'L').classList.remove('on'); BSC[p].pick(); }
+document.addEventListener('click',function(e){ if(!e.target.closest('.bsc')) document.querySelectorAll('.bsl.on').forEach(function(l){ l.classList.remove('on'); }); });
 function coCalc(){
-  var i=SG.insumo($('coIns').value), q=(numIn($('coQtd').value)||0)/(i.un==='un'?1:1000), v=numIn($('coVal').value), at=SG.custoInsumo(i.id).valor;
+  var i=SG.insumo($('coIns').value); if(!i){ $('coOut').innerHTML=''; $('coQl').textContent='Quantidade'; return; } var q=(numIn($('coQtd').value)||0)/(i.un==='un'?1:1000), v=numIn($('coVal').value), at=SG.custoInsumo(i.id).valor;
   $('coQl').textContent = i.un==='un'?'Quantidade (unidades)':'Quantidade (gramas)';
   var h='<div class="res"><div class="n"><span>Custo atual</span><b>'+SG.brl(at)+'</b><small>por '+(i.un==='un'?'unidade':'kg')+'</small></div>';
   if(q&&v){ var nv=v/q, d=at?nv/at-1:0; h+='<div class="n"><span>Novo custo</span><b class="'+(d>0.005?'neg':d<-0.005?'pos':'')+'">'+SG.brl(nv)+'</b><small>'+(at?(d>=0?'+':'')+SG.pct(d,1)+' vs atual':'')+'</small></div>'; }
   $('coOut').innerHTML=h+'</div>';
 }
-function salvaCompra(){ var q=(numIn($('coQtd').value)||0)/(SG.insumo($('coIns').value).un==='un'?1:1000), v=numIn($('coVal').value); if(!q||!v){ toast('Preencha quantidade e valor'); return; }
+function salvaCompra(){ var ins=SG.insumo($('coIns').value); if(!ins){ toast('Escolha o insumo'); $('coQ').focus(); return; } var q=(numIn($('coQtd').value)||0)/(ins.un==='un'?1:1000), v=numIn($('coVal').value); if(!q||!v){ toast('Preencha quantidade e valor'); return; }
   D().compras.push({id:SG.novoId('c'), data:$('coData').value||SG.hoje(), insumo:$('coIns').value, qtd:q, valor:v, conta:$('coConta').value||null, ts:Date.now(), por:usuario().id, historico:false}); SG.salvar(true); volta(); toast('Compra registrada'); }
 
 /* DESPESA */
