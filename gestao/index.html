@@ -10,15 +10,15 @@
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.SG_BUILD='20261115130029';</script>
-<script src="../shared/versao.js?v=20261115130029"></script>
-<script src="../shared/config.js?v=20261115130029"></script>
-<script src="../shared/seed.js?v=20261115130029"></script>
-<script src="../shared/biblioteca.js?v=20261115130029"></script>
-<script src="../shared/core.js?v=20261115130029"></script>
+<script>window.SG_BUILD='20261115141813';</script>
+<script src="../shared/versao.js?v=20261115141813"></script>
+<script src="../shared/config.js?v=20261115141813"></script>
+<script src="../shared/seed.js?v=20261115141813"></script>
+<script src="../shared/biblioteca.js?v=20261115141813"></script>
+<script src="../shared/core.js?v=20261115141813"></script>
 <script src="../assets/excel-export.js"></script>
 <script src="../assets/pdf-export.js"></script>
-<script src="../shared/remote.js?v=20261115130029"></script>
+<script src="../shared/remote.js?v=20261115141813"></script>
 <style>
 /* ============================================================
    SURREAL — Painel de gestão (PC). OneSpot · 16/10/2026
@@ -82,6 +82,7 @@ body.claro .s-item svg{color:var(--acc);}
 .top h1{font-size:21px;font-weight:700;letter-spacing:-.3px;}
 .top .sub{font-size:11px;color:var(--txt3);font-weight:600;margin-top:2px;}
 .top .flt{display:flex;align-items:flex-end;gap:8px;flex-wrap:wrap;}
+.bibg{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 18px}.bibl{padding:5px 0;cursor:pointer;align-items:center;gap:10px}.bibl input{width:15px;height:15px;accent-color:var(--acc);flex:0 0 auto;margin:0}.bibl.par .nm b{color:var(--txt2)}.bibl.par small{color:var(--ambar);display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.bibl .nm{min-width:0}
 .pendb{display:inline-flex;align-items:center;gap:6px;background:rgba(245,166,35,.12);border:1px solid rgba(245,166,35,.45);color:var(--ambar);border-radius:8px;padding:6px 10px;font-size:11px;font-weight:700;cursor:pointer;margin-right:4px;} .pendb svg{width:14px;height:14px;} .pendb:hover{background:rgba(245,166,35,.2);}
 .tlbl{display:flex;flex-direction:column;gap:3px;font-size:8.5px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.7px;}
 .tsel{background:var(--inp);border:1px solid var(--card-brd);border-radius:8px;padding:6px 9px;color:var(--txt);font-size:12px;font-weight:600;cursor:pointer;max-width:260px;}
@@ -1438,8 +1439,48 @@ VIEWS.insumos=function(){
       {t:'Estoque',f:function(i){var s=e.insumos[i.id];return s==null?'<span class="muted">—</span>':s<0?'<span class="amb" title="Usou mais do que as compras lançadas">sem compra</span>':'<span class="'+(i.min&&s<i.min?'cr':'')+'">'+SG.qtdFmt(s,i.un)+'</span>';},v:function(i){return e.insumos[i.id]||0;},cls:'num'},
       {t:'Composição',f:function(i){ if(i.tipo!=='ingrediente') return '<span class="muted">—</span>'; return i.comp?'<span class="st vd">'+esc(i.bib||'própria')+'</span>':(usos(i)?'<span class="st am">falta</span>':'<span class="muted">—</span>'); },s:function(i){return i.comp?'a':'b';}},
       {t:'Usado em',f:function(i){var n=usos(i);return n?n+(n>1?' receitas':' receita'):'—';},v:usos,cls:'num'},
-    ], ls, null, function(i){ return "abrirInsumo('"+i.id+"')"; }));
+    ], ls, null, function(i){ return "abrirInsumo('"+i.id+"')"; })), '<button class="btn sm" onclick="importarBiblioteca()">'+ic('lista')+'Importar da planilha do curso</button>';
 };
+/* Importa a Tabela de ingredientes da planilha do curso (shared/biblioteca.js) como insumos:
+   composição por 100 g, categoria e o 'Custo Kg' da planilha como preço estimado até a 1ª compra.
+   Casa pelo nome (sem acento/caixa) ou pelo vínculo 'bib'; quem já existe só ganha a composição se não tiver. */
+function normNome(s){ return String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().replace(/[^a-z0-9%]+/g,' ').trim(); }
+function planoBiblioteca(){
+  var bib=(window.SG_BIB&&SG_BIB.ingredientes)||[], por={}, ins=D().insumos.filter(function(i){return i.tipo!=='embalagem';});
+  ins.forEach(function(i){ por[normNome(i.nome)]=i; if(i.bib) por[normNome(i.bib)]=por[normNome(i.bib)]||i; });
+  /* parecido: nome contido num no outro (tirando o prefixo 'açúcar - ') ou um termo raro em comum (aparece em até 2 nomes da planilha) */
+  var STOP={acucar:1,leite:1,creme:1,pasta:1,fruta:1,nativa:1,fresco:1,integral:1,seco:1,seca:1,suco:1,polpa:1,gordura:1,farinha:1,semente:1,branca:1,liquida:1,vegetal:1,fibra:1,desnatado:1,sacarose:1,condensado:1,amargo:1,chocolate:1};
+  var freq={}; bib.forEach(function(b){ normNome(b.n).split(' ').forEach(function(t){ if(t.length>=4&&!STOP[t]) freq[t]=(freq[t]||0)+1; }); });
+  function core(n){ return normNome(n).replace(/^acucar (sacarose )?/,''); }
+  function parecido(b){ var cb=core(b.n), tb=cb.split(' ').filter(function(t){return t.length>=4&&!STOP[t]&&freq[t]<=2;});
+    return ins.filter(function(i){ if(i.comp&&i.bib) return false; var ci=core(i.nome); if(ci.length<3) return false; if(cb.indexOf(ci)>=0||ci.indexOf(cb)>=0) return true; var ti=ci.split(' '); return tb.some(function(t){return ti.indexOf(t)>=0;}); })[0]||null; }
+  var novos=[], completa=[], iguais=[], fora=[];
+  bib.forEach(function(b){ if(b.cat==='Bases'){ fora.push(b); return; } var ex=por[normNome(b.n)]; if(!ex) novos.push({b:b, par:parecido(b)}); else if(!ex.comp) completa.push({b:b,i:ex}); else iguais.push(b); });
+  return {novos:novos, completa:completa, iguais:iguais, fora:fora};
+}
+function importarBiblioteca(){
+  var P=planoBiblioteca(), cats={}; window.BIBP=P;
+  P.novos.forEach(function(x,k){ x.k=k; (cats[x.b.cat]=cats[x.b.cat]||[]).push(x); });
+  var lista=Object.keys(cats).sort().map(function(c){ return '<div class="sec2">'+esc(c)+' <span class="mut">'+cats[c].length+'</span></div><div class="bibg">'+cats[c].map(function(x){ var b=x.b; return '<label class="lin bibl'+(x.par?' par':'')+'"><input type="checkbox" class="bibck" data-k="'+x.k+'"'+(x.par?'':' checked')+' onchange="bibConta()"><div class="nm"><b>'+esc(b.n)+'</b>'+(x.par?'<small>parece ser <span style="font-weight:700">'+esc(x.par.nome)+'</span>, já cadastrado'+(x.par.comp?'':' · recebe a composição')+'</small>':'')+'</div><div class="v">'+(b.custo?SG.brl(b.custo)+'/kg':'<span class="muted">sem preço</span>')+'</div></label>'; }).join('')+'</div>'; }).join('');
+  var comPreco=P.novos.filter(function(x){return x.b.custo;}).length, pars=P.novos.filter(function(x){return x.par;}).length;
+  var resumo='<div class="mk"><div><small>Na planilha</small><b>'+(P.novos.length+P.iguais.length+P.completa.length)+'</b></div><div><small>Novos</small><b id="bibN">'+(P.novos.length-pars)+'</b></div><div><small>Com preço da planilha</small><b>'+comPreco+'</b></div><div><small>Já cadastrados</small><b>'+(P.iguais.length+P.completa.length)+'</b></div><div><small>Parecidos (desmarcados)</small><b>'+pars+'</b></div></div>'
+    + '<div class="fdica" style="margin:8px 0 4px">Entram como ingrediente, em kg, com a composição por 100 g e o preço da planilha valendo só até a primeira compra lançada. Os parecidos com um insumo já cadastrado vêm desmarcados: marque para importar mesmo assim; desmarcado, o insumo existente só recebe a composição se ainda não tiver. As 4 "bases" da planilha ficam de fora: no app elas são receitas.'+(P.completa.length?' Já cadastrados que recebem a composição: '+P.completa.map(function(x){return esc(x.i.nome);}).join(', ')+'.':'')+'</div>';
+  abrirModal('Importar ingredientes da planilha do curso', resumo+(P.novos.length?lista:'<div class="muted" style="font-size:12px;margin-top:8px">Todos os ingredientes da planilha já estão cadastrados.</div>'),
+    '<button class="btn" onclick="fecharModal()">Cancelar</button>'+(P.novos.length||P.completa.length?'<button class="btn pri" id="bibOk" onclick="importarBibliotecaOk()">Importar</button>':''), true);
+  bibConta();
+}
+function bibConta(){ var n=document.querySelectorAll('.bibck:checked').length, b=$('bibOk'); if($('bibN')) $('bibN').textContent=n; if(b) b.textContent='Importar '+(n?n+' insumo'+(n>1?'s':''):'só composições'); }
+function importarBibliotecaOk(){
+  var P=window.BIBP||planoBiblioteca(), n=0, c=0, marc={};
+  document.querySelectorAll('.bibck:checked').forEach(function(e){ marc[e.getAttribute('data-k')]=1; });
+  function comp(b){ var o={}; COMP_K.forEach(function(k){ o[k]=+b[k]||0; }); return o; }
+  function completa(i,b){ if(i.comp) return; i.comp=comp(b); i.bib=b.n; c++; if(!i.cat||i.cat==='Outros') i.cat=b.cat||i.cat; if(!(i.custoManual>0)&&b.custo&&!SG.ultimaCompra(i.id)){ i.custoManual=b.custo; i.estimado=true; } }
+  var porPar={}; P.novos.forEach(function(x){ if(!marc[x.k]&&x.par) (porPar[x.par.id]=porPar[x.par.id]||[]).push(x.b); });
+  P.novos.forEach(function(x){ if(marc[x.k]){ D().insumos.push({id:SG.novoId('i'), nome:x.b.n.trim(), tipo:'ingrediente', un:'kg', cat:x.b.cat||'Outros', custoManual:x.b.custo||0, min:0, estimado:!!x.b.custo, comp:comp(x.b), bib:x.b.n}); n++; } });
+  Object.keys(porPar).forEach(function(id){ if(porPar[id].length===1) completa(SG.insumo(id), porPar[id][0]); });   // 2 itens da planilha para o mesmo insumo = ambíguo, não mexe
+  P.completa.forEach(function(x){ completa(x.i,x.b); });
+  SG.salvar(true); fecharModal(); toast((n?n+' insumos importados':'Nenhum insumo novo')+(c?' · '+c+' receberam composição':''));
+}
 function abrirInsumo(id){
   var i=id?SG.insumo(id):null, cats={}; D().insumos.forEach(function(x){cats[x.cat]=1;});
   var IF={tipo:i?i.tipo:'ingrediente'}; window.IF=IF;
