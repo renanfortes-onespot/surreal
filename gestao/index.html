@@ -10,15 +10,15 @@
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.SG_BUILD='20261115141813';</script>
-<script src="../shared/versao.js?v=20261115141813"></script>
-<script src="../shared/config.js?v=20261115141813"></script>
-<script src="../shared/seed.js?v=20261115141813"></script>
-<script src="../shared/biblioteca.js?v=20261115141813"></script>
-<script src="../shared/core.js?v=20261115141813"></script>
+<script>window.SG_BUILD='20261115142130';</script>
+<script src="../shared/versao.js?v=20261115142130"></script>
+<script src="../shared/config.js?v=20261115142130"></script>
+<script src="../shared/seed.js?v=20261115142130"></script>
+<script src="../shared/biblioteca.js?v=20261115142130"></script>
+<script src="../shared/core.js?v=20261115142130"></script>
 <script src="../assets/excel-export.js"></script>
 <script src="../assets/pdf-export.js"></script>
-<script src="../shared/remote.js?v=20261115141813"></script>
+<script src="../shared/remote.js?v=20261115142130"></script>
 <style>
 /* ============================================================
    SURREAL — Painel de gestão (PC). OneSpot · 16/10/2026
@@ -1444,23 +1444,9 @@ VIEWS.insumos=function(){
 /* Importa a Tabela de ingredientes da planilha do curso (shared/biblioteca.js) como insumos:
    composição por 100 g, categoria e o 'Custo Kg' da planilha como preço estimado até a 1ª compra.
    Casa pelo nome (sem acento/caixa) ou pelo vínculo 'bib'; quem já existe só ganha a composição se não tiver. */
-function normNome(s){ return String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().replace(/[^a-z0-9%]+/g,' ').trim(); }
-function planoBiblioteca(){
-  var bib=(window.SG_BIB&&SG_BIB.ingredientes)||[], por={}, ins=D().insumos.filter(function(i){return i.tipo!=='embalagem';});
-  ins.forEach(function(i){ por[normNome(i.nome)]=i; if(i.bib) por[normNome(i.bib)]=por[normNome(i.bib)]||i; });
-  /* parecido: nome contido num no outro (tirando o prefixo 'açúcar - ') ou um termo raro em comum (aparece em até 2 nomes da planilha) */
-  var STOP={acucar:1,leite:1,creme:1,pasta:1,fruta:1,nativa:1,fresco:1,integral:1,seco:1,seca:1,suco:1,polpa:1,gordura:1,farinha:1,semente:1,branca:1,liquida:1,vegetal:1,fibra:1,desnatado:1,sacarose:1,condensado:1,amargo:1,chocolate:1};
-  var freq={}; bib.forEach(function(b){ normNome(b.n).split(' ').forEach(function(t){ if(t.length>=4&&!STOP[t]) freq[t]=(freq[t]||0)+1; }); });
-  function core(n){ return normNome(n).replace(/^acucar (sacarose )?/,''); }
-  function parecido(b){ var cb=core(b.n), tb=cb.split(' ').filter(function(t){return t.length>=4&&!STOP[t]&&freq[t]<=2;});
-    return ins.filter(function(i){ if(i.comp&&i.bib) return false; var ci=core(i.nome); if(ci.length<3) return false; if(cb.indexOf(ci)>=0||ci.indexOf(cb)>=0) return true; var ti=ci.split(' '); return tb.some(function(t){return ti.indexOf(t)>=0;}); })[0]||null; }
-  var novos=[], completa=[], iguais=[], fora=[];
-  bib.forEach(function(b){ if(b.cat==='Bases'){ fora.push(b); return; } var ex=por[normNome(b.n)]; if(!ex) novos.push({b:b, par:parecido(b)}); else if(!ex.comp) completa.push({b:b,i:ex}); else iguais.push(b); });
-  return {novos:novos, completa:completa, iguais:iguais, fora:fora};
-}
 function importarBiblioteca(){
-  var P=planoBiblioteca(), cats={}; window.BIBP=P;
-  P.novos.forEach(function(x,k){ x.k=k; (cats[x.b.cat]=cats[x.b.cat]||[]).push(x); });
+  var P=SG.bibPlano(), cats={}; window.BIBP=P;
+  P.novos.forEach(function(x){ (cats[x.b.cat]=cats[x.b.cat]||[]).push(x); });
   var lista=Object.keys(cats).sort().map(function(c){ return '<div class="sec2">'+esc(c)+' <span class="mut">'+cats[c].length+'</span></div><div class="bibg">'+cats[c].map(function(x){ var b=x.b; return '<label class="lin bibl'+(x.par?' par':'')+'"><input type="checkbox" class="bibck" data-k="'+x.k+'"'+(x.par?'':' checked')+' onchange="bibConta()"><div class="nm"><b>'+esc(b.n)+'</b>'+(x.par?'<small>parece ser <span style="font-weight:700">'+esc(x.par.nome)+'</span>, já cadastrado'+(x.par.comp?'':' · recebe a composição')+'</small>':'')+'</div><div class="v">'+(b.custo?SG.brl(b.custo)+'/kg':'<span class="muted">sem preço</span>')+'</div></label>'; }).join('')+'</div>'; }).join('');
   var comPreco=P.novos.filter(function(x){return x.b.custo;}).length, pars=P.novos.filter(function(x){return x.par;}).length;
   var resumo='<div class="mk"><div><small>Na planilha</small><b>'+(P.novos.length+P.iguais.length+P.completa.length)+'</b></div><div><small>Novos</small><b id="bibN">'+(P.novos.length-pars)+'</b></div><div><small>Com preço da planilha</small><b>'+comPreco+'</b></div><div><small>Já cadastrados</small><b>'+(P.iguais.length+P.completa.length)+'</b></div><div><small>Parecidos (desmarcados)</small><b>'+pars+'</b></div></div>'
@@ -1471,15 +1457,8 @@ function importarBiblioteca(){
 }
 function bibConta(){ var n=document.querySelectorAll('.bibck:checked').length, b=$('bibOk'); if($('bibN')) $('bibN').textContent=n; if(b) b.textContent='Importar '+(n?n+' insumo'+(n>1?'s':''):'só composições'); }
 function importarBibliotecaOk(){
-  var P=window.BIBP||planoBiblioteca(), n=0, c=0, marc={};
-  document.querySelectorAll('.bibck:checked').forEach(function(e){ marc[e.getAttribute('data-k')]=1; });
-  function comp(b){ var o={}; COMP_K.forEach(function(k){ o[k]=+b[k]||0; }); return o; }
-  function completa(i,b){ if(i.comp) return; i.comp=comp(b); i.bib=b.n; c++; if(!i.cat||i.cat==='Outros') i.cat=b.cat||i.cat; if(!(i.custoManual>0)&&b.custo&&!SG.ultimaCompra(i.id)){ i.custoManual=b.custo; i.estimado=true; } }
-  var porPar={}; P.novos.forEach(function(x){ if(!marc[x.k]&&x.par) (porPar[x.par.id]=porPar[x.par.id]||[]).push(x.b); });
-  P.novos.forEach(function(x){ if(marc[x.k]){ D().insumos.push({id:SG.novoId('i'), nome:x.b.n.trim(), tipo:'ingrediente', un:'kg', cat:x.b.cat||'Outros', custoManual:x.b.custo||0, min:0, estimado:!!x.b.custo, comp:comp(x.b), bib:x.b.n}); n++; } });
-  Object.keys(porPar).forEach(function(id){ if(porPar[id].length===1) completa(SG.insumo(id), porPar[id][0]); });   // 2 itens da planilha para o mesmo insumo = ambíguo, não mexe
-  P.completa.forEach(function(x){ completa(x.i,x.b); });
-  SG.salvar(true); fecharModal(); toast((n?n+' insumos importados':'Nenhum insumo novo')+(c?' · '+c+' receberam composição':''));
+  var marc={}; document.querySelectorAll('.bibck:checked').forEach(function(e){ marc[e.getAttribute('data-k')]=1; });
+  var r=SG.bibImportar(window.BIBP||SG.bibPlano(), marc); fecharModal(); toast((r.novos?r.novos+' insumos importados':'Nenhum insumo novo')+(r.completados?' · '+r.completados+' receberam composição':''));
 }
 function abrirInsumo(id){
   var i=id?SG.insumo(id):null, cats={}; D().insumos.forEach(function(x){cats[x.cat]=1;});

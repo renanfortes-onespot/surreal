@@ -533,12 +533,42 @@
   function unidade(i) { return i.un === 'un' ? 'un' : 'kg'; }
   function qtdFmt(q, un) { if (q == null) return '—'; return un === 'un' ? num(q, 0) + ' un' : (Math.abs(q) < 1 ? num(q * 1000, 0) + ' g' : num(q, 2) + ' kg'); }
 
+
+  /* ── Tabela de ingredientes da planilha do curso (shared/biblioteca.js) → insumos ──
+     bibPlano(): o que entraria (novos, com 'par' = insumo parecido já cadastrado), quem já existe sem composição (completa) e as bases (fora).
+     bibImportar(P, marcados): cria os novos marcados; desmarcado com parecido único e sem composição → o parecido recebe a composição. */
+  function bibNorm(s) { return String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9%]+/g, ' ').trim(); }
+  var BIB_STOP = { acucar: 1, leite: 1, creme: 1, pasta: 1, fruta: 1, nativa: 1, fresco: 1, integral: 1, seco: 1, seca: 1, suco: 1, polpa: 1, gordura: 1, farinha: 1, semente: 1, branca: 1, liquida: 1, vegetal: 1, fibra: 1, desnatado: 1, sacarose: 1, condensado: 1, amargo: 1, chocolate: 1 };
+  function bibPlano() {
+    var bib = (window.SG_BIB && SG_BIB.ingredientes) || [], por = {}, ins = D.insumos.filter(function (i) { return i.tipo !== 'embalagem'; });
+    ins.forEach(function (i) { por[bibNorm(i.nome)] = i; if (i.bib) por[bibNorm(i.bib)] = por[bibNorm(i.bib)] || i; });
+    var freq = {}; bib.forEach(function (b) { bibNorm(b.n).split(' ').forEach(function (t) { if (t.length >= 4 && !BIB_STOP[t]) freq[t] = (freq[t] || 0) + 1; }); });
+    function core(n) { return bibNorm(n).replace(/^acucar (sacarose )?/, ''); }
+    function parecido(b) {
+      var cb = core(b.n), tb = cb.split(' ').filter(function (t) { return t.length >= 4 && !BIB_STOP[t] && freq[t] <= 2; });
+      return ins.filter(function (i) { if (i.comp && i.bib) return false; var ci = core(i.nome); if (ci.length < 3) return false; if (cb.indexOf(ci) >= 0 || ci.indexOf(cb) >= 0) return true; var ti = ci.split(' '); return tb.some(function (t) { return ti.indexOf(t) >= 0; }); })[0] || null;
+    }
+    var novos = [], completa = [], iguais = [], fora = [];
+    bib.forEach(function (b) { if (b.cat === 'Bases') { fora.push(b); return; } var ex = por[bibNorm(b.n)]; if (!ex) novos.push({ b: b, par: parecido(b), k: novos.length }); else if (!ex.comp) completa.push({ b: b, i: ex }); else iguais.push(b); });
+    return { novos: novos, completa: completa, iguais: iguais, fora: fora };
+  }
+  function bibImportar(P, marc) {
+    var n = 0, c = 0, KS = ['acu', 'gor', 'sngl', 'os', 'pod', 'pac', 'prot'];
+    function comp(b) { var o = {}; KS.forEach(function (k) { o[k] = +b[k] || 0; }); return o; }
+    function completa(i, b) { if (!i || i.comp) return; i.comp = comp(b); i.bib = b.n; c++; if (!i.cat || i.cat === 'Outros') i.cat = b.cat || i.cat; if (!(i.custoManual > 0) && b.custo && !ultimaCompra(i.id)) { i.custoManual = b.custo; i.estimado = true; } }
+    var porPar = {}; P.novos.forEach(function (x) { if (!marc[x.k] && x.par) (porPar[x.par.id] = porPar[x.par.id] || []).push(x.b); });
+    P.novos.forEach(function (x) { if (marc[x.k]) { D.insumos.push({ id: novoId('i'), nome: x.b.n.trim(), tipo: 'ingrediente', un: 'kg', cat: x.b.cat || 'Outros', custoManual: x.b.custo || 0, min: 0, estimado: !!x.b.custo, comp: comp(x.b), bib: x.b.n }); n++; } });
+    Object.keys(porPar).forEach(function (id) { if (porPar[id].length === 1) completa(insumo(id), porPar[id][0]); });   // 2 itens da planilha para o mesmo insumo = ambíguo, não mexe
+    P.completa.forEach(function (x) { completa(x.i, x.b); });
+    salvar(true); return { novos: n, completados: c };
+  }
+
   window.SG = {
     carregar: carregar, salvar: salvar, resetar: resetar, aoMudar: aoMudar, novoId: novoId, usar: usar, notificar: notificar, aoSalvarLocal: aoSalvarLocal,
     get D() { return D; },
     brl: brl, brl0: brl0, pct: pct, num: num, hoje: hoje, dataBR: dataBR, dataCurta: dataCurta, nomeMes: nomeMes, mesAtual: mesAtual, addMes: addMes, MES3: MES3,
     insumo: insumo, receita: receita, produto: produto, produtosReceita: produtosReceita, produtoPadrao: produtoPadrao, produtoLote: produtoLote, tamanho: tamanho, canal: canal, cliente: cliente,
-    ultimaCompra: ultimaCompra, custoInsumo: custoInsumo, custoReceitaKg: custoReceitaKg, pesoReceita: pesoReceita, composicao: composicao, balanco: balanco, compInsumo: compInsumo, faixasBal: faixasBal, balTipo: balTipo, BAL_COLS: BAL_COLS, BAL_TIPOS: BAL_TIPOS,
+    ultimaCompra: ultimaCompra, bibPlano: bibPlano, bibImportar: bibImportar, custoInsumo: custoInsumo, custoReceitaKg: custoReceitaKg, pesoReceita: pesoReceita, composicao: composicao, balanco: balanco, compInsumo: compInsumo, faixasBal: faixasBal, balTipo: balTipo, BAL_COLS: BAL_COLS, BAL_TIPOS: BAL_TIPOS,
     indiretosMes: indiretosMes, indiretoKg: indiretoKg, contasOBZ: contasOBZ, contaOBZ: contaOBZ, pacoteDespesa: pacoteDespesa, obzPorPacote: obzPorPacote, PACOTES_OBZ: PACOTES_OBZ, custoPote: custoPote, taxaCanal: taxaCanal,
     precoTabela: precoTabela, definirPreco: definirPreco, precificar: precificar, metaPotes: metaPotes,
     totalVenda: totalVenda, potesVenda: potesVenda, resultadoVenda: resultadoVenda, vendasMes: vendasMes, nomeItem: nomeItem, nomeCliente: nomeCliente,
