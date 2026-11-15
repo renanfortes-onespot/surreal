@@ -19,6 +19,7 @@
     if (bruto) { try { D = JSON.parse(bruto); } catch (e) { D = null; } }
     if (!D || !D.versao) { D = clone(window.SG_SEED); salvar(true); }
     if (!D.socios) D.socios = [];
+    if (!D.ordens) D.ordens = [];
     return D;
   }
   var aoSalvarRemoto = null;   // shared/remote.js pluga aqui a sincronia com o Supabase
@@ -602,6 +603,40 @@
     });
     if (n) salvar(true); return n;
   }
+  /* ── ORDENS DE PRODUÇÃO: o 'pedido' da cozinha ──
+     ordem = { id, data, status: 'aberta'|'concluida', obs, itens:[{produto, tam, qtd}], ts, por, concluidaEm, producoes:[ids] }
+     opLotes(op): agrupa por produto → lote {produto, receita, kg (Σ potes × g do tamanho), potes{tam:qtd}}
+     opNecessidade(op): lotes + insumos consumidos (ficha + pote + lacre/adesivo) + faltas contra o estoque de hoje
+     opSugerir(): pedidos a entregar − potes prontos = o que falta produzir
+     opConcluir(id, data): vira lotes de Produção (baixa insumos, sobe potes) e fecha a ordem */
+  function ordem(id) { return por(D.ordens, id); }
+  function opLotes(op) {
+    var g = {};
+    (op.itens || []).forEach(function (it) { var p = produto(it.produto); if (!p || !it.qtd) return; var t = tamanho(it.tam); var l = g[p.id] = g[p.id] || { produto: p.id, receita: p.receita, kg: 0, potes: {} };
+      l.potes[it.tam] = (l.potes[it.tam] || 0) + it.qtd; l.kg += it.qtd * ((t && t.g) || 0) / 1000; });
+    return Object.keys(g).map(function (k) { return g[k]; });
+  }
+  function opNecessidade(op) {
+    var lotes = opLotes(op), ins = {}, e = estoque(), faltas = [];
+    lotes.forEach(function (l) { if (!l.receita) return; var c = consumoProducao(l); Object.keys(c).forEach(function (k) { ins[k] = (ins[k] || 0) + c[k]; }); });
+    Object.keys(ins).forEach(function (k) { var tem = e.insumos[k]; if (tem != null && tem < ins[k] - 1e-9) faltas.push({ insumo: k, precisa: ins[k], tem: tem }); });
+    var potes = 0; lotes.forEach(function (l) { Object.keys(l.potes).forEach(function (t) { potes += l.potes[t]; }); });
+    return { lotes: lotes, insumos: ins, faltas: faltas, potes: potes, kg: lotes.reduce(function (s, l) { return s + l.kg; }, 0), semReceita: lotes.filter(function (l) { return !l.receita; }).map(function (l) { return produto(l.produto).nome; }) };
+  }
+  function opSugerir() {
+    var ped = {}, e = estoque();
+    D.vendas.forEach(function (v) { if (v.historico || v.entregue) return; v.itens.forEach(function (it) { if (!it.produto || !it.tam) return; var k = it.produto + '|' + it.tam; ped[k] = (ped[k] || 0) + it.qtd; }); });
+    var out = [];
+    Object.keys(ped).forEach(function (k) { var falta = ped[k] - Math.max(0, e.potes[k] || 0); if (falta > 0) out.push({ produto: k.split('|')[0], tam: k.split('|')[1], qtd: falta }); });
+    return out;
+  }
+  function opConcluir(id, data, por_) {
+    var op = ordem(id); if (!op || op.status === 'concluida') return null;
+    var ids = [];
+    opLotes(op).forEach(function (l) { if (!l.receita) return; var p = { id: novoId('p'), receita: l.receita, produto: l.produto, kg: l.kg, potes: l.potes, data: data || hoje(), ts: Date.now(), por: por_ || null, historico: false, ordem: op.id }; D.producoes.push(p); ids.push(p.id); });
+    op.status = 'concluida'; op.concluidaEm = data || hoje(); op.producoes = ids; op.ts = Date.now();
+    salvar(true); return ids;
+  }
   function bibImportar(P, marc) {
     var n = 0, c = 0, KS = ['acu', 'gor', 'sngl', 'os', 'pod', 'pac', 'prot'];
     function comp(b) { var o = {}; KS.forEach(function (k) { o[k] = +b[k] || 0; }); return o; }
@@ -620,7 +655,7 @@
     get D() { return D; },
     brl: brl, brl0: brl0, pct: pct, num: num, hoje: hoje, dataBR: dataBR, dataCurta: dataCurta, nomeMes: nomeMes, mesAtual: mesAtual, addMes: addMes, MES3: MES3,
     insumo: insumo, receita: receita, produto: produto, produtosReceita: produtosReceita, produtoPadrao: produtoPadrao, produtoLote: produtoLote, tamanho: tamanho, canal: canal, cliente: cliente,
-    ultimaCompra: ultimaCompra, bibPlano: bibPlano, bibImportar: bibImportar, bibLimpaCusto: bibLimpaCusto, bibGarantir: bibGarantir, bibDuplicados: bibDuplicados, bibJuntar: bibJuntar, custoInsumo: custoInsumo, custoReceitaKg: custoReceitaKg, pesoReceita: pesoReceita, composicao: composicao, balanco: balanco, compInsumo: compInsumo, faixasBal: faixasBal, balTipo: balTipo, BAL_COLS: BAL_COLS, BAL_TIPOS: BAL_TIPOS,
+    ultimaCompra: ultimaCompra, bibPlano: bibPlano, bibImportar: bibImportar, bibLimpaCusto: bibLimpaCusto, bibGarantir: bibGarantir, ordem: ordem, opLotes: opLotes, opNecessidade: opNecessidade, opSugerir: opSugerir, opConcluir: opConcluir, bibDuplicados: bibDuplicados, bibJuntar: bibJuntar, custoInsumo: custoInsumo, custoReceitaKg: custoReceitaKg, pesoReceita: pesoReceita, composicao: composicao, balanco: balanco, compInsumo: compInsumo, faixasBal: faixasBal, balTipo: balTipo, BAL_COLS: BAL_COLS, BAL_TIPOS: BAL_TIPOS,
     indiretosMes: indiretosMes, indiretoKg: indiretoKg, contasOBZ: contasOBZ, contaOBZ: contaOBZ, pacoteDespesa: pacoteDespesa, obzPorPacote: obzPorPacote, PACOTES_OBZ: PACOTES_OBZ, custoPote: custoPote, taxaCanal: taxaCanal,
     precoTabela: precoTabela, definirPreco: definirPreco, precificar: precificar, metaPotes: metaPotes,
     totalVenda: totalVenda, potesVenda: potesVenda, resultadoVenda: resultadoVenda, vendasMes: vendasMes, nomeItem: nomeItem, nomeCliente: nomeCliente,

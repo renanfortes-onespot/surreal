@@ -13,13 +13,13 @@
 <link rel="icon" href="img/icone-192.png">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.SG_BUILD='20261115150525';</script>
-<script src="shared/versao.js?v=20261115150525"></script>
-<script src="shared/config.js?v=20261115150525"></script>
-<script src="shared/seed.js?v=20261115150525"></script>
-<script src="shared/biblioteca.js?v=20261115150525"></script>
-<script src="shared/core.js?v=20261115150525"></script>
-<script src="shared/remote.js?v=20261115150525"></script>
+<script>window.SG_BUILD='20261115195032';</script>
+<script src="shared/versao.js?v=20261115195032"></script>
+<script src="shared/config.js?v=20261115195032"></script>
+<script src="shared/seed.js?v=20261115195032"></script>
+<script src="shared/biblioteca.js?v=20261115195032"></script>
+<script src="shared/core.js?v=20261115195032"></script>
+<script src="shared/remote.js?v=20261115195032"></script>
 <style>
 /* ============================================================
    SURREAL · gelato artesanal — app (PWA)
@@ -730,6 +730,67 @@ TELAS.importBib = function(a){
 function ibTog(k){ var a=atual(); if(a.marc[k]) delete a.marc[k]; else a.marc[k]=1; render(); }
 function ibOk(){ var a=atual(), r=SG.bibImportar(a.P||SG.bibPlano(), a.marc||{}); volta(); toast((r.novos?r.novos+' insumos importados':'Nenhum insumo novo')+(r.completados?' · '+r.completados+' com composição':'')); }
 
+/* ORDENS DE PRODUÇÃO — o "pedido" da cozinha */
+var OP=null;
+TELAS.ordens = function(a){
+  var f=a.filtro||'abertas', l=D().ordens.slice().sort(function(x,y){ return x.data<y.data?1:x.data>y.data?-1:0; });
+  if(f==='abertas') l=l.filter(function(o){return o.status!=='concluida';});
+  var sug=SG.opSugerir(), sq=sug.reduce(function(s,i){return s+i.qtd;},0);
+  var h=cab('lista','Ordens de produção','O que a cozinha precisa fazer · ao concluir vira lotes de Produção');
+  h+='<div class="duo2" style="margin:0 0 12px"><button class="btn" onclick="novaOrdem(false)">'+ic('mais1')+'Nova ordem</button><button class="btn sec2" onclick="novaOrdem(true)"'+(sq?'':' disabled style="opacity:.5"')+'>Sugerir pelos pedidos</button></div>';
+  if(sq) h+='<div class="nota2" style="margin:-4px 2px 12px">'+sq+' potes pedidos ainda sem estoque pronto.</div>';
+  h+='<div class="seg">'+[['abertas','A produzir'],['todas','Todas']].map(function(o){ return '<button class="'+(o[0]===f?'on':'')+'" onclick="atual().filtro=\''+o[0]+'\';render()">'+o[1]+'</button>'; }).join('')+'</div>';
+  h+=l.map(function(o){ var N=SG.opNecessidade(o), g={}; o.itens.forEach(function(i){ var p=SG.produto(i.produto), n=p?p.nome:'?'; g[n]=(g[n]||0)+i.qtd; }); var ok=o.status==='concluida';
+    return li({ic:ok?'ok':'lista', cor:ok?'vd':(N.faltas.length?'am':''), t:SG.dataBR(o.data)+(o.obs?' · '+esc(o.obs):''), s:Object.keys(g).map(function(n){return n+' '+g[n];}).join(' · ')+(ok?'':N.faltas.length?' · <span class="amb">falta '+N.faltas.length+(N.faltas.length>1?' insumos':' insumo')+'</span>':''), v:N.potes+' potes', vs:ok?'concluída':SG.qtdFmt(N.kg,'kg'), on:"abre('ordem',{id:'"+o.id+"'})"}); }).join('')||vazio(f==='abertas'?'Nenhuma ordem a produzir.':'Nenhuma ordem.');
+  return h;
+};
+TELAS.ordem = function(a){
+  var o=SG.ordem(a.id); if(!o) return vazio('Ordem não encontrada.');
+  var N=SG.opNecessidade(o), ok=o.status==='concluida', e=SG.estoque();
+  var h=cab(ok?'ok':'lista', 'Ordem de '+SG.dataBR(o.data), (ok?'Concluída em '+SG.dataBR(o.concluidaEm):'A produzir')+(o.obs?' · '+esc(o.obs):''));
+  h+='<div class="res"><div class="n"><span>Potes</span><b>'+N.potes+'</b></div><div class="n"><span>Mistura</span><b>'+SG.qtdFmt(N.kg,'kg')+'</b></div></div>';
+  h+='<div class="sec">Sabores</div><div class="itens">'+o.itens.map(function(it){ var p=SG.produto(it.produto), tem=e.potes[it.produto+'|'+it.tam]; return '<div class="it"><div class="tx"><b>'+esc(p?p.nome:'?')+'</b><span>'+nTam(it.tam)+(tem!=null?' · prontos hoje: '+tem:'')+'</span></div><b>'+it.qtd+'</b></div>'; }).join('')+'</div>';
+  h+='<div class="sec" style="margin-top:14px">Lotes'+(ok?' criados':' que vão nascer')+'</div><div class="itens">'+N.lotes.map(function(l){ var r=SG.receita(l.receita), p=SG.produto(l.produto); return '<div class="it"><div class="tx"><b>'+esc(p?p.nome:'?')+'</b><span>'+(r?esc(r.nome):'<span class="amb">sem receita</span>')+' · '+Object.keys(l.potes).map(function(t){return l.potes[t]+' '+t;}).join(' + ')+'</span></div><b>'+SG.qtdFmt(l.kg,'kg')+'</b></div>'; }).join('')+'</div>';
+  if(!ok){ var ks=Object.keys(N.insumos).sort(function(a,b){ var fa=N.faltas.some(function(f){return f.insumo===a;}), fb=N.faltas.some(function(f){return f.insumo===b;}); return (fb?1:0)-(fa?1:0); });
+    h+='<div class="sec" style="margin-top:14px">Sai do estoque'+(N.faltas.length?'<span class="cont amb">falta '+N.faltas.length+'</span>':'')+'</div><div class="card" style="padding:4px 14px">'+ks.map(function(k){ var i=SG.insumo(k), f=N.faltas.filter(function(x){return x.insumo===k;})[0]; return '<div style="display:flex;justify-content:space-between;gap:10px;padding:7px 0;font-size:12px;border-bottom:1px solid var(--brd)"><span>'+esc(i?i.nome:k)+(f?'<br><small class="amb">tem '+SG.qtdFmt(f.tem,i&&i.un)+' · falta '+SG.qtdFmt(f.precisa-f.tem,i&&i.un)+'</small>':'')+'</span><b class="'+(f?'amb':'')+'">'+SG.qtdFmt(N.insumos[k],i&&i.un)+'</b></div>'; }).join('')+'</div>';
+    h+='<button class="btn" style="margin-top:16px" onclick="concluiOrdem(\''+o.id+'\')">'+ic('ok')+'Concluir produção</button>';
+    h+='<div class="duo2"><button class="btn sec2" onclick="editaOrdem(\''+o.id+'\')">Editar</button><button class="btn perigo" onclick="apagaOrdem(\''+o.id+'\')">Excluir</button></div>'; }
+  return h;
+};
+function novaOrdem(sugerir){ OP={id:null, data:SG.hoje(), status:'aberta', obs:'', itens:sugerir?SG.opSugerir():[]}; abre('ordemForm',{form:1}); }
+function editaOrdem(id){ OP=JSON.parse(JSON.stringify(SG.ordem(id))); abre('ordemForm',{form:1}); }
+function apagaOrdem(id){ if(!confirm('Excluir esta ordem?')) return; D().ordens=D().ordens.filter(function(x){return x.id!==id;}); SG.salvar(); volta(); toast('Ordem excluída'); }
+function concluiOrdem(id){ var o=SG.ordem(id), N=SG.opNecessidade(o); if(!confirm('Concluir? Cria '+N.lotes.length+(N.lotes.length>1?' lotes':' lote')+' de produção hoje, baixa os insumos e soma '+N.potes+' potes no estoque.')) return; SG.opConcluir(id, SG.hoje(), usuario().id); render(); toast('Produção registrada'); }
+TELAS.ordemForm = function(){
+  var h=cab('lista', OP.id?'Editar ordem':'Nova ordem de produção', 'Toque nos tamanhos de cada sabor');
+  h+='<div class="lado"><div class="campo"><label>Data</label><input id="opData" type="date" value="'+OP.data+'"></div><div class="campo"><label>Observação</label><input id="opObs" placeholder="ex.: feira" value="'+esc(OP.obs||'')+'"></div></div>';
+  h+='<button class="btn sec2" style="margin:0 0 12px" onclick="opSugereApp()">Sugerir pelos pedidos</button>';
+  h+='<div class="sec">Sabores</div><input class="busca" id="opBusca" placeholder="Buscar sabor" oninput="opFiltra()"><div id="opProds"></div>';
+  h+='<div class="sec" style="margin-top:12px">Na ordem</div><div class="itens" id="opItens"></div><div id="opNec"></div>';
+  h+='<button class="btn" onclick="salvaOrdem()">'+ic('ok')+'Salvar ordem</button>';
+  return h;
+};
+TELAS.ordemForm_depois = function(){ opFiltra(); opItensApp(); };
+function opFiltra(){
+  var q=($('opBusca').value||'').toLowerCase(), tams=SG.tamanhosAtivos(), e=SG.estoque();
+  $('opProds').innerHTML = SG.produtosAtivos().filter(function(p){ return p.receita && (!q || p.nome.toLowerCase().indexOf(q)>=0); }).map(function(p){
+    return '<div class="prod"><div class="l1"><b>'+esc(p.nome)+'</b></div><div class="tams">'+tams.map(function(t){
+      var n=OP.itens.filter(function(i){return i.produto===p.id&&i.tam===t.id;}).reduce(function(s,i){return s+i.qtd;},0), tem=e.potes[p.id+'|'+t.id];
+      return '<button class="'+(n?'tem':'')+'" onclick="opAddApp(\''+p.id+'\',\''+t.id+'\')">'+t.nome+(n?'<i>'+n+'</i>':'')+'<small>'+(tem!=null?tem+' prontos':'—')+'</small></button>';
+    }).join('')+'</div></div>';
+  }).join('') || '<div class="vazio">Nenhum sabor com receita.</div>';
+}
+function opAddApp(pid,tid){ var it=OP.itens.filter(function(i){return i.produto===pid&&i.tam===tid;})[0]; if(it) it.qtd++; else OP.itens.push({produto:pid, tam:tid, qtd:1}); opFiltra(); opItensApp(); }
+function opQtdApp(i,d){ OP.itens[i].qtd+=d; if(OP.itens[i].qtd<=0) OP.itens.splice(i,1); opFiltra(); opItensApp(); }
+function opSugereApp(){ var s=SG.opSugerir(); if(!s.length){ toast('Nenhum pedido a entregar sem estoque'); return; } s.forEach(function(i){ var ex=OP.itens.filter(function(x){return x.produto===i.produto&&x.tam===i.tam;})[0]; if(ex) ex.qtd=Math.max(ex.qtd,i.qtd); else OP.itens.push(i); }); opFiltra(); opItensApp(); }
+function opItensApp(){
+  $('opItens').innerHTML = OP.itens.length ? OP.itens.map(function(it,i){ var p=SG.produto(it.produto); return '<div class="it"><div class="tx"><b>'+esc(p?p.nome:'?')+'</b><span>'+nTam(it.tam)+'</span></div><div class="step"><button onclick="opQtdApp('+i+',-1)">−</button><span>'+it.qtd+'</span><button onclick="opQtdApp('+i+',1)">+</button></div></div>'; }).join('') : '<div class="vazio">Toque num tamanho acima para adicionar.</div>';
+  var N=SG.opNecessidade(OP);
+  $('opNec').innerHTML = OP.itens.length ? '<div class="total"><span>'+N.lotes.length+(N.lotes.length>1?' lotes':' lote')+' · '+SG.qtdFmt(N.kg,'kg')+' de mistura'+(N.faltas.length?' · <b class="amb">falta '+N.faltas.length+(N.faltas.length>1?' insumos':' insumo')+'</b>':'')+'</span><b>'+N.potes+' potes</b></div>' : '';
+}
+function salvaOrdem(){ OP.data=$('opData').value||SG.hoje(); OP.obs=($('opObs').value||'').trim(); OP.itens=OP.itens.filter(function(i){return i.qtd>0;}); if(!OP.itens.length){ toast('Adicione pelo menos um sabor'); return; }
+  OP.ts=Date.now(); if(!OP.por) OP.por=usuario().id; if(OP.id){ Object.assign(SG.ordem(OP.id),OP); } else { OP.id=SG.novoId('op'); D().ordens.push(OP); } SG.salvar(true); volta(); toast('Ordem salva'); }
+
 /* COMPRAS */
 TELAS.compraNova = function(a){
   var ins=D().insumos.slice().sort(function(a,b){return a.nome.localeCompare(b.nome);});
@@ -902,10 +963,10 @@ TELAS.vendas = function(a){
   D().vendas.filter(function(v){ return !ym || v.data.slice(0,7)===ym; }).forEach(function(v){ v.itens.forEach(function(it){
     var k= dim==='sab'?SG.nomeItem(it) : dim==='cli'?SG.nomeCliente(v) : dim==='can'?nCanal(v.canal) : (it.tam?nTam(it.tam):'Sem tamanho');
     var o=ag[k]=ag[k]||{k:k,rec:0,potes:0}, rv=it.qtd*it.preco; o.rec+=rv; T.rec+=rv; if(it.tam){ o.potes+=it.qtd; T.potes+=it.qtd; } }); });
-  var f=function(o){ return m==='rs'?o.rec:o.potes; }, fm=function(o){ return m==='rs'?SG.brl(o.rec):o.potes+' potes'; };
+  var f=function(o){ return m==='rs'?o.rec:o.potes; }, fm=function(o){ return m==='rs'?SG.brl(o.rec):m==='pct'?SG.pct(T.potes?o.potes/T.potes:0,1):o.potes+' potes'; };
   var rows=Object.values(ag).filter(function(o){ return f(o)>0; }).sort(function(x,y){ return f(y)-f(x); }), mx=rows.length?f(rows[0]):0;
   var h=cab('sacola','Vendas',perNome(a))+perSel(a);
-  h+='<div class="seg">'+[['rs','R$'],['potes','Potes']].map(function(o){ return '<button class="'+(o[0]===m?'on':'')+'" onclick="atual().m=\''+o[0]+'\';render()">'+o[1]+'</button>'; }).join('')+'</div>';
+  h+='<div class="seg">'+[['rs','R$'],['potes','Potes'],['pct','%']].map(function(o){ return '<button class="'+(o[0]===m?'on':'')+'" onclick="atual().m=\''+o[0]+'\';render()">'+o[1]+'</button>'; }).join('')+'</div>';
   h+='<div class="seg">'+[['sab','Sabor'],['cli','Cliente'],['can','Canal'],['tam','Tamanho']].map(function(o){ return '<button class="'+(o[0]===dim?'on':'')+'" onclick="atual().dim=\''+o[0]+'\';render()">'+o[1]+'</button>'; }).join('')+'</div>';
   h+= rows.length ? '<div class="card" style="padding:4px 14px">'+rows.map(function(o){ return '<div class="rk"><div class="l"><span>'+esc(o.k)+'</span><b>'+fm(o)+'</b></div><div class="bb"><i style="width:'+(mx?f(o)/mx*100:0)+'%"></i></div></div>'; }).join('')
       + '<div class="rk tot"><div class="l"><span>Total</span><b>'+fm(T)+'</b></div></div></div>' : vazio('Sem vendas neste período.');
@@ -1057,6 +1118,7 @@ TELAS.mais = function(){
   h += li({ic:'carrinho', t:'Compras e despesas', s:'Insumos, embalagens, marketing, contas', on:"abre('saidas')"});
   h += li({ic:'moeda', t:'Retirada / aporte dos sócios', s:'Dinheiro de vocês · fora do DRE', on:"abre('socioForm',{form:1})"});
   h += li({ic:'pote', t:'Produção', s:'Lotes produzidos', on:"abre('producoes')"});
+  h += li({ic:'lista', t:'Ordens de produção', s:(function(){ var n=D().ordens.filter(function(o){return o.status!=='concluida';}).length; return n?n+' em aberto · o que a cozinha precisa fazer':'O que a cozinha precisa fazer'; })(), on:"abre('ordens')"});
   h += li({ic:'pessoas', t:'Clientes', s:D().clientes.length+' cadastrados', on:"abre('clientes')"});
   h += li({ic:'frasco', t:'Receitas', s:'Ficha técnica e balanceamento de cada receita', on:"abre('fichas')"});
   h += li({ic:'lista', t:'Ingredientes da planilha do curso', s:'Importar como insumos: composição e categoria', on:"abre('importBib',{form:1})"});
@@ -1082,7 +1144,7 @@ TELAS.compras = function(){
 };
 TELAS.producoes = function(){
   var l=D().producoes.slice().sort(function(a,b){return a.data<b.data?1:-1;});
-  return cab('pote','Produção', l.length+' lotes') + '<button class="btn" style="margin:0 0 16px" onclick="abre(\'producaoNova\',{form:1})">'+ic('mais1')+'Registrar produção</button>'
+  return cab('pote','Produção', l.length+' lotes') + '<div class="duo2" style="margin:0 0 16px"><button class="btn" onclick="abre(\'producaoNova\',{form:1})">'+ic('mais1')+'Registrar produção</button><button class="btn sec2" onclick="abre(\'ordens\')">'+ic('lista')+'Ordens de produção</button></div>'
     + l.map(function(p){ var r=SG.receita(p.receita); var pt=Object.keys(p.potes||{}).map(function(k){return p.potes[k]+' '+k;}).join(' + ');
       return li({ic:'pote', t:esc(r?r.nome:p.receita), s:SG.dataBR(p.data)+' · '+SG.qtdFmt(p.kg,'kg')+(pt?' → '+pt:''), v:SG.brl(SG.custoReceitaKg(p.receita)*p.kg), vs:'custo hoje'}); }).join('');
 };

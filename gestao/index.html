@@ -10,15 +10,15 @@
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.SG_BUILD='20261115150525';</script>
-<script src="../shared/versao.js?v=20261115150525"></script>
-<script src="../shared/config.js?v=20261115150525"></script>
-<script src="../shared/seed.js?v=20261115150525"></script>
-<script src="../shared/biblioteca.js?v=20261115150525"></script>
-<script src="../shared/core.js?v=20261115150525"></script>
+<script>window.SG_BUILD='20261115195032';</script>
+<script src="../shared/versao.js?v=20261115195032"></script>
+<script src="../shared/config.js?v=20261115195032"></script>
+<script src="../shared/seed.js?v=20261115195032"></script>
+<script src="../shared/biblioteca.js?v=20261115195032"></script>
+<script src="../shared/core.js?v=20261115195032"></script>
 <script src="../assets/excel-export.js"></script>
 <script src="../assets/pdf-export.js"></script>
-<script src="../shared/remote.js?v=20261115150525"></script>
+<script src="../shared/remote.js?v=20261115195032"></script>
 <style>
 /* ============================================================
    SURREAL — Painel de gestão (PC). OneSpot · 16/10/2026
@@ -376,7 +376,7 @@ function eu(){ if(SGR.ativo&&SGR.perfil) return SGR.perfil; var id=null; try{id=
 /* ════════ navegação ════════ */
 var MENU=[
   ['Visões',[['resumo','Resumo Gerencial','resumo'],['vendasA','Vendas','vendas'],['dreG','DRE gerencial','fin'],['dre','DRE mês a mês','lista'],['caixa','Caixa','caixa'],['simulador','Simulador de preço (DRE)','sim'],['cenarios','Simular todos os sabores','grade']]],
-  ['Operação',[['pedidos','Pedidos','vendas'],['producao','Produção','prod'],['saidas','Compras e despesas','compra'],['estoque','Estoque','estoque'],['lancamentos','Lançamentos','lista']]],
+  ['Operação',[['pedidos','Pedidos','vendas'],['producao','Produção','prod'],['ordens','Ordens de produção','lista'],['saidas','Compras e despesas','compra'],['estoque','Estoque','estoque'],['lancamentos','Lançamentos','lista']]],
   ['Cadastros',[['fichas','Receitas','ficha'],['produtos','Cardápio e preços','tag'],['insumos','Insumos','insumo'],['clientes','Clientes','clientes'],['parametros','Parâmetros','config']]],
 ];
 var TIT={}; MENU.forEach(function(s){ s[1].forEach(function(m){ TIT[m[0]]=m[1]; }); });
@@ -452,7 +452,7 @@ var FDEF={
 var FVIS={
   resumo:['per','can','sab','tam','cli'], vendasA:['per','can','sab','tam','cli'], dre:['per'], caixa:['per'], simulador:[], cenarios:['tam','can'],
   lancamentos:['per','tip','can','cli','sit'], pedidos:['per','can','cli','sab','tam','sit'], producao:['per','sab'], compras:['per','tipI','catI'], despesas:['per','catD'], saidas:['per','tipS','catS'],
-  estoque:['sab','tam','tipI','catI'], fichas:['tipR'], insumos:['tipI','catI'], produtos:['can','sab'], clientes:['tipC'], parametros:[]
+  estoque:['sab','tam','tipI','catI'], fichas:['tipR'], ordens:[], insumos:['tipI','catI'], produtos:['can','sab'], clientes:['tipC'], parametros:[]
 };
 function barraFiltros(){
   var vis=FVIS[V.view]||[];
@@ -1087,6 +1087,56 @@ VIEWS.producao=function(){
     ], ls, null, function(p){ return "abrirProducao('"+p.id+"')"; }));
 };
 var PR=null;
+/* ORDENS DE PRODUÇÃO — o "pedido" da cozinha: o que produzir; ao concluir vira lotes de Produção */
+VIEWS.ordens=function(){
+  sub('O que a cozinha precisa produzir · ao concluir, a ordem vira lotes de Produção (baixa insumos e sobe os potes)');
+  var ls=D().ordens.slice().sort(function(a,b){ return (a.status===b.status?0:a.status==='aberta'?-1:1)||(a.data<b.data?1:-1); }).filter(function(o){ return qOk('ord',[o.obs].concat(o.itens.map(function(i){var p=SG.produto(i.produto);return p?p.nome:'';}))); });
+  var ab=D().ordens.filter(function(o){return o.status!=='concluida';}).length, sug=SG.opSugerir(), sq=sug.reduce(function(s,i){return s+i.qtd;},0);
+  $('view').innerHTML=cadastro(ls.length+' ordens · '+ab+' em aberto'+(sq?' · <span class="amb">'+sq+' potes pedidos sem estoque</span>':''), busca('ord','Sabor ou observação…'), (sq?'<button class="btn sm" onclick="abrirOrdem(null,true)">Sugerir pelos pedidos</button>':'')+btNovo('Nova ordem','abrirOrdem(null)'),
+    tabela('tOrd',[
+      {t:'Data',f:function(o){return SG.dataBR(o.data);},s:function(o){return o.data;}},
+      {t:'Situação',f:function(o){return o.status==='concluida'?'<span class="st vd">concluída '+SG.dataBR(o.concluidaEm)+'</span>':'<span class="st am">a produzir</span>';},s:function(o){return o.status;}},
+      {t:'Sabores',f:function(o){ var g={}; o.itens.forEach(function(i){ var p=SG.produto(i.produto); var n=p?p.nome:'?'; g[n]=(g[n]||0)+i.qtd; }); return Object.keys(g).map(function(n){return esc(n)+' <span class="mut">'+g[n]+'</span>';}).join(' · ')||'—'; },cls:'conta'},
+      {t:'Potes',f:function(o){return o.itens.reduce(function(s,i){return s+i.qtd;},0);},v:function(o){return o.itens.reduce(function(s,i){return s+i.qtd;},0);},cls:'num'},
+      {t:'Mistura',f:function(o){return SG.qtdFmt(SG.opNecessidade(o).kg,'kg');},v:function(o){return SG.opNecessidade(o).kg;},cls:'num'},
+      {t:'Insumos',f:function(o){ if(o.status==='concluida') return '<span class="mut">—</span>'; var f=SG.opNecessidade(o).faltas; return f.length?'<span class="st vm">falta '+f.length+'</span>':'<span class="st vd">tem tudo</span>'; }},
+      {t:'Obs.',f:function(o){return esc(o.obs||'');}},
+    ], ls, null, function(o){ return "abrirOrdem('"+o.id+"')"; }));
+};
+var OP=null;
+function abrirOrdem(id, sugerir){
+  var o=id?SG.ordem(id):null;
+  OP=o?JSON.parse(JSON.stringify(o)):{id:null,data:SG.hoje(),status:'aberta',obs:'',itens:sugerir?SG.opSugerir():[]};
+  var ro=OP.status==='concluida';
+  var dados='<div class="frow"><div class="fld"><label>Data</label><input class="inp" type="date" id="opData" value="'+OP.data+'"'+(ro?' disabled':'')+'></div><div class="fld" style="flex:2"><label>Observações</label><input class="inp" id="opObs" value="'+esc(OP.obs||'')+'" placeholder="ex.: feira de sábado"'+(ro?' disabled':'')+'></div></div>'
+    + '<div class="sec2" style="display:flex;align-items:center;gap:8px">Sabores e potes'+(ro?'':'<span style="margin-left:auto;display:flex;gap:6px"><button class="btn sm" onclick="opSugere()" title="Pedidos a entregar menos potes prontos">Sugerir pelos pedidos</button><button class="btn pri sm" onclick="opAddLinha()">'+ic('mais')+'Sabor</button></span>')+'</div>'
+    + '<div id="opItens"></div><div class="erro" id="opErro"></div>';
+  var foot=ro?'<button class="btn" onclick="fecharModal()">Fechar</button>'
+    : (o?'<button class="btn warn" onclick="apagaReg(\'ordens\',\''+o.id+'\',\'Excluir esta ordem?\')">Excluir</button>':'')+'<span style="margin-right:auto"></span><button class="btn" onclick="fecharModal()">Cancelar</button>'+(o?'<button class="btn" onclick="opConcluir()">'+ic('ok')+'Concluir produção</button>':'')+'<button class="btn pri" onclick="salvaOrdem()">Salvar</button>';
+  abrirModal(o?'Ordem de produção · '+SG.dataBR(o.data)+(ro?' · concluída':''):'Nova ordem de produção', '<div class="wz-2col">'+col('Ordem','o que produzir',dados)+col('Necessidade','lotes que vão nascer e insumos que saem do estoque','<div id="opNec"></div>')+'</div>', foot, true);
+  opPinta();
+}
+function opAddLinha(){ var ps=SG.produtosAtivos().filter(function(p){return p.receita;}), t=SG.tamanhosAtivos()[0]; if(!ps.length) return; OP.itens.push({produto:ps[0].id, tam:t?t.id:null, qtd:1}); opPinta(); }
+function opSugere(){ var s=SG.opSugerir(); if(!s.length){ toast('Nenhum pedido a entregar sem estoque'); return; } s.forEach(function(i){ var ex=OP.itens.filter(function(x){return x.produto===i.produto&&x.tam===i.tam;})[0]; if(ex) ex.qtd=Math.max(ex.qtd,i.qtd); else OP.itens.push(i); }); opPinta(); }
+function opSet(k,campo,v){ OP.itens[k][campo]=campo==='qtd'?(numIn(v)||0):v; opPinta(campo==='qtd'); }
+function opDel(k){ OP.itens.splice(k,1); opPinta(); }
+function opPinta(soNec){
+  var ro=OP.status==='concluida', ps=SG.produtosAtivos().filter(function(p){return p.receita;}), ts=SG.tamanhosAtivos(), e=SG.estoque();
+  if(soNec!==true) $('opItens').innerHTML=OP.itens.length?'<table class="dre"><thead><tr><th>Sabor</th><th>Tamanho</th><th class="num">Potes</th><th class="num">Prontos hoje</th>'+(ro?'':'<th></th>')+'</tr></thead><tbody>'+OP.itens.map(function(it,k){ var p=SG.produto(it.produto), tem=e.potes[it.produto+'|'+it.tam];
+      return '<tr><td class="conta">'+(ro?esc(p?p.nome:'?'):'<select class="inp sm" style="width:100%;min-width:220px" onchange="opSet('+k+',\'produto\',this.value)">'+ps.map(function(x){return '<option value="'+x.id+'"'+(x.id===it.produto?' selected':'')+'>'+esc(x.nome)+'</option>';}).join('')+(p&&!ps.some(function(x){return x.id===p.id;})?'<option value="'+p.id+'" selected>'+esc(p.nome)+'</option>':'')+'</select>')+'</td>'
+        + '<td>'+(ro?esc(it.tam):'<select class="inp sm" style="width:100%;min-width:220px" onchange="opSet('+k+',\'tam\',this.value)">'+ts.map(function(t){return '<option value="'+t.id+'"'+(t.id===it.tam?' selected':'')+'>'+t.nome+' · '+t.ml+' ml</option>';}).join('')+'</select>')+'</td>'
+        + '<td class="num">'+(ro?it.qtd:'<input class="inp num sm" style="width:70px" value="'+it.qtd+'" oninput="opSet('+k+',\'qtd\',this.value)">')+'</td><td class="num mut">'+(tem==null?'—':tem)+'</td>'+(ro?'':'<td class="num"><button class="btn sm" onclick="opDel('+k+')" title="Tirar">×</button></td>')+'</tr>'; }).join('')+'</tbody></table>'
+    : '<div class="muted" style="font-size:12px;padding:8px 0">Nenhum sabor. Use “Sabor” para adicionar ou “Sugerir pelos pedidos”.</div>';
+  var N=SG.opNecessidade(OP), h='<div class="mk"><div><small>Potes</small><b>'+N.potes+'</b></div><div><small>Mistura</small><b>'+SG.qtdFmt(N.kg,'kg')+'</b></div><div><small>Insumos em falta</small><b class="'+(N.faltas.length?'cr':'cg')+'">'+(N.faltas.length||'nenhum')+'</b></div></div>';
+  h+='<div class="sec2">Lotes</div>'+(N.lotes.map(function(l){ var r=SG.receita(l.receita), p=SG.produto(l.produto); return '<div class="lin"><div class="nm"><b>'+esc(p?p.nome:'?')+'</b><small>'+(r?esc(r.nome):'<span class="amb">sem receita</span>')+' · '+Object.keys(l.potes).map(function(t){return l.potes[t]+' '+t;}).join(' + ')+'</small></div><div class="v">'+SG.qtdFmt(l.kg,'kg')+'</div></div>'; }).join('')||'<div class="muted" style="font-size:12px">—</div>');
+  var ks=Object.keys(N.insumos).sort(function(a,b){ var fa=N.faltas.some(function(f){return f.insumo===a;}), fb=N.faltas.some(function(f){return f.insumo===b;}); return (fb?1:0)-(fa?1:0); });
+  h+='<div class="sec2">Sai do estoque</div>'+(ks.map(function(k){ var i=SG.insumo(k), f=N.faltas.filter(function(x){return x.insumo===k;})[0]; return '<div class="lin"><div class="nm"><b>'+esc(i?i.nome:k)+'</b>'+(f?'<small class="cr">tem '+SG.qtdFmt(f.tem,i&&i.un)+' · falta '+SG.qtdFmt(f.precisa-f.tem,i&&i.un)+'</small>':'')+'</div><div class="v'+(f?' cr':'')+'">'+SG.qtdFmt(N.insumos[k],i&&i.un)+'</div></div>'; }).join('')||'<div class="muted" style="font-size:12px">—</div>');
+  $('opNec').innerHTML=h;
+}
+function salvaOrdem(){ OP.data=$('opData').value||SG.hoje(); OP.obs=($('opObs').value||'').trim(); OP.itens=OP.itens.filter(function(i){return i.qtd>0;}); if(!OP.itens.length){ $('opErro').textContent='Adicione pelo menos um sabor.'; return; }
+  OP.ts=Date.now(); if(!OP.por) OP.por=eu().id; if(OP.id){ Object.assign(SG.ordem(OP.id),OP); } else { OP.id=SG.novoId('op'); D().ordens.push(OP); } SG.salvar(true); fecharModal(); toast('Ordem salva'); }
+function opConcluir(){ if(!OP.id) return; var N=SG.opNecessidade(OP); if(!confirm('Concluir esta ordem? Vai criar '+N.lotes.length+(N.lotes.length>1?' lotes':' lote')+' de produção com a data de hoje, baixar os insumos e somar '+N.potes+' potes no estoque.')) return;
+  Object.assign(SG.ordem(OP.id),{itens:OP.itens,obs:($('opObs').value||'').trim()}); var ids=SG.opConcluir(OP.id, SG.hoje(), eu().id); fecharModal(); toast((ids?ids.length:0)+' lotes criados em Produção'); }
 function abrirProducao(id, rid){
   var p=id?D().producoes.filter(function(x){return x.id===id;})[0]:null, rs=D().receitas.filter(function(r){return r.tipo!=='base';});
   var ult=D().producoes.slice().sort(function(a,b){return (b.ts||0)-(a.ts||0);})[0], r0=rid||(ult&&SG.receita(ult.receita)?ult.receita:null)||(rs[0]&&rs[0].id);
