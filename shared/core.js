@@ -60,6 +60,10 @@
   function insumo(id) { return por(D.insumos, id); }
   function receita(id) { return por(D.receitas, id); }
   function produto(id) { return por(D.produtos, id); }
+  /* produtos que vendem uma receita; o "padrão" é o único sem cobertura (ou o único que existe) — é ele que recebe os potes de um lote sem produto escolhido */
+  function produtosReceita(rid) { return D.produtos.filter(function (p) { return p.receita === rid; }); }
+  function produtoPadrao(rid) { var ps = produtosReceita(rid), a = ps.filter(function (p) { return p.ativo !== false; }), s = a.filter(function (p) { return !p.cobertura; }); return s.length === 1 ? s[0] : a.length === 1 ? a[0] : ps.length === 1 ? ps[0] : null; }
+  function produtoLote(c) { if (c.produto) return produto(c.produto); var r = receita(c.receita); return r && r.tipo === 'sabor' ? produtoPadrao(c.receita) : null; }
   function tamanho(id) { return por(D.tamanhos, id); }
   function canal(id) { return por(D.canais, id); }
   function cliente(id) { return por(D.clientes, id); }
@@ -500,7 +504,7 @@
       } else if (m.tipo === 'compra') { if (!c.conta) add(ins, c.insumo, +c.qtd || 0); }   // compra com linha do DRE escolhida não vai para o estoque
       else if (m.tipo === 'producao') {
         var cons = consumoProducao(c); Object.keys(cons).forEach(function (k) { add(ins, k, -cons[k]); });
-        if (c.produto && !c.historico) Object.keys(c.potes || {}).forEach(function (t) { add(potes, c.produto + '|' + t, +c.potes[t] || 0); });
+        var pl = produtoLote(c); if (pl && !c.historico) Object.keys(c.potes || {}).forEach(function (t) { add(potes, pl.id + '|' + t, +c.potes[t] || 0); });
       } else if (m.tipo === 'venda') {
 
         c.itens.forEach(function (it) { if (it.produto && it.tam) add(potes, it.produto + '|' + it.tam, -it.qtd); });
@@ -533,7 +537,7 @@
     carregar: carregar, salvar: salvar, resetar: resetar, aoMudar: aoMudar, novoId: novoId, usar: usar, notificar: notificar, aoSalvarLocal: aoSalvarLocal,
     get D() { return D; },
     brl: brl, brl0: brl0, pct: pct, num: num, hoje: hoje, dataBR: dataBR, dataCurta: dataCurta, nomeMes: nomeMes, mesAtual: mesAtual, addMes: addMes, MES3: MES3,
-    insumo: insumo, receita: receita, produto: produto, tamanho: tamanho, canal: canal, cliente: cliente,
+    insumo: insumo, receita: receita, produto: produto, produtosReceita: produtosReceita, produtoPadrao: produtoPadrao, produtoLote: produtoLote, tamanho: tamanho, canal: canal, cliente: cliente,
     ultimaCompra: ultimaCompra, custoInsumo: custoInsumo, custoReceitaKg: custoReceitaKg, pesoReceita: pesoReceita, composicao: composicao, balanco: balanco, compInsumo: compInsumo, faixasBal: faixasBal, balTipo: balTipo, BAL_COLS: BAL_COLS, BAL_TIPOS: BAL_TIPOS,
     indiretosMes: indiretosMes, indiretoKg: indiretoKg, contasOBZ: contasOBZ, contaOBZ: contaOBZ, pacoteDespesa: pacoteDespesa, obzPorPacote: obzPorPacote, PACOTES_OBZ: PACOTES_OBZ, custoPote: custoPote, taxaCanal: taxaCanal,
     precoTabela: precoTabela, definirPreco: definirPreco, precificar: precificar, metaPotes: metaPotes,
