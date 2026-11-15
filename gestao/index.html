@@ -10,15 +10,15 @@
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.SG_BUILD='20261115142742';</script>
-<script src="../shared/versao.js?v=20261115142742"></script>
-<script src="../shared/config.js?v=20261115142742"></script>
-<script src="../shared/seed.js?v=20261115142742"></script>
-<script src="../shared/biblioteca.js?v=20261115142742"></script>
-<script src="../shared/core.js?v=20261115142742"></script>
+<script>window.SG_BUILD='20261115143001';</script>
+<script src="../shared/versao.js?v=20261115143001"></script>
+<script src="../shared/config.js?v=20261115143001"></script>
+<script src="../shared/seed.js?v=20261115143001"></script>
+<script src="../shared/biblioteca.js?v=20261115143001"></script>
+<script src="../shared/core.js?v=20261115143001"></script>
 <script src="../assets/excel-export.js"></script>
 <script src="../assets/pdf-export.js"></script>
-<script src="../shared/remote.js?v=20261115142742"></script>
+<script src="../shared/remote.js?v=20261115143001"></script>
 <style>
 /* ============================================================
    SURREAL — Painel de gestão (PC). OneSpot · 16/10/2026
@@ -176,15 +176,6 @@ table.dre.sim th,table.dre.sim td{padding-left:6px;padding-right:6px;}
 .dre-g table.dre td{padding:8px 16px;}
 .dre-g table.dre th{padding:10px 16px;}
 .pilha > .kpi{flex:1 1 0;min-height:0;}
-.ponte{display:flex;align-items:stretch;gap:4px;flex:0 0 auto;}
-.ponte .pcard{flex:1 1 0;padding:12px 12px;}
-.ponte .pcard .kv{font-size:20px;}
-.ponte .pcard.fim{border-color:var(--acc2);}
-.ponte .pseta{flex:0 0 auto;align-self:center;font-size:18px;font-weight:800;color:var(--txt4);}
-.pbar{height:5px;border-radius:3px;background:var(--linha);margin-top:8px;overflow:hidden;}
-.pbar i{display:block;height:100%;background:var(--acc2);border-radius:3px;} .pbar i.neg{background:var(--vermelho);} .pbar i.pos{background:var(--verde);}
-.pmg{font-size:11px;font-weight:700;color:var(--txt2);margin-top:6px;}
-.ponte .km{padding-top:4px;} .ponte .km b{color:var(--txt);}
 table.dre.dmes{font-size:11px;} table.dre.dmes td,table.dre.dmes th{padding:7px 7px;} table.dre.dmes td.conta{min-width:200px;}
 table.dre.dmes th.sel{color:var(--acc2);} table.dre.dmes td.sel{background:rgba(91,155,255,.07);}
 #tSim td.conta{white-space:nowrap;} #tSim th,#tSim td{padding-left:8px;padding-right:8px;} #tSim td.conta .cl{max-width:190px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
@@ -726,7 +717,7 @@ function dreLinhas(objs){
 }
 function dreTemDado(o){ return !!(o.rec||o.cmv||o.despT||o.fin); }
 
-/* DRE GERENCIAL — leitura executiva: ponte da receita ao lucro + evolução no ano da linha escolhida */
+/* DRE GERENCIAL — leitura executiva: lucro, linhas do DRE em cards + evolução no ano da linha escolhida */
 var DRE_SERIE={
   rec:['Receita bruta',function(o){return o.bruta;}], liq:['Receita líquida',function(o){return o.liq;}], cmv:['CMV',function(o){return o.cmv;}],
   bruto:['Lucro bruto',function(o){return o.bruto;},1], mc:['Margem de contribuição',function(o){return o.mc;},1], desp:['Despesas operacionais',function(o){return o.despT;}],
@@ -736,23 +727,15 @@ VIEWS.dreG=function(){
   var ms=perMeses(), ym=ymV(), ano=ym.slice(0,4), A=dreMeses(ms), r=A.rec;
   sub('Competência · da receita ao lucro · '+perTxt());
   var pc=function(v){ return r?SG.pct(Math.abs(v)/r,1)+' da receita':'—'; };
-  var ponte=[
-    ['Receita bruta', A.bruta, 0, A.potes+' potes vendidos'],
-    ['Deduções', A.ded, 1, 'Receita líquida <b>'+SG.brl(A.liq)+'</b>'],
-    ['CMV', A.cmv, 1, 'Lucro bruto <b class="'+(A.bruto>=0?'cg':'cr')+'">'+SG.brl(A.bruto)+'</b>'],
-    ['Variáveis', A.kit, 1, 'Margem contrib. <b class="'+(A.mc>=0?'cg':'cr')+'">'+SG.brl(A.mc)+'</b>'],
-    ['Despesas oper.', A.despT, 1, 'Resultado oper. <b class="'+(A.oper>=0?'cg':'cr')+'">'+SG.brl(A.oper)+'</b>'],
-    ['Financeiro e IR', A.fin+A.ir, 1, 'LAIR <b class="'+(A.lair>=0?'cg':'cr')+'">'+SG.brl(A.lair)+'</b>'],
-    ['Lucro líquido', A.res, 2, 'Retiradas no período <b>'+SG.brl(A.retiradas)+'</b>']
-  ];
-  var h='<div class="ponte">'+ponte.map(function(p,i){
-    var v=p[1], w=r?Math.min(100,Math.abs(v)/r*100):0, cls=p[2]===2?(v>=0?'cg':'cr'):'';
-    var mg=p[2]===2?(r?'<span class="'+corMg(v/r)+'">'+SG.pct(v/r,1)+' margem líquida</span>':'—'):p[2]===0?(r?'100% · base':'—'):pc(v);
-    return (i?'<div class="pseta">'+(p[2]===2?'=':'−')+'</div>':'')
-      + '<div class="kpi pcard'+(p[2]===2?' fim':'')+'"><div class="kl">'+(p[2]===1?'(−) ':'')+p[0]+'</div><div class="kv '+cls+'">'+SG.brl(p[2]===1&&v?-v:v)+'</div>'
-      + '<div class="pbar"><i class="'+(p[2]===1?'neg':p[2]===2?(v>=0?'pos':'neg'):'')+'" style="width:'+w.toFixed(1)+'%"></i></div>'
-      + '<div class="pmg">'+mg+'</div><div class="km">'+p[3]+'</div></div>';
-  }).join('')+'</div>';
+  var sg=function(v){ return v>=0?'cg':'cr'; };
+  var h='<div class="hero"><div><div class="hl">Lucro líquido · '+perTxt()+'</div><div class="hv '+sg(A.res)+'">'+SG.brl(A.res)+'</div><div class="tsub">'+(r?'<b class="'+corMg(A.res/r)+'">'+SG.pct(A.res/r,1)+'</b> de margem líquida · ':'')+A.potes+' potes vendidos</div></div>'
+    + '<div class="hd"><div>Receita bruta<b>'+SG.brl(A.bruta)+'</b></div><div>Receita líquida<b>'+SG.brl(A.liq)+'</b></div><div>Despesas operacionais<b>'+SG.brl(A.despT)+'</b></div><div>Retiradas no período<b>'+SG.brl(A.retiradas)+'</b></div></div></div>';
+  h+='<div class="kpis">'
+    + kpi('Lucro bruto', '<span class="'+sg(A.bruto)+'">'+SG.brl(A.bruto)+'</span>', 'CMV <b>'+SG.brl(A.cmv)+'</b> · '+pc(A.cmv))
+    + kpi('Margem de contribuição', '<span class="'+sg(A.mc)+'">'+SG.brl(A.mc)+'</span>', 'Variáveis de venda <b>'+SG.brl(A.kit)+'</b> · '+(r?'<span class="'+corMg(A.mc/r)+'">'+SG.pct(A.mc/r,1)+'</span> da receita':'—'))
+    + kpi('Resultado operacional', '<span class="'+sg(A.oper)+'">'+SG.brl(A.oper)+'</span>', 'Despesas <b>'+SG.brl(A.despT)+'</b> · '+pc(A.despT))
+    + kpi('Financeiro e IR', SG.brl(A.fin+A.ir), 'LAIR <b class="'+sg(A.lair)+'">'+SG.brl(A.lair)+'</b> · deduções <b>'+SG.brl(A.ded)+'</b>')
+    + '</div>';
   var k=DRE_SERIE[V.dreL]?V.dreL:'res', u=V.dreU==='pct'?'pct':'rs', S=DRE_SERIE[k];
   var dims='<div class="dims">'+Object.keys(DRE_SERIE).map(function(x){ return '<button class="dimb'+(x===k?' on':'')+'" onclick="V.dreL=\''+x+'\';render()">'+DRE_SERIE[x][0]+'</button>'; }).join('')+'</div>';
   var uni='<div class="dims"><button class="dimb'+(u==='rs'?' on':'')+'" onclick="V.dreU=\'rs\';render()">R$</button><button class="dimb'+(u==='pct'?' on':'')+'" onclick="V.dreU=\'pct\';render()">% receita</button></div>';
