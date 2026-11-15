@@ -13,13 +13,13 @@
 <link rel="icon" href="img/icone-192.png">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.SG_BUILD='20261115143001';</script>
-<script src="shared/versao.js?v=20261115143001"></script>
-<script src="shared/config.js?v=20261115143001"></script>
-<script src="shared/seed.js?v=20261115143001"></script>
-<script src="shared/biblioteca.js?v=20261115143001"></script>
-<script src="shared/core.js?v=20261115143001"></script>
-<script src="shared/remote.js?v=20261115143001"></script>
+<script>window.SG_BUILD='20261115143207';</script>
+<script src="shared/versao.js?v=20261115143207"></script>
+<script src="shared/config.js?v=20261115143207"></script>
+<script src="shared/seed.js?v=20261115143207"></script>
+<script src="shared/biblioteca.js?v=20261115143207"></script>
+<script src="shared/core.js?v=20261115143207"></script>
+<script src="shared/remote.js?v=20261115143207"></script>
 <style>
 /* ============================================================
    SURREAL · gelato artesanal — app (PWA)
@@ -1157,7 +1157,7 @@ function entrar(){ var e=$('lgEmail').value, s=$('lgSenha').value; if(!e||!s){ $
 function trocaSenha(){ fechaMenu(); var n=prompt('Nova senha (mínimo 6 caracteres):'); if(!n) return; if(n.length<6){ alert('A senha precisa ter pelo menos 6 caracteres.'); return; } SGR.trocarSenha(n).then(function(){ toast('Senha trocada'); }).catch(function(e){ alert('Não deu: '+e.message); }); }
 var CB = {
   login: mostraLogin,
-  pronto: function(){ $('login').classList.remove('on'); $('sync').classList.add('on'); iniciaApp(); },
+  pronto: function(){ $('login').classList.remove('on'); $('sync').classList.add('on'); SG.bibGarantir(); iniciaApp(); },
   status: function(s, m){ var e=$('sync'); e.className='sync on'+(s==='sync'?' sync-s':s==='off'?' sync-off':''); e.title = s==='ok'?'Sincronizado':s==='sync'?'Sincronizando…':(m||'Sem conexão'); }
 };
 aplicaTema(); mostraInstalar();

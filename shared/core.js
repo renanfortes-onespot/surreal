@@ -558,6 +558,13 @@
     D.insumos.forEach(function (i) { var b = i.bib && porN[i.bib]; if (b && b.custo && i.estimado && Math.abs((+i.custoManual || 0) - b.custo) < 0.005 && !ultimaCompra(i.id)) { i.custoManual = 0; i.estimado = false; n++; } });
     return n;
   }
+  /* garante a tabela inteira no cadastro: roda uma vez por banco (config.bibV) e cria todo ingrediente da planilha
+     que ainda não exista pelo nome; os parecidos também entram (quem quiser junta depois). Chamado quando o banco carrega. */
+  function bibGarantir() {
+    if (!window.SG_BIB || (D.config && D.config.bibV >= 1)) return 0;
+    var P = bibPlano(), marc = {}; P.novos.forEach(function (x) { marc[x.k] = 1; });
+    var r = bibImportar(P, marc); D.config.bibV = 1; salvar(true); return r.novos;
+  }
   function bibImportar(P, marc) {
     var n = 0, c = 0, KS = ['acu', 'gor', 'sngl', 'os', 'pod', 'pac', 'prot'];
     function comp(b) { var o = {}; KS.forEach(function (k) { o[k] = +b[k] || 0; }); return o; }
@@ -576,7 +583,7 @@
     get D() { return D; },
     brl: brl, brl0: brl0, pct: pct, num: num, hoje: hoje, dataBR: dataBR, dataCurta: dataCurta, nomeMes: nomeMes, mesAtual: mesAtual, addMes: addMes, MES3: MES3,
     insumo: insumo, receita: receita, produto: produto, produtosReceita: produtosReceita, produtoPadrao: produtoPadrao, produtoLote: produtoLote, tamanho: tamanho, canal: canal, cliente: cliente,
-    ultimaCompra: ultimaCompra, bibPlano: bibPlano, bibImportar: bibImportar, bibLimpaCusto: bibLimpaCusto, custoInsumo: custoInsumo, custoReceitaKg: custoReceitaKg, pesoReceita: pesoReceita, composicao: composicao, balanco: balanco, compInsumo: compInsumo, faixasBal: faixasBal, balTipo: balTipo, BAL_COLS: BAL_COLS, BAL_TIPOS: BAL_TIPOS,
+    ultimaCompra: ultimaCompra, bibPlano: bibPlano, bibImportar: bibImportar, bibLimpaCusto: bibLimpaCusto, bibGarantir: bibGarantir, custoInsumo: custoInsumo, custoReceitaKg: custoReceitaKg, pesoReceita: pesoReceita, composicao: composicao, balanco: balanco, compInsumo: compInsumo, faixasBal: faixasBal, balTipo: balTipo, BAL_COLS: BAL_COLS, BAL_TIPOS: BAL_TIPOS,
     indiretosMes: indiretosMes, indiretoKg: indiretoKg, contasOBZ: contasOBZ, contaOBZ: contaOBZ, pacoteDespesa: pacoteDespesa, obzPorPacote: obzPorPacote, PACOTES_OBZ: PACOTES_OBZ, custoPote: custoPote, taxaCanal: taxaCanal,
     precoTabela: precoTabela, definirPreco: definirPreco, precificar: precificar, metaPotes: metaPotes,
     totalVenda: totalVenda, potesVenda: potesVenda, resultadoVenda: resultadoVenda, vendasMes: vendasMes, nomeItem: nomeItem, nomeCliente: nomeCliente,
