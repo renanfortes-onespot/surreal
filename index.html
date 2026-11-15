@@ -13,13 +13,13 @@
 <link rel="icon" href="img/icone-192.png">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.SG_BUILD='20261115142424';</script>
-<script src="shared/versao.js?v=20261115142424"></script>
-<script src="shared/config.js?v=20261115142424"></script>
-<script src="shared/seed.js?v=20261115142424"></script>
-<script src="shared/biblioteca.js?v=20261115142424"></script>
-<script src="shared/core.js?v=20261115142424"></script>
-<script src="shared/remote.js?v=20261115142424"></script>
+<script>window.SG_BUILD='20261115142742';</script>
+<script src="shared/versao.js?v=20261115142742"></script>
+<script src="shared/config.js?v=20261115142742"></script>
+<script src="shared/seed.js?v=20261115142742"></script>
+<script src="shared/biblioteca.js?v=20261115142742"></script>
+<script src="shared/core.js?v=20261115142742"></script>
+<script src="shared/remote.js?v=20261115142742"></script>
 <style>
 /* ============================================================
    SURREAL · gelato artesanal — app (PWA)
@@ -717,12 +717,12 @@ TELAS.importBib = function(a){
   var P=SG.bibPlano(); a.P=P; if(!a.marc){ a.marc={}; P.novos.forEach(function(x){ if(!x.par) a.marc[x.k]=1; }); }
   var n=Object.keys(a.marc).length, pars=P.novos.filter(function(x){return x.par;}).length, cats={};
   P.novos.forEach(function(x){ (cats[x.b.cat]=cats[x.b.cat]||[]).push(x); });
-  var h = cab('lista','Ingredientes da planilha','Entram como insumo em kg, com a composição por 100 g · o preço da planilha vale até a 1ª compra');
+  var h = cab('lista','Ingredientes da planilha','Entram como insumo em kg, só com a composição por 100 g · o preço vem da 1ª compra lançada');
   h += '<div class="res"><div class="n"><span>Na planilha</span><b>'+(P.novos.length+P.iguais.length+P.completa.length)+'</b></div><div class="n"><span>Marcados</span><b id="ibN">'+n+'</b></div><div class="n"><span>Já cadastrados</span><b>'+(P.iguais.length+P.completa.length)+'</b><small>'+(P.completa.length?P.completa.length+' recebem composição':'')+'</small></div><div class="n"><span>Parecidos</span><b>'+pars+'</b><small>vêm desmarcados</small></div></div>';
   if(!P.novos.length) return h+'<div class="vazio">Todos os ingredientes da planilha já estão cadastrados.</div>'+(P.completa.length?'<button class="btn" onclick="ibOk()">'+ic('ok')+'Completar composições</button>':'');
   h += '<div class="dica" style="margin:-6px 0 12px">Toque para marcar ou desmarcar. Parecido com um insumo já cadastrado vem desmarcado: desmarcado, o insumo existente só recebe a composição se ainda não tiver. As 4 "bases" ficam de fora: no app são receitas.</div>';
   Object.keys(cats).sort().forEach(function(c){ h+='<div class="sec">'+esc(c)+' · '+cats[c].length+'</div>'; cats[c].forEach(function(x){ var on=!!a.marc[x.k];
-    h+=li({ic:on?'ok':'seta', cor:on?'vd':'', t:esc(x.b.n), s:x.par?'<span class="amb">parece ser '+esc(x.par.nome)+', já cadastrado'+(x.par.comp?'':' · recebe a composição')+'</span>':esc(x.b.cat), v:x.b.custo?SG.brl(x.b.custo):'<span style="color:var(--txt3);font-weight:400">sem preço</span>', vs:x.b.custo?'por kg':'', on:"ibTog("+x.k+")"}); }); });
+    h+=li({ic:on?'ok':'seta', cor:on?'vd':'', t:esc(x.b.n), s:x.par?'<span class="amb">parece ser '+esc(x.par.nome)+', já cadastrado'+(x.par.comp?'':' · recebe a composição')+'</span>':esc(x.b.cat), on:"ibTog("+x.k+")"}); }); });
   h += '<button class="btn" id="ibBt" onclick="ibOk()">'+ic('ok')+'Importar '+n+' insumos</button>';
   return h;
 };
@@ -1049,7 +1049,7 @@ TELAS.mais = function(){
   h += li({ic:'pote', t:'Produção', s:'Lotes produzidos', on:"abre('producoes')"});
   h += li({ic:'pessoas', t:'Clientes', s:D().clientes.length+' cadastrados', on:"abre('clientes')"});
   h += li({ic:'frasco', t:'Receitas', s:'Ficha técnica e balanceamento de cada receita', on:"abre('fichas')"});
-  h += li({ic:'lista', t:'Ingredientes da planilha do curso', s:'Importar como insumos: composição, categoria e preço', on:"abre('importBib',{form:1})"});
+  h += li({ic:'lista', t:'Ingredientes da planilha do curso', s:'Importar como insumos: composição e categoria', on:"abre('importBib',{form:1})"});
   h += li({ic:'conta', t:'Tabela de preços', s:'Preço por sabor, tamanho e canal', on:"abre('tabela')"});
   h += li({ic:'engr', t:'Parâmetros', s:'Metas, regime (DAS), orçamento OBZ, canais e tamanhos', on:"abre('parametros')"});
   if(!instalado()) h += li({ic:'baixar', cor:'ac', t:'Baixar o app no celular', s:'Ícone na tela de início, abre em tela cheia', on:'instalar()'});

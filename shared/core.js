@@ -552,12 +552,20 @@
     bib.forEach(function (b) { if (b.cat === 'Bases') { fora.push(b); return; } var ex = por[bibNorm(b.n)]; if (!ex) novos.push({ b: b, par: parecido(b), k: novos.length }); else if (!ex.comp) completa.push({ b: b, i: ex }); else iguais.push(b); });
     return { novos: novos, completa: completa, iguais: iguais, fora: fora };
   }
+  /* desfaz o preço do curso que uma importação anterior gravou como 'estimado' (mesmo valor da planilha, sem compra lançada) */
+  function bibLimpaCusto() {
+    var bib = (window.SG_BIB && SG_BIB.ingredientes) || [], porN = {}; bib.forEach(function (b) { porN[b.n] = b; }); var n = 0;
+    D.insumos.forEach(function (i) { var b = i.bib && porN[i.bib]; if (b && b.custo && i.estimado && Math.abs((+i.custoManual || 0) - b.custo) < 0.005 && !ultimaCompra(i.id)) { i.custoManual = 0; i.estimado = false; n++; } });
+    return n;
+  }
   function bibImportar(P, marc) {
     var n = 0, c = 0, KS = ['acu', 'gor', 'sngl', 'os', 'pod', 'pac', 'prot'];
     function comp(b) { var o = {}; KS.forEach(function (k) { o[k] = +b[k] || 0; }); return o; }
-    function completa(i, b) { if (!i || i.comp) return; i.comp = comp(b); i.bib = b.n; c++; if (!i.cat || i.cat === 'Outros') i.cat = b.cat || i.cat; if (!(i.custoManual > 0) && b.custo && !ultimaCompra(i.id)) { i.custoManual = b.custo; i.estimado = true; } }
+    function completa(i, b) { if (!i || i.comp) return; i.comp = comp(b); i.bib = b.n; c++; if (!i.cat || i.cat === 'Outros') i.cat = b.cat || i.cat; }
+    /* só composição e categoria: o 'Custo Kg' da planilha é do curso, não da Surreal — o custo vem das compras lançadas */
+    bibLimpaCusto();
     var porPar = {}; P.novos.forEach(function (x) { if (!marc[x.k] && x.par) (porPar[x.par.id] = porPar[x.par.id] || []).push(x.b); });
-    P.novos.forEach(function (x) { if (marc[x.k]) { D.insumos.push({ id: novoId('i'), nome: x.b.n.trim(), tipo: 'ingrediente', un: 'kg', cat: x.b.cat || 'Outros', custoManual: x.b.custo || 0, min: 0, estimado: !!x.b.custo, comp: comp(x.b), bib: x.b.n }); n++; } });
+    P.novos.forEach(function (x) { if (marc[x.k]) { D.insumos.push({ id: novoId('i'), nome: x.b.n.trim(), tipo: 'ingrediente', un: 'kg', cat: x.b.cat || 'Outros', custoManual: 0, min: 0, estimado: false, comp: comp(x.b), bib: x.b.n }); n++; } });
     Object.keys(porPar).forEach(function (id) { if (porPar[id].length === 1) completa(insumo(id), porPar[id][0]); });   // 2 itens da planilha para o mesmo insumo = ambíguo, não mexe
     P.completa.forEach(function (x) { completa(x.i, x.b); });
     salvar(true); return { novos: n, completados: c };
@@ -568,7 +576,7 @@
     get D() { return D; },
     brl: brl, brl0: brl0, pct: pct, num: num, hoje: hoje, dataBR: dataBR, dataCurta: dataCurta, nomeMes: nomeMes, mesAtual: mesAtual, addMes: addMes, MES3: MES3,
     insumo: insumo, receita: receita, produto: produto, produtosReceita: produtosReceita, produtoPadrao: produtoPadrao, produtoLote: produtoLote, tamanho: tamanho, canal: canal, cliente: cliente,
-    ultimaCompra: ultimaCompra, bibPlano: bibPlano, bibImportar: bibImportar, custoInsumo: custoInsumo, custoReceitaKg: custoReceitaKg, pesoReceita: pesoReceita, composicao: composicao, balanco: balanco, compInsumo: compInsumo, faixasBal: faixasBal, balTipo: balTipo, BAL_COLS: BAL_COLS, BAL_TIPOS: BAL_TIPOS,
+    ultimaCompra: ultimaCompra, bibPlano: bibPlano, bibImportar: bibImportar, bibLimpaCusto: bibLimpaCusto, custoInsumo: custoInsumo, custoReceitaKg: custoReceitaKg, pesoReceita: pesoReceita, composicao: composicao, balanco: balanco, compInsumo: compInsumo, faixasBal: faixasBal, balTipo: balTipo, BAL_COLS: BAL_COLS, BAL_TIPOS: BAL_TIPOS,
     indiretosMes: indiretosMes, indiretoKg: indiretoKg, contasOBZ: contasOBZ, contaOBZ: contaOBZ, pacoteDespesa: pacoteDespesa, obzPorPacote: obzPorPacote, PACOTES_OBZ: PACOTES_OBZ, custoPote: custoPote, taxaCanal: taxaCanal,
     precoTabela: precoTabela, definirPreco: definirPreco, precificar: precificar, metaPotes: metaPotes,
     totalVenda: totalVenda, potesVenda: potesVenda, resultadoVenda: resultadoVenda, vendasMes: vendasMes, nomeItem: nomeItem, nomeCliente: nomeCliente,
