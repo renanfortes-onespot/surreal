@@ -10,15 +10,15 @@
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.SG_BUILD='20261024190219';</script>
-<script src="../shared/versao.js?v=20261024190219"></script>
-<script src="../shared/config.js?v=20261024190219"></script>
-<script src="../shared/seed.js?v=20261024190219"></script>
-<script src="../shared/biblioteca.js?v=20261024190219"></script>
-<script src="../shared/core.js?v=20261024190219"></script>
+<script>window.SG_BUILD='20261115124436';</script>
+<script src="../shared/versao.js?v=20261115124436"></script>
+<script src="../shared/config.js?v=20261115124436"></script>
+<script src="../shared/seed.js?v=20261115124436"></script>
+<script src="../shared/biblioteca.js?v=20261115124436"></script>
+<script src="../shared/core.js?v=20261115124436"></script>
 <script src="../assets/excel-export.js"></script>
 <script src="../assets/pdf-export.js"></script>
-<script src="../shared/remote.js?v=20261024190219"></script>
+<script src="../shared/remote.js?v=20261115124436"></script>
 <style>
 /* ============================================================
    SURREAL — Painel de gestão (PC). OneSpot · 16/10/2026
@@ -290,10 +290,11 @@ table.dre tr.stat td{padding-top:4px;padding-bottom:8px;background:var(--cabec);
 .tams button{border:1px solid var(--card-brd);background:var(--inp);color:var(--txt);border-radius:7px;padding:5px 9px;font-size:11px;font-weight:700;cursor:pointer;line-height:1.2;}
 .tams button small{display:block;font-size:9.5px;color:var(--txt3);font-weight:600;}
 .tams button.tem{border-color:var(--acc2);}
-.pg{display:grid;grid-template-columns:110px repeat(4,minmax(0,1fr));gap:6px;align-items:center;font-size:11.5px;}
+.pg{display:grid;grid-template-columns:104px repeat(4,minmax(0,1fr));gap:5px 6px;align-items:center;font-size:11px;}
+.pg .cl{font-weight:600;color:var(--txt3);white-space:nowrap;} .pg .v{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;font-weight:700;color:var(--txt);overflow:hidden;text-overflow:ellipsis;}
+.pg .v .mut{font-weight:600;}
 .pg .h{font-size:9px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.7px;text-align:right;}
 .pg .cn{font-weight:700;}
-.pg .cel small{display:block;font-size:9.5px;text-align:right;margin-top:2px;font-weight:700;}
 .toast{position:fixed;left:50%;bottom:30px;transform:translateX(-50%) translateY(20px);background:var(--txt);color:var(--fundo);font-size:12.5px;font-weight:700;border-radius:999px;padding:10px 18px;opacity:0;transition:all .25s;z-index:900;pointer-events:none;}
 .toast.on{opacity:1;transform:translateX(-50%);}
 
@@ -1438,7 +1439,7 @@ function abrirProduto(id){
     + '<div class="fld"><label>Receita base</label><select class="inp" id="ppRec" onchange="PP.receita=this.value||null;ppPrecos()"><option value="">— sem ficha técnica —</option>'+rs.map(function(r){return '<option value="'+r.id+'"'+(r.id===PP.receita?' selected':'')+'>'+esc(r.nome)+'</option>';}).join('')+'</select></div>'
     + '<div class="frow"><div class="fld"><label>Cobertura / calda</label><select class="inp" id="ppCob" onchange="PP.cobertura=this.value||null;ppPrecos()"><option value="">— nenhuma —</option>'+cs.map(function(r){return '<option value="'+r.id+'"'+(r.id===PP.cobertura?' selected':'')+'>'+esc(r.nome)+'</option>';}).join('')+'</select></div><div class="fld"><label>Cobertura no pote (%)</label><input class="inp num" id="ppPct" value="'+nv(PP.pctCob*100,0)+'" oninput="PP.pctCob=(numIn(this.value)||0)/100;ppPrecos()"></div></div>'
     + '<div class="fld"><label>Situação</label>'+segH('ppAt',[['1','No cardápio'],['0','Inativo']],PP.ativo?'1':'0','ppAtivo')+'</div><div class="erro" id="ppErro"></div>';
-  abrirModal(p?'Produto · '+p.nome:'Novo produto', '<div class="wz-2col">'+col('Produto','o que é vendido',dados)+col('Preços','por canal e tamanho · embaixo do preço, margem real e custo','<div id="ppPre"></div>')+'</div>',
+  abrirModal(p?'Produto · '+p.nome:'Novo produto', '<div class="wz-2col" style="grid-template-columns:minmax(0,.85fr) minmax(0,1.5fr)">'+col('Produto','o que é vendido',dados)+col('Preços','por canal e tamanho · custo do pote e margem de cada preço','<div id="ppPre"></div>')+'</div>',
     footPad('salvaProduto()', p?"apagaProduto('"+p.id+"')":null), true);
   ppPrecos();
 }
@@ -1447,9 +1448,11 @@ function ppPrecos(){
   var tmp={id:'__pp', nome:'tmp', receita:PP.receita, cobertura:PP.cobertura, pctCob:PP.pctCob}; D().produtos.push(tmp); var old=D().precos.__pp; D().precos.__pp=PP.precos;
   var ts=D().tamanhos, h='';
   D().canais.forEach(function(c){
-    h+='<div class="sec2">'+esc(c.nome)+(c.taxa?' · taxa '+SG.pct(c.taxa,0):'')+'</div><div class="pg"><div></div>'+ts.map(function(t){return '<div class="h">'+t.nome+' · '+t.ml+(t.ativo?'':' (sim.)')+'</div>';}).join('')+'<div class="cn">Preço (R$)</div>'
-      + ts.map(function(t){ var x=SG.precificar('__pp',t.id,c.id), pr=(PP.precos[c.id]||{})[t.id];
-        return '<div class="cel"><input class="inp num sm" value="'+(pr!=null?nv(pr):'')+'" placeholder="'+nv(Math.ceil(x.sugerido||0),0)+'" onchange="ppSet(\''+c.id+'\',\''+t.id+'\',this.value)"><small class="'+(pr!=null&&!x.custo.semFicha?corMg(x.margem):'mut')+'">'+(pr!=null&&!x.custo.semFicha?SG.pct(x.margem,0)+' · lucro '+SG.brl(x.lucro):'custo '+SG.brl(x.custo.total))+'</small></div>'; }).join('')+'</div>';
+    var X=ts.map(function(t){ return {t:t, x:SG.precificar('__pp',t.id,c.id), pr:(PP.precos[c.id]||{})[t.id]}; });
+    h+='<div class="sec2">'+esc(c.nome)+(c.taxa?' · taxa '+SG.pct(c.taxa,0):'')+'</div><div class="pg"><div></div>'+X.map(function(o){return '<div class="h">'+o.t.nome+' · '+o.t.ml+(o.t.ativo?'':' (sim.)')+'</div>';}).join('')
+      + '<div class="cn">Preço (R$)</div>'+X.map(function(o){ return '<div><input class="inp num sm" value="'+(o.pr!=null?nv(o.pr):'')+'" placeholder="'+nv(Math.ceil(o.x.sugerido||0),0)+'" onchange="ppSet(\''+c.id+'\',\''+o.t.id+'\',this.value)"></div>'; }).join('')
+      + '<div class="cl">Custo do pote</div>'+X.map(function(o){ return '<div class="v">'+(o.x.custo.semFicha?'<span class="mut">sem ficha</span>':SG.brl(o.x.custo.total))+'</div>'; }).join('')
+      + '<div class="cl">Margem · lucro</div>'+X.map(function(o){ var ok=o.pr!=null&&!o.x.custo.semFicha; return '<div class="v">'+(ok?'<span class="'+corMg(o.x.margem)+'">'+SG.pct(o.x.margem,0)+'</span> <span class="mut">· '+SG.brl(o.x.lucro)+'</span>':'<span class="muted">—</span>')+'</div>'; }).join('')+'</div>';
   });
   D().produtos.pop(); if(old===undefined) delete D().precos.__pp; else D().precos.__pp=old;
   $('ppPre').innerHTML=h+'<div class="nota">Em branco = sem preço de tabela (no pedido entra o sugerido para a meta de '+SG.pct(D().config.margemAlvo,0)+', que aparece apagado no campo).</div>';
